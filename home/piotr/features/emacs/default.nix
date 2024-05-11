@@ -1,4 +1,4 @@
-{ inputs, outputs, pkgs, ... }: {
+{ inputs, pkgs, config, ... }: {
 
   home.packages = with pkgs; [
     nodejs_20
@@ -9,7 +9,15 @@
     rust-analyzer
     rustc
     rustfmt
+    nil
   ];
+
+  xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
+    (let ((default-directory (file-name-as-directory
+                           "${config.programs.emacs.finalPackage.deps}/share/emacs/site-lisp/"))
+          (normal-top-level-add-subdirs-inode-list nil))
+    (normal-top-level-add-subdirs-to-load-path))
+    '';
 
   programs.emacs = {
     enable = true;
@@ -87,6 +95,7 @@
       no-littering
       notmuch
       nix-mode
+      nix-ts-mode
       lsp-mode
       ob-mermaid
       olivetti
