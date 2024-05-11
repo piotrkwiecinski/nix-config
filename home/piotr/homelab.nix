@@ -1,12 +1,31 @@
 {
+  inputs,
+  outputs,
+  config,
   pkgs,
   ...
 }: {
-  imports = [./global];
+  imports = [
+    ./global
+    ./features/emacs
+    ./features/desktop/common/firefox.nix
+  ];
 
-  home.packages = [pkgs.emacs29 pkgs.htop];
+  nixpkgs = {
+    overlays = [
+      outputs.overlays.unstable-packages
+      inputs.emacs-overlay.overlays.default
+    ];
+  };
 
-  programs.firefox.enable = true;
+  home.packages = with pkgs; [
+    nodejs_20
+    htop
+    signal-desktop
+    fira-code
+    fira-code-symbols
+    fira-code-nerdfont
+  ];
 
   programs.bash = {
     enable = true;
@@ -30,6 +49,9 @@
 
   programs.direnv = {
     enable = true;
+    enableBashIntegration = true;
     nix-direnv.enable = true;
   };
+
+  fonts.fontconfig.enable = true;
 }

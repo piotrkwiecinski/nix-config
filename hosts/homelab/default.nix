@@ -10,6 +10,13 @@
     ../../users/piotr
   ];
 
+  nixpkgs = {
+    overlays = [
+      outputs.overlays.unstable-packages
+      inputs.emacs-overlay.overlays.default
+    ];
+  };
+
   home-manager.useGlobalPkgs = true;
   home-manager.extraSpecialArgs = {
     inherit inputs outputs;
@@ -63,8 +70,6 @@
    
    ];
   };
-
-  programs.firefox.enable = true;
 
   services.printing.enable = true;
 
