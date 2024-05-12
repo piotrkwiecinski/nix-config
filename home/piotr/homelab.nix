@@ -26,7 +26,7 @@
     fira-code-symbols
     fira-code-nerdfont
     jq
-    spotify
+    unstable.spotify
   ];
 
   programs.bash = {
