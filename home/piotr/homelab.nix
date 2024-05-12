@@ -24,10 +24,13 @@
     fira-code
     fira-code-symbols
     fira-code-nerdfont
+    jq
+    spotify
   ];
 
   programs.bash = {
     enable = true;
+    enableCompletion = true;
   };
 
   programs.git = {

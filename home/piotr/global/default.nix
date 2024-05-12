@@ -1,9 +1,7 @@
 {
-  input,
   lib,
   pkgs,
   config,
-  outputs,
   ...
 }: {
   nix = {
@@ -11,10 +9,14 @@
     settings = {
       experimental-features = [
         "nix-command"
-	"flakes"
+        "flakes"
       ];
     };
   };
+
+  nixpkgs.config.allowUnfree = true;
+
+  news.display = "silent";
 
   programs.home-manager.enable = true;
   programs.git.enable = true;

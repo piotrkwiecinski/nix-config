@@ -33,7 +33,7 @@
     );
   in {
     inherit lib;
-    
+
     overlays = import ./overlays { inherit inputs; };
 
     devShells = forEachSystem (system:
@@ -45,7 +45,7 @@
       homelab = lib.nixosSystem {
         modules = [./hosts/homelab];
         specialArgs = {
-	        inherit inputs outputs nixpkgs;
+	        inherit inputs outputs;
 	      };
       };
     };
@@ -55,7 +55,7 @@
        modules = [./home/piotr/homelab.nix];
        pkgs = nixpkgs.legacyPackages.x86_64-linux;
        extraSpecialArgs = {
-         inherit inputs outputs nixpkgs;
+         inherit inputs outputs;
        };
      };
    };
