@@ -11,6 +11,9 @@
   ];
 
   nixpkgs = {
+    config = {
+      allowUnfree = true;
+    };
     overlays = [
       outputs.overlays.unstable-packages
       inputs.emacs-overlay.overlays.default

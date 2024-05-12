@@ -18,19 +18,14 @@
       url = "github:copilot-emacs/copilot.el";
       flake = false;
     };
+    treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
-  outputs = { self, nixpkgs, home-manager, systems, ... } @ inputs: let
+  outputs = { self, nixpkgs, home-manager, treefmt-nix, systems, ... } @ inputs: let
     inherit (self) outputs;
     lib = nixpkgs.lib // home-manager.lib;
     forEachSystem = nixpkgs.lib.genAttrs (import systems);
-    pkgsFor = lib.getAttrs (import systems) (
-      system:
-        import nixpkgs {
-	        inherit system;
-	        config.allowUnfree = true;
-	      }
-    );
+    treefmtEval = forEachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
   in {
     inherit lib;
 
@@ -40,6 +35,12 @@
       let pkgs = nixpkgs.legacyPackages.${system};
       in import ./shell.nix { inherit pkgs; }
     );
+
+    formatter = forEachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
+
+    checks = forEachSystem (pkgs: {
+      formatting = treefmtEval.${pkgs.system}.config.build.check self;
+    });
 
     nixosConfigurations = {
       homelab = lib.nixosSystem {
