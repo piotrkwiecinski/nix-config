@@ -8,7 +8,7 @@
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager/release-23.11";
-      inputs.nixpkgs.follows ="nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
@@ -18,47 +18,66 @@
       url = "github:copilot-emacs/copilot.el";
       flake = false;
     };
-    treefmt-nix.url = "github:numtide/treefmt-nix";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, treefmt-nix, systems, ... } @ inputs: let
-    inherit (self) outputs;
-    lib = nixpkgs.lib // home-manager.lib;
-    forEachSystem = nixpkgs.lib.genAttrs (import systems);
-    treefmtEval = forEachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
-  in {
-    inherit lib;
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixpkgs-unstable,
+      home-manager,
+      treefmt-nix,
+      systems,
+      ...
+    }@inputs:
+    let
+      inherit (self) outputs;
+      lib = nixpkgs.lib // home-manager.lib;
+      forEachSystem = nixpkgs.lib.genAttrs (import systems);
+      eachSystem =
+        f: nixpkgs.lib.genAttrs (import systems) (system: f nixpkgs-unstable.legacyPackages.${system});
+      treefmtEval = eachSystem (pkgs: treefmt-nix.lib.evalModule pkgs ./treefmt.nix);
+    in
+    {
+      inherit lib;
 
-    overlays = import ./overlays { inherit inputs; };
+      overlays = import ./overlays { inherit inputs; };
 
-    devShells = forEachSystem (system:
-      let pkgs = nixpkgs.legacyPackages.${system};
-      in import ./shell.nix { inherit pkgs; }
-    );
+      devShells = forEachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        import ./shell.nix { inherit pkgs; }
+      );
 
-    formatter = forEachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
+      formatter = eachSystem (pkgs: treefmtEval.${pkgs.system}.config.build.wrapper);
 
-    checks = forEachSystem (pkgs: {
-      formatting = treefmtEval.${pkgs.system}.config.build.check self;
-    });
+      checks = eachSystem (pkgs: {
+        formatting = treefmtEval.${pkgs.system}.config.build.check self;
+      });
 
-    nixosConfigurations = {
-      homelab = lib.nixosSystem {
-        modules = [./hosts/homelab];
-        specialArgs = {
-	        inherit inputs outputs;
-	      };
+      nixosConfigurations = {
+        homelab = lib.nixosSystem {
+          modules = [ ./hosts/homelab ];
+          specialArgs = {
+            inherit inputs outputs;
+          };
+        };
+      };
+
+      homeConfigurations = {
+        "piotr@homelab" = lib.homeManagerConfiguration {
+          modules = [ ./home/piotr/homelab.nix ];
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          extraSpecialArgs = {
+            inherit inputs outputs;
+          };
+        };
       };
     };
-
-   homeConfigurations = {
-     "piotr@homelab" = lib.homeManagerConfiguration {
-       modules = [./home/piotr/homelab.nix];
-       pkgs = nixpkgs.legacyPackages.x86_64-linux;
-       extraSpecialArgs = {
-         inherit inputs outputs;
-       };
-     };
-   };
-  };
 }

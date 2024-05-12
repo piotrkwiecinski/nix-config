@@ -3,7 +3,8 @@
   pkgs,
   config,
   ...
-}: {
+}:
+{
   nix = {
     package = lib.mkDefault pkgs.nix;
     settings = {

@@ -3,7 +3,8 @@
   outputs,
   pkgs,
   ...
-}: {
+}:
+{
   imports = [
     ./global
     ./features/emacs
