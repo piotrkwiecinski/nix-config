@@ -6,6 +6,7 @@
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.yaml-language-server
+    mermaid-cli
     rust-analyzer
     rustc
     rustfmt
@@ -145,5 +146,11 @@
     enable = true;
 
     client = { enable = true; };
+  };
+
+  home.sessionVariables = {
+    ALTERNATIVE_EDITOR = "";
+    EDITOR = "emacsclient -t";
+    VISUAL = "emacsclient -c -a emacs";
   };
 }
