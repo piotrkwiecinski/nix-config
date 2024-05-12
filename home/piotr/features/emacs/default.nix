@@ -17,6 +17,7 @@
     rustc
     rustfmt
     nil
+    phpactor
   ];
 
   xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''

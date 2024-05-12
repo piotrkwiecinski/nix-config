@@ -78,6 +78,13 @@
             inherit inputs outputs;
           };
         };
+        "piotr@thinkpad-x1-g3" = lib.homeManagerConfiguration {
+          modules = [ ./home/piotr/thinkpag-x1-g3.nix ];
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          extraSpecialArgs = {
+            inherit inputs outputs;
+          };
+        };
       };
     };
 }
