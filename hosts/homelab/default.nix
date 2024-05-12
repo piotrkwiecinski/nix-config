@@ -74,12 +74,6 @@
   # Configure console keymap
   console.keyMap = "uk";
 
-  environment = {
-    systemPackages = with pkgs; [
-
-    ];
-  };
-
   services.printing.enable = true;
 
   # Enable sound with pipewire.
