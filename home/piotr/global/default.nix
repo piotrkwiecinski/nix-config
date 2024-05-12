@@ -2,9 +2,13 @@
   lib,
   pkgs,
   config,
+  inputs,
+  outputs,
   ...
 }:
 {
+  imports = [ ./git.nix ];
+
   nix = {
     package = lib.mkDefault pkgs.nix;
     settings = {
@@ -15,10 +19,18 @@
     };
   };
 
+  nixpkgs = {
+    overlays = [
+      outputs.overlays.unstable-packages
+      inputs.emacs-overlay.overlays.default
+    ];
+  };
+
   news.display = "silent";
 
+  xdg.mime.enable = true;
+
   programs.home-manager.enable = true;
-  programs.git.enable = true;
 
   systemd.user.startServices = "sd-switch";
 
