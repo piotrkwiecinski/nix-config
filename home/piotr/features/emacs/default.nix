@@ -154,6 +154,7 @@
         yasnippet-capf
         web-mode
         yaml-mode
+        uuidgen
         vterm
       ])
     );
