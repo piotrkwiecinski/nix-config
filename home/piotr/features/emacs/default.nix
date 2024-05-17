@@ -18,6 +18,7 @@
     rustfmt
     nil
     phpactor
+    unstable.emacs-all-the-icons-fonts
   ];
 
   xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
