@@ -18,7 +18,6 @@
     rustfmt
     nil
     phpactor
-    unstable.emacs-all-the-icons-fonts
   ];
 
   xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
@@ -74,8 +73,6 @@
       epkgs:
       (with epkgs; [
         async
-        all-the-icons
-        all-the-icons-dired
         bats-mode
         cape
         csv-mode
