@@ -87,11 +87,13 @@
         corfu
         dap-mode
         debbugs
+        diminish
         dired-hacks-utils
         dired-preview
         dired-subtree
         direnv
         docker
+        doom-modeline
         editorconfig
         eglot
         eldoc
@@ -110,6 +112,9 @@
         modus-themes
         mpv
         mixed-pitch
+        nerd-icons
+        nerd-icons-dired
+        nerd-icons-corfu
         no-littering
         notmuch
         nix-mode
