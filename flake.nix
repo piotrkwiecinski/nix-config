@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    systems.url = "github:nix-systems/default";
+    systems.url = "github:nix-systems/default-linux";
     hardware.url = "github:nixos/nixos-hardware";
     home-manager = {
       url = "github:nix-community/home-manager/release-23.11";
@@ -21,6 +21,10 @@
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    private-nix-config = {
+      flake = false;
+      url = "git+ssh://git@github.com/piotrkwiecinski/nix-config-private";
     };
   };
 
@@ -79,7 +83,7 @@
           };
         };
         "piotr@thinkpad-x1-g3" = lib.homeManagerConfiguration {
-          modules = [ ./home/piotr/thinkpag-x1-g3.nix ];
+          modules = [ ./home/piotr/thinkpad-x1-g3.nix ];
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
           extraSpecialArgs = {
             inherit inputs outputs;

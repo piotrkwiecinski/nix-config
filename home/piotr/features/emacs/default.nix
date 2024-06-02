@@ -5,18 +5,15 @@
   ...
 }:
 {
-
   home.packages = with pkgs; [
     nodejs_20
     nodePackages.bash-language-server
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.yaml-language-server
-    mermaid-cli
     rust-analyzer
     rustc
     rustfmt
-    nil
     phpactor
   ];
 
@@ -29,8 +26,6 @@
 
   programs.emacs = {
     enable = true;
-
-    package = pkgs.unstable.emacs29-pgtk;
 
     overrides = _self: _super: {
       copilot =
@@ -117,7 +112,6 @@
         nix-mode
         nix-ts-mode
         lsp-mode
-        ob-mermaid
         olivetti
         orderless
         org-modern

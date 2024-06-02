@@ -26,6 +26,8 @@
     openvpn
   ];
 
+  programs.emacs.package = pkgs.unstable.emacs29-pgtk;
+
   programs.bash = {
     enable = true;
     enableCompletion = true;
