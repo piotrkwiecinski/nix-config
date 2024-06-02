@@ -1,22 +1,56 @@
-{ pkgs, ... }:
+{ ... }:
 {
   programs.git = {
     enable = true;
-    package = pkgs.gitAndTools.gitFull;
+
     userName = "Piotr Kwiecinski";
-    userEmail = "piokwiecinski@gmail.com";
+    userEmail = "piotr.kwiecinski@codemanufacture.com";
+
     lfs.enable = true;
+
     extraConfig = {
       init.defaultBranch = "main";
+      pull.rebase = true;
     };
+
+    includes = [
+      {
+        condition = "hasconfig:remote.*.url:git@github.com:*/**";
+        contents = {
+          user = {
+            email = "2151333+piotrkwiecinski@users.noreply.github.com";
+            signingKey = "EC0DE1CB9D5258B4";
+          };
+
+          commit.gpgSign = true;
+          tag.gpgSign = true;
+
+          core.sshCommand = "ssh -i ~/.ssh/gh_rsa";
+        };
+      }
+    ];
+
     ignores = [
-      ".direnv"
-      "result"
       "*~"
       "*.swp"
       ".idea/"
+      "result/"
+
       "node_modules/"
+
+      "auth.json"
+
       "*.elc"
+      ".dir-locals.el"
     ];
+  };
+
+  programs.ssh = {
+    matchBlocks = {
+      "github.com" = {
+        user = "git";
+        identityFile = "~/.ssh/gh_rsa";
+      };
+    };
   };
 }
