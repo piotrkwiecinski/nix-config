@@ -8,8 +8,6 @@
   ];
 
   nix = {
-    package = pkgs.nix;
-
     settings = {
       allowed-users = [ "@sudo" ];
       trusted-users = [

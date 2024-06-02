@@ -10,7 +10,7 @@
   imports = [ ./git.nix ];
 
   nix = {
-    package = lib.mkDefault pkgs.nix;
+    package = lib.mkDefault pkgs.unstable.nix;
     settings = {
       experimental-features = [
         "auto-allocate-uids"
