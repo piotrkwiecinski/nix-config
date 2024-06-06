@@ -35,6 +35,7 @@
       "*.swp"
       ".idea/"
       "result/"
+      "result"
 
       "node_modules/"
 

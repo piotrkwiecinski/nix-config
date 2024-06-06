@@ -52,7 +52,7 @@
     nodePackages.typescript-language-server
   ];
 
-  programs.emacs.package = pkgs.unstable.emacs29;
+  programs.emacs.package = pkgs.emacs-git;
 
   programs.bash = {
     enable = true;
