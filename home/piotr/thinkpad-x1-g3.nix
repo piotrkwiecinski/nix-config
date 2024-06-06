@@ -4,6 +4,7 @@
     ./global
     ./features/emacs
     ./features/direnv.nix
+    ./features/desktop/common/firefox.nix
     (inputs.private-nix-config + "/home/piotr/work.nix")
   ];
 
