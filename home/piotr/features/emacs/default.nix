@@ -15,6 +15,7 @@
     rustc
     rustfmt
     phpactor
+    lua-language-server
   ];
 
   xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
@@ -95,6 +96,7 @@
         embark
         embark-consult
         emms
+        envrc
         exec-path-from-shell
         forge
         graphql-ts-mode
@@ -141,6 +143,7 @@
           ts.tree-sitter-php
           ts.tree-sitter-python
           ts.tree-sitter-rust
+          ts.tree-sitter-lua
           ts.tree-sitter-toml
           ts.tree-sitter-tsx
           ts.tree-sitter-typescript
