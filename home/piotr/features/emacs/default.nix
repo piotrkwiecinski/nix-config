@@ -16,6 +16,7 @@
     rustfmt
     phpactor
     lua-language-server
+    jetbrains-mono
   ];
 
   xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
