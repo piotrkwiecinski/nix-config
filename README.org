@@ -1,0 +1,26 @@
+#+title: My NixOS config
+
+** Overview
+Multi-host NixOS configuration for my personal devices.
+
+** Host specification
+
+| Name           | Description               | Type    | Arch         |
+| homelab        | Workstation               | Desktop | x86_64-linux |
+| thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux |
+
+** Roadmap
+- [ ] Merge Emacs configuration.
+- [ ] Replace Ubuntu with NixOS on `thinkpad-x1-g3`.
+- [ ] Configure Raspberry Pi 4 as a mini server with NixOs.
+- [ ] Add secret management with [[https://github.com/Mic92/sops-nix][SOPS]].
+- [ ] Add declarative disk partitioning with [[https://github.com/nix-community/disko][Disko]].
+- [ ] Convert the configuration to use [[https://flake.parts/][Flake parts]].
+
+** Resources
+- [[https://nix.dev/][Official Nix Documentation]]
+  - [[https://nix.dev/guides/best-practices][Best practices]]
+
+** Acknowledgements
+
+- [[https://github.com/EmergentMind/nix-config][EmergentMind]] - For the inspiration and the initial structure of the configuration.
