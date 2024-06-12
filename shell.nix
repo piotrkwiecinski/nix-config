@@ -8,11 +8,26 @@
       };
     in
     import nixpkgs { overlays = [ ]; },
-  ...
 }:
 {
-  default = pkgs.mkShell {
-    NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake";
-    nativeBuildInputs = builtins.attrValues { inherit (pkgs) nix home-manager git; };
+  default = pkgs.mkShellNoCC {
+    NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake auto-allocate-uids";
+    packages = with pkgs; [
+      git
+      home-manager
+      nil
+      (pkgs.writeShellApplication {
+        name = "home-switch";
+        text = ''
+          home-manager switch --flake ".#$(whoami)@$(hostname)"
+        '';
+      })
+      (pkgs.writeShellApplication {
+        name = "nix-switch";
+        text = ''
+          sudo nixos-rebuild switch --flake ".#$(hostname)"
+        '';
+      })
+    ];
   };
 }
