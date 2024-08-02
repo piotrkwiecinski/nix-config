@@ -11,7 +11,7 @@
 }:
 {
   default = pkgs.mkShellNoCC {
-    NIX_CONFIG = "extra-experimental-features = nix-command flakes repl-flake auto-allocate-uids";
+    NIX_CONFIG = "extra-experimental-features = nix-command flakes auto-allocate-uids";
     packages = with pkgs; [
       git
       home-manager
