@@ -10,7 +10,7 @@
   imports = [ ./git.nix ];
 
   nix = {
-    package = pkgs.unstable.nixVersions.latest;
+    package = lib.mkDefault pkgs.unstable.nixVersions.latest;
     settings = {
       auto-optimise-store = true;
       experimental-features = [
