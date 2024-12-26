@@ -22,8 +22,8 @@
             signingKey = "EC0DE1CB9D5258B4";
           };
 
-          commit.gpgSign = true;
-          tag.gpgSign = true;
+          commit.gpgSign = false;
+          tag.gpgSign = false;
 
           core.sshCommand = "ssh -i ~/.ssh/gh_rsa";
         };
