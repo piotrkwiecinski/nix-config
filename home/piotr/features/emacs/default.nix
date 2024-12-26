@@ -46,6 +46,7 @@
             editorconfig
             s
             jsonrpc
+            f
           ];
 
           src = fetchFromGitHub {
