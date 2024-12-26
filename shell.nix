@@ -19,7 +19,7 @@
       (pkgs.writeShellApplication {
         name = "home-switch";
         text = ''
-          home-manager switch -b backup --flake ".#$(whoami)@$(hostname)"
+          home-manager switch -b backup --impure --flake ".#$(whoami)@$(hostname)"
         '';
       })
       (pkgs.writeShellApplication {
