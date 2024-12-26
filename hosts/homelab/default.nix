@@ -23,9 +23,7 @@
   };
 
   home-manager.useGlobalPkgs = true;
-  home-manager.extraSpecialArgs = {
-    inherit inputs outputs;
-  };
+  home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   nix = {
     settings = {

@@ -68,9 +68,7 @@
       nixosConfigurations = {
         homelab = lib.nixosSystem {
           modules = [ ./hosts/homelab ];
-          specialArgs = {
-            inherit inputs outputs;
-          };
+          specialArgs = { inherit inputs outputs; };
         };
       };
 
@@ -78,16 +76,12 @@
         "piotr@homelab" = lib.homeManagerConfiguration {
           modules = [ ./home/piotr/homelab.nix ];
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-          };
+          extraSpecialArgs = { inherit inputs outputs; };
         };
         "piotr@thinkpad-x1-g3" = lib.homeManagerConfiguration {
           modules = [ ./home/piotr/thinkpad-x1-g3.nix ];
           pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          extraSpecialArgs = {
-            inherit inputs outputs;
-          };
+          extraSpecialArgs = { inherit inputs outputs; };
         };
       };
     };

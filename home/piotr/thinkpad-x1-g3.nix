@@ -1,4 +1,9 @@
-{ pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 {
   imports = [
     ./global
@@ -7,6 +12,10 @@
     ./features/desktop/common/firefox.nix
     (inputs.private-nix-config + "/home/piotr/work.nix")
   ];
+
+  home = {
+    stateVersion = "24.11";
+  };
 
   nix = {
     settings = {
