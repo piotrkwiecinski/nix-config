@@ -150,6 +150,7 @@
           ts.tree-sitter-tsx
           ts.tree-sitter-typescript
           ts.tree-sitter-yaml
+          ts.tree-sitter-html
         ]))
         vertico
         yasnippet
