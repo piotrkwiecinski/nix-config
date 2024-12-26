@@ -32,7 +32,7 @@
   };
 
   home.packages = with pkgs; [
-    audacity
+    unstable.audacity
     fira-code
     fira-code-symbols
     fira-code-nerdfont
@@ -51,6 +51,14 @@
     unstable.devenv
     openvpn
     nodePackages.typescript-language-server
+    unstable.element-desktop
+    unstable.maven
+    unstable.jdk11
+    montserrat
+    unstable.nixVersions.latest
+    unstable.nixpkgs-review
+    unstable.gh
+    unstable.lightningcss
   ];
 
   programs.emacs.package = pkgs.emacs29;
