@@ -1,8 +1,8 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   programs.firefox = {
     enable = true;
-    package = pkgs.unstable.firefox;
+    package = lib.mkDefault pkgs.unstable.firefox;
     policies = {
       AppAutoUpdate = false;
       OfferToSaveLogins = false;
