@@ -1,6 +1,6 @@
 { ... }:
 {
   projectRootFile = "flake.nix";
-  programs.nixfmt-rfc-style.enable = true;
-  settings.formatter.nixfmt-rfc-style.excludes = [ "hardware-configuration.nix" ];
+  programs.nixfmt.enable = true;
+  settings.formatter.nixfmt.excludes = [ "hardware-configuration.nix" ];
 }
