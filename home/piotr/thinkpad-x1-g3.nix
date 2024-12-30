@@ -17,28 +17,7 @@
     stateVersion = "24.11";
   };
 
-  nix = {
-    settings = {
-      allowed-users = [ "@sudo" ];
-      trusted-users = [
-        "root"
-        "@sudo"
-      ];
-    };
-  };
-
   fonts.fontconfig.enable = true;
-
-  services.polybar = {
-    enable = true;
-    script = ''
-      for m in $(polybar --list-monitors | cut -d":" -f1); do
-      MONITOR=$m polybar --reload main &
-      done
-    '';
-
-    package = pkgs.unstable.polybar.override { pulseSupport = true; };
-  };
 
   home.packages = with pkgs; [
     unstable.audacity
@@ -52,7 +31,6 @@
     jq
     unstable.nil
     unstable.nixfmt-classic
-    pavucontrol
     unstable.signal-desktop
     unstable.slack
     unstable.spotify
@@ -68,6 +46,8 @@
     unstable.nixpkgs-review
     unstable.gh
     unstable.lightningcss
+    bc
+    dig
   ];
 
   programs.emacs.package = pkgs.emacs29;
@@ -101,53 +81,6 @@
       if [ -f "$HOME/"'.magento-cloud/shell-config.rc' ]; then . "$HOME/"'.magento-cloud/shell-config.rc'; fi
       # END SNIPPET
     '';
-  };
-
-  programs.feh.enable = true;
-
-  services.picom = {
-    enable = true;
-    package = pkgs.unstable.picom;
-    backend = "xrender";
-
-    shadow = true;
-    shadowExclude = [
-      "name = 'Notification'"
-      "class_g ?= 'Notify-osd'"
-      "_GTK_FRAME_EXTENTS@:c"
-    ];
-    shadowOpacity = 0.5;
-
-    settings = {
-      shadow-color = "#0A0A0A";
-      shadow-offset-x = -8;
-      shadow-offset-y = -8;
-      mark-wmwin-focused = true;
-      detect-transient = true;
-    };
-
-    wintypes = {
-      tooltip = {
-        fade = true;
-        shadow = true;
-        opacity = 0.95;
-        focus = true;
-        full-shadow = false;
-      };
-      dock = {
-        shadow = false;
-        clip-shadow-above = true;
-      };
-      dnd = {
-        shadow = false;
-      };
-      popup_menu = {
-        opacity = 0.95;
-      };
-      dropdown_menu = {
-        opacity = 0.95;
-      };
-    };
   };
 
   programs.ssh = {

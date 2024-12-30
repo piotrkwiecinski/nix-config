@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     systems.url = "github:nix-systems/default-linux";
     hardware.url = "github:nixos/nixos-hardware";
@@ -68,6 +68,10 @@
       nixosConfigurations = {
         homelab = lib.nixosSystem {
           modules = [ ./hosts/homelab ];
+          specialArgs = { inherit inputs outputs; };
+        };
+        thinkpad-x1-g3 = lib.nixosSystem {
+          modules = [ ./hosts/thinkpad-x1-g3 ];
           specialArgs = { inherit inputs outputs; };
         };
       };
