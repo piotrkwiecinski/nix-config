@@ -3,11 +3,11 @@
     "copilot-el": {
       "flake": false,
       "locked": {
-        "lastModified": 1735010233,
-        "narHash": "sha256-XH4wtac1sHcjREENjs4BkWhI1VgH8SaiYelt/No7VDU=",
+        "lastModified": 1735360573,
+        "narHash": "sha256-FzI08AW7a7AleEM7kSQ8LsWsDYID8SW1SmSN6/mIB/A=",
         "owner": "copilot-emacs",
         "repo": "copilot.el",
-        "rev": "fd68d2e79e11939f5c2024671f67602bb2b34b4a",
+        "rev": "c5dfa99f05878db5e6a6a378dc7ed09f11e803d4",
         "type": "github"
       },
       "original": {
@@ -24,11 +24,11 @@
         "nixpkgs-stable": "nixpkgs-stable"
       },
       "locked": {
-        "lastModified": 1735233083,
-        "narHash": "sha256-3AqQQcBXc2iAvpGqZ4UinsJ7RF8lQ41ml3H4plBqqNI=",
+        "lastModified": 1735405920,
+        "narHash": "sha256-tYFl5t7luBdiNbHc9M6yUEah3hvR7VPqlvEPFHq2tXs=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "644713bfd86acb4198fc416f9452eb6d25775a03",
+        "rev": "74388037057110eb4b64dc94c75395ddf4d0f940",
         "type": "github"
       },
       "original": {
@@ -39,11 +39,11 @@
     },
     "hardware": {
       "locked": {
-        "lastModified": 1734954597,
-        "narHash": "sha256-QIhd8/0x30gEv8XEE1iAnrdMlKuQ0EzthfDR7Hwl+fk=",
+        "lastModified": 1735388221,
+        "narHash": "sha256-e5IOgjQf0SZcFCEV/gMGrsI0gCJyqOKShBQU0iiM3Kg=",
         "owner": "nixos",
         "repo": "nixos-hardware",
-        "rev": "def1d472c832d77885f174089b0d34854b007198",
+        "rev": "7c674c6734f61157e321db595dbfcd8523e04e19",
         "type": "github"
       },
       "original": {
@@ -59,11 +59,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1734366194,
-        "narHash": "sha256-vykpJ1xsdkv0j8WOVXrRFHUAdp9NXHpxdnn1F4pYgSw=",
+        "lastModified": 1735344290,
+        "narHash": "sha256-oJDtWPH1oJT34RJK1FSWjwX4qcGOBRkcNQPD0EbSfNM=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "80b0fdf483c5d1cb75aaad909bd390d48673857f",
+        "rev": "613691f285dad87694c2ba1c9e6298d04736292d",
         "type": "github"
       },
       "original": {
@@ -75,27 +75,27 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1735226783,
-        "narHash": "sha256-GpwiPdC+aeve3ZfRHJYpjj3X1DRjs9uc9AjmRdPM5lM=",
+        "lastModified": 1735264675,
+        "narHash": "sha256-MgdXpeX2GuJbtlBrH9EdsUeWl/yXEubyvxM1G+yO4Ak=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e84eed731d30c94448b2629c57e3734b701c1508",
+        "rev": "d49da4c08359e3c39c4e27c74ac7ac9b70085966",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-24.11",
+        "ref": "nixos-24.11",
         "repo": "nixpkgs",
         "type": "github"
       }
     },
     "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1734991663,
-        "narHash": "sha256-8T660guvdaOD+2/Cj970bWlQwAyZLKrrbkhYOFcY1YE=",
+        "lastModified": 1735264675,
+        "narHash": "sha256-MgdXpeX2GuJbtlBrH9EdsUeWl/yXEubyvxM1G+yO4Ak=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6c90912761c43e22b6fb000025ab96dd31c971ff",
+        "rev": "d49da4c08359e3c39c4e27c74ac7ac9b70085966",
         "type": "github"
       },
       "original": {
@@ -107,11 +107,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1734649271,
-        "narHash": "sha256-4EVBRhOjMDuGtMaofAIqzJbg4Ql7Ai0PSeuVZTHjyKQ=",
+        "lastModified": 1735291276,
+        "narHash": "sha256-NYVcA06+blsLG6wpAbSPTCyLvxD/92Hy4vlY9WxFI1M=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "d70bd19e0a38ad4790d3913bf08fcbfc9eeca507",
+        "rev": "634fd46801442d760e09493a794c4f15db2d0cbb",
         "type": "github"
       },
       "original": {
@@ -124,11 +124,11 @@
     "private-nix-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1723016827,
-        "narHash": "sha256-RWvIlnBYuExDn8FIEzrPtE3+SRX7MC0rwekyhiGbpMs=",
+        "lastModified": 1735549353,
+        "narHash": "sha256-hY0YogaTNhFbrH7DCUMsXpeQzLITew8IqRGfDi5Oxbk=",
         "ref": "refs/heads/main",
-        "rev": "7ff58885d75517bbbafac22a99639a3e82f36c4c",
-        "revCount": 4,
+        "rev": "c795b485d636fc1892da7fe0e99d1ec37fdc43c4",
+        "revCount": 5,
         "type": "git",
         "url": "ssh://git@github.com/piotrkwiecinski/nix-config-private"
       },
