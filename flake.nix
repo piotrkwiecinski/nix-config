@@ -49,6 +49,8 @@
     {
       inherit lib;
 
+      packages = forEachSystem (system: import ./pkgs nixpkgs.legacyPackages.${system});
+
       overlays = import ./overlays { inherit inputs; };
 
       devShells = forEachSystem (

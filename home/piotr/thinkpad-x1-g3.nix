@@ -48,6 +48,7 @@
     unstable.lightningcss
     bc
     dig
+    magento-cloud
   ];
 
   programs.emacs.package = pkgs.emacs29;
