@@ -1,3 +1,3 @@
 pkgs: {
-  magento-cloud = pkgs.callPackage ./magento-cloud {};
+  magento-cloud = pkgs.callPackage ./magento-cloud { };
 }
