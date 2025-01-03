@@ -117,6 +117,10 @@
     pulse.enable = true;
   };
 
+  environment.systemPackages = builtins.attrValues {
+    inherit (pkgs) gnome-tweaks;
+  };
+
   # Enable touchpad support (enabled default in most desktopManager).
   services.libinput.enable = true;
 
