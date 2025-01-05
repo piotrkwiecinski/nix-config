@@ -33,5 +33,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     homepage = "https://experienceleague.adobe.com/en/docs/commerce-cloud-service/user-guide/dev-tools/cloud-cli/cloud-cli-overview";
     description = "Adobe Commerce Cloud cli";
     mainProgram = "magento-cloud";
+    maintainers = [ lib.maintainers.piotrkwiecinski ];
+    license = lib.licenses.unfree;
   };
 })
