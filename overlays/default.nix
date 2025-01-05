@@ -1,5 +1,5 @@
 { inputs, ... }:
-{
+let
   additions = final: _prev: import ../pkgs final.pkgs;
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will
   # be accessible through 'pkgs.unstable'
@@ -9,4 +9,7 @@
       config.allowUnfree = true;
     };
   };
+in
+{
+  default = final: prev: (additions final prev) // (unstable-packages final prev);
 }

@@ -18,9 +18,8 @@
       allowUnfree = true;
     };
     overlays = [
-      outputs.overlays.additions
-      outputs.overlays.unstable-packages
       inputs.emacs-overlay.overlays.default
+      outputs.overlays.default
     ];
   };
 
