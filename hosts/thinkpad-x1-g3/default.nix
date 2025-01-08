@@ -37,9 +37,19 @@
   nix = {
     settings = {
       auto-optimise-store = true;
-      extra-substituters = [ "https://nix-community.cachix.org" ];
+      extra-substituters = [
+        "https://emacs-ci.cachix.org"
+        "https://devenv.cachix.org"
+        "https://nix-community.cachix.org"
+      ];
       extra-trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+        "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
+        "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
+      ];
+      trusted-users = [
+        "root"
+        "piotr"
       ];
     };
     gc = {
