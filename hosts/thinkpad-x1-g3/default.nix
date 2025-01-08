@@ -111,6 +111,17 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
+  services.dnsmasq = {
+    enable = true;
+    alwaysKeepRunning = true;
+    settings = {
+      address = [
+        "/test/127.0.0.1"
+        "/loc/127.0.0.1"
+      ];
+    };
+  };
+
   # Enable sound with pipewire.
   hardware.pulseaudio.enable = false;
   hardware.nvidia.open = true;
