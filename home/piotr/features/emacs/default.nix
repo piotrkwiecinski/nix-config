@@ -26,50 +26,10 @@
     (normal-top-level-add-subdirs-to-load-path))
   '';
 
-  programs.emacs = {
-    enable = true;
-
-    overrides = _self: _super: {
-      copilot =
-        let
-          rev = inputs.copilot-el.shortRev;
-        in
-        with pkgs;
-        with pkgs.emacsPackages;
-        melpaBuild {
-          pname = "copilot";
-          ename = "copilot";
-          version = inputs.copilot-el.lastModifiedDate;
-          commit = rev;
-          packageRequires = [
-            dash
-            editorconfig
-            s
-            jsonrpc
-            f
-          ];
-
-          src = fetchFromGitHub {
-            inherit rev;
-            owner = "copilot-emacs";
-            repo = "copilot.el";
-            sha256 = inputs.copilot-el.narHash;
-          };
-
-          recipe = writeText "recipe" ''
-            (copilot
-            :repo "copilot-emacs/copilot.el"
-            :fetcher github
-            :files ("*.el" "dist"))
-          '';
-
-          meta.description = "Emacs plugin for GitHub Copilot";
-        };
-    };
-
-    extraPackages = (
-      epkgs:
-      (with epkgs; [
+  programs.emacs.enable = true;
+  programs.emacs.package = (
+    (pkgs.unstable.emacsPackagesFor pkgs.unstable.emacs30).emacsWithPackages (
+      epkgs: with epkgs; [
         async
         bats-mode
         cape
@@ -159,9 +119,9 @@
         yaml-mode
         uuidgen
         vterm
-      ])
-    );
-  };
+      ]
+    )
+  );
 
   services.emacs = {
     enable = true;

@@ -51,8 +51,6 @@
     magento-cloud
   ];
 
-  programs.emacs.package = pkgs.emacs29;
-
   programs.bash = {
     enable = true;
     enableCompletion = true;
