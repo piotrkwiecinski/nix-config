@@ -47,7 +47,7 @@
     unstable.lightningcss
     bc
     dig
-    magento-cloud
+    unstable.magento-cloud
   ];
 
   programs.bash = {
