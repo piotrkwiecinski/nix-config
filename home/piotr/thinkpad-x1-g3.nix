@@ -30,7 +30,6 @@
     unstable.jetbrains.idea-ultimate
     jq
     unstable.nil
-    unstable.nixfmt-classic
     unstable.signal-desktop
     unstable.slack
     unstable.spotify
