@@ -32,7 +32,7 @@
     unstable.nil
     unstable.slack
     unstable.spotify
-    yt-dlp
+    unstable.yt-dlp
     unstable.devenv
     openvpn
     nodePackages.typescript-language-server
