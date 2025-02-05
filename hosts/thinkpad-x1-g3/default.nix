@@ -27,7 +27,7 @@
   home-manager.useGlobalPkgs = true;
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.unstable.linuxPackages_latest;
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
