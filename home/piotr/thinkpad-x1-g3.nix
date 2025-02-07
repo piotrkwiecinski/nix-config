@@ -24,6 +24,7 @@
     fira-code
     fira-code-symbols
     fira-code-nerdfont
+    unstable.nerd-fonts.symbols-only
     unstable.gimp
     git
     htop
