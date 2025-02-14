@@ -48,6 +48,7 @@
     dig
     unstable.magento-cloud
     unstable.mpv
+    unstable.ispell
   ];
 
   programs.bash = {
