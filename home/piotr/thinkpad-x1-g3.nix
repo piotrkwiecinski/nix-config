@@ -18,38 +18,44 @@
 
   fonts.fontconfig.enable = true;
 
-  home.packages = with pkgs; [
-    unstable.audacity
-    fira-code
-    fira-code-symbols
-    fira-code-nerdfont
-    unstable.nerd-fonts.symbols-only
-    unstable.gimp
-    git
-    htop
-    unstable.jetbrains.idea-ultimate
-    jq
-    unstable.nil
-    unstable.slack
-    unstable.spotify
-    unstable.yt-dlp
-    unstable.devenv
-    openvpn
-    nodePackages.typescript-language-server
-    unstable.element-desktop
-    unstable.maven
-    unstable.jdk11
-    montserrat
-    unstable.nixVersions.latest
-    unstable.nixpkgs-review
-    unstable.gh
-    unstable.lightningcss
-    bc
-    dig
-    unstable.magento-cloud
-    unstable.mpv
-    unstable.ispell
-  ];
+  home.packages = builtins.attrValues {
+    inherit (pkgs)
+      fira-code
+      fira-code-symbols
+      fira-code-nerdfont
+      git
+      htop
+      jq
+      openvpn
+      monserrat
+      bc
+      dig
+      ;
+    inherit (pkgs.unstable)
+      audacity
+      gimp
+      nil
+      slack
+      spotify
+      yt-dlp
+      devenv
+      element-desktop
+      maven
+      jdk11
+      gh
+      nixpkgs-review
+      lightningcss
+      magento-cloud
+      mpv
+      ispell
+      google-chrome
+      open-in-mpv
+      ;
+    inherit (pkgs.unstable.nerd-fonts) symbols-only;
+    inherit (pkgs.unstable.jetbrains) idea-ultimate;
+    inherit (pkgs.nodePackages) typescript-language-server;
+    inherit (pkgs.unstable.nixVersions) latest;
+  };
 
   programs.bash = {
     enable = true;
