@@ -27,7 +27,7 @@
       htop
       jq
       openvpn
-      monserrat
+      montserrat
       bc
       dig
       ;
