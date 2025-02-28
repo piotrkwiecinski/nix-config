@@ -80,9 +80,7 @@
 
     bashrcExtra = ''
       export NIX_PATH="$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels''${NIX_PATH:+:$NIX_PATH}";
-      PATH="$HOME/.cargo/bin:$HOME/bin:$PATH"
       # BEGIN SNIPPET: Magento Cloud CLI configuration
-      export PATH="$HOME/"'.magento-cloud/bin':"$PATH"
       if [ -f "$HOME/"'.magento-cloud/shell-config.rc' ]; then . "$HOME/"'.magento-cloud/shell-config.rc'; fi
       # END SNIPPET
     '';
