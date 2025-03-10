@@ -23,7 +23,6 @@
       fira-code
       fira-code-symbols
       fira-code-nerdfont
-      git
       htop
       jq
       openvpn

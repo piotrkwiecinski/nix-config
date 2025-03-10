@@ -1,7 +1,11 @@
-{ ... }:
+{
+  pkgs,
+  ...
+}:
 {
   programs.git = {
     enable = true;
+    package = pkgs.unstable.git;
 
     userName = "Piotr Kwiecinski";
     userEmail = "piotr.kwiecinski@codemanufacture.com";
