@@ -125,6 +125,7 @@
 
   services.emacs = {
     enable = true;
+    socketActivation.enable = true;
 
     client = {
       enable = true;
