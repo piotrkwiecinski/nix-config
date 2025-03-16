@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   config,
   ...
@@ -14,7 +13,7 @@
     rust-analyzer
     rustc
     rustfmt
-    phpactor
+    unstable.phpactor
     lua-language-server
     jetbrains-mono
   ];
