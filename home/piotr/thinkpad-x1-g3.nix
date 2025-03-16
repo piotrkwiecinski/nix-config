@@ -39,6 +39,7 @@
       yt-dlp
       devenv
       element-desktop
+      postman
       maven
       jdk11
       gh
