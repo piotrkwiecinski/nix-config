@@ -102,6 +102,7 @@
           ts.tree-sitter-json
           ts.tree-sitter-nix
           ts.tree-sitter-php
+          ts.tree-sitter-jsdoc
           ts.tree-sitter-python
           ts.tree-sitter-rust
           ts.tree-sitter-lua
@@ -110,6 +111,7 @@
           ts.tree-sitter-typescript
           ts.tree-sitter-yaml
           ts.tree-sitter-html
+          pkgs.tree-sitter-phpdoc
         ]))
         vertico
         yasnippet
