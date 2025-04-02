@@ -48,6 +48,7 @@
       magento-cloud
       mpv
       ispell
+      libreoffice
       google-chrome
       open-in-mpv
       ;
