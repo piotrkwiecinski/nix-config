@@ -73,6 +73,7 @@
     allowedTCPPorts = [
       9001
       9003
+      9090
     ];
   };
 
@@ -101,6 +102,13 @@
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
+  services.displayManager.autoLogin = {
+    enable = true;
+    user = "piotr";
+  };
+
+  systemd.services."getty@tty1".enable = false;
+  systemd.services."autovt@tty1".enable = false;
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -147,6 +155,7 @@
 
   environment.systemPackages = builtins.attrValues {
     inherit (pkgs) gnome-tweaks;
+    inherit (pkgs.unstable) libnotify;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
