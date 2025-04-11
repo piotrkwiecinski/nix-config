@@ -13,6 +13,14 @@
     (inputs.private-nix-config + "/nixos/thinkpad-x1-g3/piotr/work.nix")
   ];
 
+  services.udev.packages = [ pkgs.yubikey-personalization ];
+
+  security.pam.yubico = {
+   enable = true;
+   mode = "challenge-response";
+   id = [ "32878882" ];
+  };
+
   nixpkgs = {
     config = {
       allowUnfree = true;
