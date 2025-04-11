@@ -13,6 +13,16 @@
     (inputs.private-nix-config + "/nixos/thinkpad-x1-g3/piotr/work.nix")
   ];
 
+  services.udev.packages = [ pkgs.yubikey-personalization ];
+
+  services.pcscd.enable = true;
+
+  security.pam.yubico = {
+   enable = true;
+   mode = "challenge-response";
+   id = [ "32878882" ];
+  };
+
   nixpkgs = {
     config = {
       allowUnfree = true;
@@ -156,6 +166,7 @@
   environment.systemPackages = builtins.attrValues {
     inherit (pkgs) gnome-tweaks;
     inherit (pkgs.unstable) libnotify;
+    inherit (pkgs.unstable) yubioath-flutter;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
