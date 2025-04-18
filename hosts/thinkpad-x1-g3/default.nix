@@ -38,6 +38,8 @@
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   boot.kernelPackages = pkgs.unstable.linuxPackages_latest;
+  boot.binfmt.emulatedSystems = [ "aarch64-linux"];
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
