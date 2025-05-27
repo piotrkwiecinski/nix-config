@@ -75,6 +75,7 @@
         nix-mode
         nix-ts-mode
         lsp-mode
+        ob-php
         olivetti
         orderless
         org-modern
