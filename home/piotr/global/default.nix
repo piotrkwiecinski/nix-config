@@ -51,6 +51,17 @@
 
   systemd.user.startServices = "sd-switch";
 
+  programs.obs-studio = {
+    enable = true;
+    package = (pkgs.obs-studio.override {
+      cudaSupport = true;
+    });
+    plugins = with pkgs.unstable.obs-studio-plugins; [
+      wlrobs
+      obs-pipewire-audio-capture
+    ];
+  };
+
   home = {
     username = lib.mkDefault "piotr";
     homeDirectory = lib.mkDefault "/home/${config.home.username}";
