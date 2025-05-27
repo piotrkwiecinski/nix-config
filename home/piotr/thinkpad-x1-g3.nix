@@ -22,7 +22,6 @@
     inherit (pkgs)
       fira-code
       fira-code-symbols
-      fira-code-nerdfont
       htop
       jq
       openvpn
