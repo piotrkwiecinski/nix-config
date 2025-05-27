@@ -169,8 +169,10 @@
 
   environment.systemPackages = builtins.attrValues {
     inherit (pkgs) gnome-tweaks;
-    inherit (pkgs.unstable) libnotify;
-    inherit (pkgs.unstable) yubioath-flutter;
+    inherit (pkgs.unstable)
+      qemu
+      libnotify
+      yubioath-flutter;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).
