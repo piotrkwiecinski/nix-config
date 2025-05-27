@@ -148,7 +148,7 @@
   };
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   hardware.nvidia.open = true;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
