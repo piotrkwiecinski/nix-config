@@ -52,6 +52,7 @@
       google-chrome
       open-in-mpv
       qpwgraph
+      inkscape
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea-ultimate;
