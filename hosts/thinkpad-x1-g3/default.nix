@@ -65,6 +65,9 @@
         "root"
         "piotr"
       ];
+      keep-outputs = true;
+      keep-derivations = true;
+      experimental-features = "nix-command flakes";
     };
     gc = {
       automatic = true;
@@ -72,11 +75,6 @@
       options = "--delete-older-than 7d";
     };
     registry.nixpkgs.flake = inputs.nixpkgs;
-    extraOptions = ''
-      experimental-features = nix-command flakes
-      keep-outputs          = true
-      keep-derivations      = true
-    '';
   };
 
   # Enable networking
