@@ -83,7 +83,6 @@
     historyIgnore = [ "exit" ];
 
     bashrcExtra = ''
-      export NIX_PATH="$HOME/.nix-defexpr/channels:/nix/var/nix/profiles/per-user/root/channels''${NIX_PATH:+:$NIX_PATH}";
       # BEGIN SNIPPET: Magento Cloud CLI configuration
       if [ -f "$HOME/"'.magento-cloud/shell-config.rc' ]; then . "$HOME/"'.magento-cloud/shell-config.rc'; fi
       # END SNIPPET
