@@ -79,6 +79,7 @@
         olivetti
         orderless
         org-modern
+        org-present
         org-roam
         org-roam-ui
         org-transclusion
