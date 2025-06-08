@@ -114,6 +114,13 @@
   # Enable the GNOME Desktop Environment.
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
+  environment.gnome.excludePackages = builtins.attrValues {
+    inherit (pkgs) epiphany
+      gnome-logs
+      gnome-weather
+      totem;
+  };
+
   services.displayManager.autoLogin = {
     enable = true;
     user = "piotr";
