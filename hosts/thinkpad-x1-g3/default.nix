@@ -13,6 +13,8 @@
     (inputs.private-nix-config + "/nixos/thinkpad-x1-g3/piotr/work.nix")
   ];
 
+  system.rebuild.enableNg = true;
+
   services.udev.packages = [ pkgs.yubikey-personalization ];
 
   services.pcscd.enable = true;
