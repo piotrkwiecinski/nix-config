@@ -14,6 +14,7 @@
   ];
 
   system.rebuild.enableNg = true;
+  system.switch.enableNg = true;
 
   services.udev.packages = [ pkgs.yubikey-personalization ];
 
