@@ -195,6 +195,7 @@
     enable = true;
     enableSSHSupport = true;
     pinentryPackage = pkgs.pinentry-curses;
+    enableExtraSocket = true;
   };
 
   users.users."piotr".openssh.authorizedKeys.keys = [
