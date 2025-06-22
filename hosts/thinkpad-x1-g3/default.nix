@@ -148,6 +148,8 @@
     enable = true;
     alwaysKeepRunning = true;
     settings = {
+      interface = [ "lo" "wlp0s20f3" "docker0" ];
+      bind-interfaces = true;
       address = [
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
