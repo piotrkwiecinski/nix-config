@@ -20,7 +20,7 @@
     };
     private-nix-config = {
       flake = false;
-      url = "git+ssh://git@github.com/piotrkwiecinski/nix-config-private";
+      url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
     };
   };
 

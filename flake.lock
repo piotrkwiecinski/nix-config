@@ -114,11 +114,11 @@
         "rev": "32e58a831a5560e5b3b3179413aa082e7f9d9f7d",
         "revCount": 16,
         "type": "git",
-        "url": "ssh://git@github.com/piotrkwiecinski/nix-config-private"
+        "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
       "original": {
         "type": "git",
-        "url": "ssh://git@github.com/piotrkwiecinski/nix-config-private"
+        "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       }
     },
     "root": {
