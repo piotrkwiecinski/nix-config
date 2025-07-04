@@ -53,9 +53,11 @@
 
   programs.ssh = {
     matchBlocks = {
-      "github.com" = {
+      "pkgithub" = {
         user = "git";
+        hostname = "github.com";
         identityFile = "~/.ssh/gh_rsa";
+        identitiesOnly = true;
       };
     };
   };
