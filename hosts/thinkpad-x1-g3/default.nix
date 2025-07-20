@@ -21,9 +21,9 @@
   services.pcscd.enable = true;
 
   security.pam.yubico = {
-   enable = true;
-   mode = "challenge-response";
-   id = [ "32878882" ];
+    enable = true;
+    mode = "challenge-response";
+    id = [ "32878882" ];
   };
 
   nixpkgs = {
@@ -41,7 +41,7 @@
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   boot.kernelPackages = pkgs.unstable.linuxPackages_latest;
-  boot.binfmt.emulatedSystems = [ "aarch64-linux"];
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -118,10 +118,12 @@
   services.xserver.displayManager.gdm.enable = true;
   services.xserver.desktopManager.gnome.enable = true;
   environment.gnome.excludePackages = builtins.attrValues {
-    inherit (pkgs) epiphany
+    inherit (pkgs)
+      epiphany
       gnome-logs
       gnome-weather
-      totem;
+      totem
+      ;
   };
 
   services.displayManager.autoLogin = {
@@ -148,7 +150,10 @@
     enable = true;
     alwaysKeepRunning = true;
     settings = {
-      interface = [ "lo" "wlp0s20f3" "docker0" ];
+      interface = [
+        "wlp0s20f3"
+        "docker0"
+      ];
       bind-interfaces = true;
       address = [
         "/test/127.0.0.1"
@@ -182,7 +187,8 @@
     inherit (pkgs.unstable)
       qemu
       libnotify
-      yubioath-flutter;
+      yubioath-flutter
+      ;
   };
 
   # Enable touchpad support (enabled default in most desktopManager).

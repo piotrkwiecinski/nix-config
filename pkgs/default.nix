@@ -1,5 +1,5 @@
 pkgs: {
-   tree-sitter-phpdoc = pkgs.tree-sitter.buildGrammar {
+  tree-sitter-phpdoc = pkgs.tree-sitter.buildGrammar {
     language = "tree-sitter-phpdoc";
     version = "0.1.5";
     src = pkgs.fetchFromGitHub {
