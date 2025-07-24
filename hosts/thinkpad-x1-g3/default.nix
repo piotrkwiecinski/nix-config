@@ -164,8 +164,12 @@
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
-  hardware.nvidia.open = true;
+  hardware.nvidia.open = false;
   hardware.nvidia.modesetting.enable = true;
+  hardware.nvidia.powerManagement = {
+    enable = true;
+    finegrained = true;
+  };
   hardware.nvidia.prime = {
     intelBusId = "PCI:0:2:0";
     nvidiaBusId = "PCI:1:0:0";
@@ -180,6 +184,23 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+  };
+
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      nvidia-vaapi-driver
+      libva
+      vaapiVdpau
+    ];
+  };
+
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-gnome
+    ];
   };
 
   environment.systemPackages = builtins.attrValues {
