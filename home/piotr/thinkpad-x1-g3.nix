@@ -54,6 +54,7 @@
       qpwgraph
       inkscape
       davinci-resolve
+      pipeline
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea-ultimate;
