@@ -220,6 +220,12 @@
 
   programs.firefox.enable = true;
 
+  programs.gnupg = {
+    package = pkgs.unstable.gnupg.override {
+      pcsclite = pkgs.unstable.pcsclite;
+    };
+  };
+
   programs.gnupg.agent = {
     enable = true;
     enableSSHSupport = true;
