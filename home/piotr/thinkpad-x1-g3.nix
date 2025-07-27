@@ -56,9 +56,7 @@
       davinci-resolve
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
-    idea-ultimate = pkgs.unstable.jetbrains.idea-ultimate.override {
-      jdk = pkgs.unstable.jdk;
-    };
+    inherit (pkgs.unstable.jetbrains) idea-ultimate;
     inherit (pkgs.nodePackages) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
   };
