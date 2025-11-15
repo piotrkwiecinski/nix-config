@@ -32,6 +32,7 @@
     inherit (pkgs.unstable)
       audacity
       calibre
+      claude-code
       gimp3
       nil
       slack
