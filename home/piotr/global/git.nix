@@ -7,12 +7,11 @@
     enable = true;
     package = pkgs.unstable.git;
 
-    userName = "Piotr Kwiecinski";
-    userEmail = "piotr.kwiecinski@codemanufacture.com";
-
-    lfs.enable = true;
-
-    extraConfig = {
+    settings = {
+      user = {
+        name = "Piotr Kwiecinski";
+        email = "piotr.kwiecinski@codemanufacture.com";
+      };
       init.defaultBranch = "main";
       pull.rebase = true;
       rebase.autoStash = true;
