@@ -19,7 +19,7 @@
     unstable.signal-desktop
     unstable.slack
     unstable.spotify
-    unstable.jetbrains.idea-ultimate
+    unstable.jetbrains.idea
     inkscape
     gimp
     yt-dlp
