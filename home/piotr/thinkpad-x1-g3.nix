@@ -59,7 +59,7 @@
       ripgrep
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
-    inherit (pkgs.unstable.jetbrains) idea-ultimate;
+    inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs.nodePackages) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
   };
@@ -94,20 +94,28 @@
 
   programs.ssh = {
     enable = true;
-
-    serverAliveInterval = 300;
-    serverAliveCountMax = 2;
-    forwardAgent = true;
-
-    extraConfig = ''
-      # BEGIN: Magento Cloud certificate configuration
-      Host *.magento.cloud *.magentosite.cloud
-        Include ~/.magento-cloud/ssh/*.config
-      Host *
-      # END: Magento Cloud certificate configuration
-    '';
+    enableDefaultConfig = false;
 
     matchBlocks = {
+      "*" = {
+        serverAliveInterval = 300;
+        forwardAgent = true;
+        addKeysToAgent = "no";
+        compression = false;
+        serverAliveCountMax = 3;
+        hashKnownHosts =  false;
+        userKnownHostsFile = "~/.ssh/known_hosts";
+        controlMaster = "no";
+        controlPath = "~/.ssh/master-%r@%n:%p";
+        controlPersist = "no";
+      };
+
+      "*.magento.cloud *.magentosite.cloud" = {
+        extraOptions = {
+          Include = "~/.magento-cloud/ssh/*.config";
+        };
+      };
+
       "homelab" = {
         hostname = "192.168.68.100";
         user = "piotr";
