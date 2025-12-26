@@ -1,11 +1,12 @@
 {
   pkgs,
+  config,
   ...
 }:
 {
   programs.git = {
     enable = true;
-    package = pkgs.unstable.git;
+    package = pkgs.unstable.gitFull;
 
     settings = {
       user = {
@@ -15,6 +16,15 @@
       init.defaultBranch = "main";
       pull.rebase = true;
       rebase.autoStash = true;
+    };
+
+    lfs.enable = true;
+
+    maintenance = {
+      enable = true;
+      repositories = [
+        "${config.home.homeDirectory}/projects/opensource/nixos-nixpkgs"
+      ];
     };
 
     includes = [
