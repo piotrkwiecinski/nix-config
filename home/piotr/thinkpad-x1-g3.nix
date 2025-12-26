@@ -56,6 +56,7 @@
       inkscape
       davinci-resolve
       pipeline
+      ripgrep
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea-ultimate;
