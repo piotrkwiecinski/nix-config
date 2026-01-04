@@ -36,7 +36,6 @@
       gimp3
       nil
       slack
-      spotify
       yt-dlp
       devenv
       element-desktop
