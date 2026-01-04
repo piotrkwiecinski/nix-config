@@ -48,6 +48,7 @@
       "*~"
       "*.swp"
       ".idea/"
+      "*.iml"
       "result/"
       "result"
 
@@ -57,6 +58,8 @@
 
       "*.elc"
       ".dir-locals.el"
+
+      ".claude/settings.local.json"
     ];
   };
 
