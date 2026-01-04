@@ -19,6 +19,7 @@
   fonts.fontconfig.enable = true;
 
   home.packages = builtins.attrValues {
+    calstart = inputs.calstart.packages.${pkgs.stdenv.hostPlatform.system}.default;
     inherit (pkgs)
       fira-code
       fira-code-symbols
