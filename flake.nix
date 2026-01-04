@@ -22,6 +22,9 @@
       flake = false;
       url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
     };
+    calstart = {
+      url = "git+ssh://pkgithub/piotrkwiecinski/calstart?ref=main";
+    };
   };
 
   outputs =
