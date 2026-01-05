@@ -12,7 +12,7 @@
     htop
     fira-code
     fira-code-symbols
-    fira-code-nerdfont
+    nerd-fonts.fira-code
     jq
     unstable.devenv
     unstable.element-desktop
@@ -25,8 +25,6 @@
     yt-dlp
     openvpn
   ];
-
-  programs.emacs.package = pkgs.unstable.emacs29-pgtk;
 
   programs.bash = {
     enable = true;
