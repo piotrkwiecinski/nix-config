@@ -17,12 +17,11 @@
       allowUnfree = true;
     };
     overlays = [
-      outputs.overlays.unstable-packages
+      outputs.overlays.default
       inputs.emacs-overlay.overlays.default
     ];
   };
 
-  home-manager.useGlobalPkgs = true;
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   nix = {
@@ -87,7 +86,7 @@
   services.printing.enable = true;
 
   # Enable sound with pipewire.
-  hardware.pulseaudio.enable = false;
+  services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
