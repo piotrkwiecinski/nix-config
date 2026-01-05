@@ -15,7 +15,10 @@
 
   system.rebuild.enableNg = true;
 
-  services.udev.packages = [ pkgs.yubikey-personalization ];
+  services.udev.packages = [
+    pkgs.yubikey-personalization
+    pkgs.libfido2
+  ];
 
   services.pcscd.enable = true;
 
@@ -225,8 +228,8 @@
   programs.firefox.enable = true;
 
   programs.gnupg = {
-    package = pkgs.unstable.gnupg.override {
-      pcsclite = pkgs.unstable.pcsclite;
+    package = pkgs.gnupg.override {
+      pcsclite = pkgs.pcsclite;
     };
   };
 

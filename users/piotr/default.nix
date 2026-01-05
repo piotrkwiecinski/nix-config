@@ -8,6 +8,7 @@
       "wheel"
       "audio"
       "video"
+      "plugdev"
     ];
     packages = [ pkgs.home-manager ];
   };

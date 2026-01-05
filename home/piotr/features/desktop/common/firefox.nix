@@ -35,6 +35,10 @@
         "dom.security.https_only_mode" = true;
         "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
         "privacy.trackingprotection.enabled" = true;
+        "security.webauth.webauthn_enable_usbtoken" = true;
+        "security.webauth.enable_softtoken" = false;
+        "security.webauth.u2f_softtoken_enabled" = false;
+        "security.webauth.ctap2" = true;
       };
     };
   };
