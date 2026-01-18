@@ -20,10 +20,10 @@
 
   # Configure scdaemon to not hold exclusive access to YubiKey,
   # allowing FIDO2/WebAuthn to work alongside GPG smartcard
-  home.file.".gnupg/scdaemon.conf".text = ''
-    disable-ccid
-    card-timeout 1
-  '';
+  programs.gpg.scdaemonSettings = {
+    disable-ccid = true;
+    card-timeout = 1;
+  };
   home.packages = builtins.attrValues {
     calstart = inputs.calstart.packages.${pkgs.stdenv.hostPlatform.system}.default;
     inherit (pkgs)
