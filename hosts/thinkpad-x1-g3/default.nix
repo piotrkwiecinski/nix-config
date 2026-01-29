@@ -45,6 +45,20 @@
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
 
+  boot.kernelParams = [
+    "nvidia_drm.modeset=1"
+    "nvidia_drm.fbdev=1"
+    "i915.enable_psr=0" # Prevents flickering on ThinkPad X1
+    "i915.enable_fbc=1" # Framebuffer compression for power saving
+  ];
+
+  boot.initrd.kernelModules = [
+    "nvidia"
+    "nvidia_modeset"
+    "nvidia_uvm"
+    "nvidia_drm"
+  ];
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 3;
@@ -172,18 +186,23 @@
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
-  hardware.nvidia.open = false;
-  hardware.nvidia.modesetting.enable = true;
-  hardware.nvidia.powerManagement = {
-    enable = true;
-    finegrained = true;
-  };
-  hardware.nvidia.prime = {
-    intelBusId = "PCI:0:2:0";
-    nvidiaBusId = "PCI:1:0:0";
-    offload = {
+  hardware.nvidia = {
+    open = false;
+    modesetting.enable = true; # Required for Wayland & proper suspend
+    nvidiaPersistenced = true; # Faster GPU wake-up
+
+    powerManagement = {
       enable = true;
-      enableOffloadCmd = true;
+      finegrained = true;
+    };
+
+    prime = {
+      intelBusId = "PCI:0:2:0";
+      nvidiaBusId = "PCI:1:0:0";
+      offload = {
+        enable = true;
+        enableOffloadCmd = true;
+      };
     };
   };
   security.rtkit.enable = true;
@@ -196,10 +215,12 @@
 
   hardware.graphics = {
     enable = true;
+
     extraPackages = with pkgs; [
+      intel-media-driver
+      intel-vaapi-driver
       nvidia-vaapi-driver
-      libva
-      vaapiVdpau
+      vulkan-validation-layers
     ];
   };
 
@@ -209,6 +230,13 @@
     extraPortals = with pkgs; [
       xdg-desktop-portal-gnome
     ];
+  };
+
+  environment.sessionVariables = {
+    GBM_BACKEND = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+
+    NVD_BACKEND = "direct";
   };
 
   environment.systemPackages = builtins.attrValues {
