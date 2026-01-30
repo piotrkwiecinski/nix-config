@@ -13,6 +13,15 @@ let
     };
   };
 
+  # When applied, the master nixpkgs set (declared in the flake inputs) will
+  # be accessible through 'pkgs.master'
+  master-packages = final: _prev: {
+    master = import inputs.nixpkgs-master {
+      inherit (final.stdenv.hostPlatform) system;
+      config.allowUnfree = true;
+    };
+  };
+
   # Auto-discover all .nix files in modifications/
   modificationsDir = ./modifications;
   modificationFiles = filter (n: n != "default.nix" && builtins.match ".*\\.nix" n != null) (
@@ -31,7 +40,7 @@ in
   default =
     final: prev:
     let
-      base = (additions final prev) // (unstable-packages final prev);
+      base = (additions final prev) // (unstable-packages final prev) // (master-packages final prev);
       allMods = composeModifications modifications final (prev // base);
     in
     base // allMods;

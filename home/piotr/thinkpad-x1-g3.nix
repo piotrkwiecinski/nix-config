@@ -63,7 +63,6 @@
     inherit (pkgs.unstable)
       audacity
       calibre
-      claude-code
       gimp3
       nil
       slack
@@ -90,6 +89,7 @@
     inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs.nodePackages) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
+    inherit (pkgs.master) claude-code-bin;
   };
 
   programs.bash = {
