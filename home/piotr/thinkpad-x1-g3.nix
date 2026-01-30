@@ -24,6 +24,15 @@
     disable-ccid = true;
     card-timeout = 1;
   };
+
+  programs.gh = {
+    enable = true;
+    package = pkgs.unstable.gh;
+    settings = {
+      git_protocol = "ssh";
+    };
+  };
+
   xdg.configFile."autostart/emacsclient.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -59,7 +68,6 @@
       bruno
       maven
       jdk11
-      gh
       nixpkgs-review
       magento-cloud
       mpv
