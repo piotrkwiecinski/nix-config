@@ -24,6 +24,16 @@
     disable-ccid = true;
     card-timeout = 1;
   };
+  xdg.configFile."autostart/emacsclient.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Emacsclient
+    Exec=emacsclient -c
+    Icon=emacs
+    Comment=Connect to Emacs daemon
+    X-GNOME-Autostart-enabled=true
+  '';
+
   home.packages = builtins.attrValues {
     calstart = inputs.calstart.packages.${pkgs.stdenv.hostPlatform.system}.default;
     inherit (pkgs)
