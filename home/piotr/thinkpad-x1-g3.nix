@@ -131,7 +131,7 @@
         addKeysToAgent = "no";
         compression = false;
         serverAliveCountMax = 3;
-        hashKnownHosts =  false;
+        hashKnownHosts = false;
         userKnownHostsFile = "~/.ssh/known_hosts";
         controlMaster = "no";
         controlPath = "~/.ssh/master-%r@%n:%p";
