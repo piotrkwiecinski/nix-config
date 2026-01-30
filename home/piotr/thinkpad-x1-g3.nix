@@ -5,6 +5,7 @@
 }:
 {
   imports = [
+    inputs.calstart.homeManagerModules.default
     ./global
     ./features/emacs
     ./features/direnv.nix
@@ -49,7 +50,6 @@
   '';
 
   home.packages = builtins.attrValues {
-    calstart = inputs.calstart.packages.${pkgs.stdenv.hostPlatform.system}.default;
     inherit (pkgs)
       fira-code
       fira-code-symbols
