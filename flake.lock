@@ -216,11 +216,11 @@
     "private-nix-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1769699768,
-        "narHash": "sha256-IPUhBmYK8Govb3M48YfOSNmA1tGfwl3kCCwA0OtsCLA=",
+        "lastModified": 1769799788,
+        "narHash": "sha256-9hmLYCx/41DgiWvrBCSDtK6CRA8l8l4ELL4P1ibBQa4=",
         "ref": "refs/heads/main",
-        "rev": "71f6c33344dc8350d6830e64ec618700910434a6",
-        "revCount": 23,
+        "rev": "82e05f1227062127f6b1ec12757ba8027de809cb",
+        "revCount": 24,
         "type": "git",
         "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
