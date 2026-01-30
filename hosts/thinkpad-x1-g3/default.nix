@@ -39,7 +39,6 @@
   };
 
   home-manager.backupFileExtension = "backup";
-  home-manager.useGlobalPkgs = true;
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
