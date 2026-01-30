@@ -61,7 +61,6 @@
       jdk11
       gh
       nixpkgs-review
-      lightningcss
       magento-cloud
       mpv
       ispell
