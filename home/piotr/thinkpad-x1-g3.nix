@@ -18,6 +18,11 @@
 
   fonts.fontconfig.enable = true;
 
+  home.sessionVariables = {
+    MOZ_ENABLE_WAYLAND = "1";
+    MOZ_DISABLE_RDD_SANDBOX = "1";
+  };
+
   # Configure scdaemon to not hold exclusive access to YubiKey,
   # allowing FIDO2/WebAuthn to work alongside GPG smartcard
   programs.gpg.scdaemonSettings = {
