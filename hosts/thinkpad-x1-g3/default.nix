@@ -183,6 +183,9 @@
     };
   };
 
+  systemd.services.dnsmasq.requires = [ "docker.service" ];
+  systemd.services.dnsmasq.after = [ "docker.service" ];
+
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
   hardware.nvidia = {
@@ -241,7 +244,6 @@
   environment.systemPackages = builtins.attrValues {
     inherit (pkgs) gnome-tweaks;
     inherit (pkgs.unstable)
-      qemu
       libnotify
       yubioath-flutter
       ;
