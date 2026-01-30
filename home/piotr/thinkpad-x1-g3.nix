@@ -14,10 +14,8 @@
   ];
 
   home = {
-    stateVersion = "24.11";
+    stateVersion = "25.11";
   };
-
-  fonts.fontconfig.enable = true;
 
   home.sessionVariables = {
     MOZ_ENABLE_WAYLAND = "1";

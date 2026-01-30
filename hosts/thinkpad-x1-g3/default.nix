@@ -13,8 +13,6 @@
     (inputs.private-nix-config + "/nixos/thinkpad-x1-g3/piotr/work.nix")
   ];
 
-  system.rebuild.enableNg = true;
-
   services.udev.packages = [
     pkgs.yubikey-personalization
     pkgs.libfido2
@@ -105,7 +103,6 @@
   };
 
   networking.firewall = {
-    enable = true;
     allowedTCPPorts = [
       3000
       9001
@@ -141,7 +138,6 @@
 
   # Enable the GNOME Desktop Environment.
   services.displayManager.gdm.enable = true;
-  services.displayManager.gdm.wayland = true;
   services.desktopManager.gnome.enable = true;
   environment.gnome.excludePackages = builtins.attrValues {
     inherit (pkgs)
@@ -195,7 +191,6 @@
   services.pulseaudio.enable = false;
   hardware.nvidia = {
     open = false;
-    modesetting.enable = true; # Required for Wayland & proper suspend
     nvidiaPersistenced = true; # Faster GPU wake-up
 
     powerManagement = {
@@ -254,9 +249,6 @@
       ;
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
-
   virtualisation.docker.enable = true;
   users.extraGroups.docker.members = [ "piotr" ];
 
@@ -303,6 +295,6 @@
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "24.11"; # Did you read the comment?
+  system.stateVersion = "25.11"; # Did you read the comment?
 
 }
