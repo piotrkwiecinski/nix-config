@@ -5,12 +5,12 @@
 }:
 {
   imports = [
-    inputs.calstart.homeManagerModules.default
+    inputs.private-nix-config.inputs.calstart.homeManagerModules.default
+    inputs.private-nix-config.homeManagerModules.work
     ./global
     ./features/emacs
     ./features/direnv.nix
     ./features/desktop/common/firefox.nix
-    (inputs.private-nix-config + "/home/piotr/work.nix")
   ];
 
   home = {

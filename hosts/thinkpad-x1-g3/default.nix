@@ -10,7 +10,7 @@
     inputs.hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen3
     ./hardware-configuration.nix
     ../../users/piotr
-    (inputs.private-nix-config + "/nixos/thinkpad-x1-g3/piotr/work.nix")
+    inputs.private-nix-config.nixosModules.thinkpad-x1-g3
   ];
 
   services.udev.packages = [
