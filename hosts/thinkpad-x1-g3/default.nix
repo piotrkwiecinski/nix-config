@@ -64,6 +64,7 @@
   services.fwupd.enable = true;
 
   networking.hostName = "thinkpad-x1-g3";
+  networking.hosts."192.168.68.106" = [ "homeserver" ];
 
   nix = {
     settings = {
@@ -77,10 +78,6 @@
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
-      ];
-      trusted-users = [
-        "root"
-        "piotr"
       ];
       keep-outputs = true;
       keep-derivations = true;
@@ -287,6 +284,21 @@
 
   users.users."piotr".openssh.authorizedKeys.keys = [
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC1AkWOqdmzCuLtD1hbJHNbli12oqco1Zh8BHf1tif7zFAz6sNgkFGSp4+gySMIBv+Qk2SbNpGCI1XL2kpgTFUu2LbF3tfOjdP5uXGZfb1Af+rv/ESprBJjjiM8YuvD1TZ4Q25ie1eIyjcey30JJReA4K9nvHPr/nthpch7xfgnoO7Pkyf1OlEeZbp1Luo1s8mqb+oFYW9mcIfDzn5R7YvPshfflMQMXfbgXQ4usKpLNNrr5NjKpBETu9/wf/T9OUD/+2BFyiMrRZkJWtM3QCoXEYDWqcW0qvc4uSXMUyCYbHNtrxuhU1VIbDXDx2Gmkcs58NPnpxw9ONdkA5XS2pfEihElYNc8jF7uh24mjs1MICFZqFgsWWz6S9bYkqW1y/MDuhKy8IA2vdHiSFxVZbSFv6jf8LMQXDbxIHNhGoF8wTJCK/zNRtmOmSQnzi1DQcncYxy0WqoHTlR/beiPqtyaUNSEEyapr9vwagePvuY/4BKMTpamfEe/nGADJpBfcvs= piotr@piotr-laptop"
+  ];
+
+  # Builder user for remote nix builds from homeserver
+  users.users.builder = {
+    isNormalUser = true;
+    description = "Nix remote builder";
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMB6N/SY2fb+OqMYrB1P24ac44V1D/qMHTQ+4oZizPiw piotr@thinkpad-x1-g3"
+    ];
+  };
+
+  nix.settings.trusted-users = [
+    "root"
+    "piotr"
+    "builder"
   ];
 
   # This value determines the NixOS release from which the default
