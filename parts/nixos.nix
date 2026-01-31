@@ -1,8 +1,12 @@
 { inputs, self, ... }:
 let
   mkHost =
-    hostname:
+    {
+      hostname,
+      system ? "x86_64-linux",
+    }:
     inputs.nixpkgs.lib.nixosSystem {
+      inherit system;
       modules = [ ../hosts/${hostname} ];
       specialArgs = {
         inherit inputs;
@@ -12,7 +16,11 @@ let
 in
 {
   flake.nixosConfigurations = {
-    homelab = mkHost "homelab";
-    thinkpad-x1-g3 = mkHost "thinkpad-x1-g3";
+    homelab = mkHost { hostname = "homelab"; };
+    thinkpad-x1-g3 = mkHost { hostname = "thinkpad-x1-g3"; };
+    homeserver = mkHost {
+      hostname = "homeserver";
+      system = "aarch64-linux";
+    };
   };
 }

@@ -11,10 +11,8 @@ Multi-host NixOS configuration for my personal devices.
 
 ** Roadmap
 - [ ] Merge Emacs configuration.
-- [ ] Configure Raspberry Pi 4 as a mini server with NixOs.
 - [ ] Add secret management with [[https://github.com/Mic92/sops-nix][SOPS]].
 - [ ] Add declarative disk partitioning with [[https://github.com/nix-community/disko][Disko]].
-- [ ] Convert the configuration to use [[https://flake.parts/][Flake parts]].
 
 ** Resources
 - [[https://nix.dev/][Official Nix Documentation]]

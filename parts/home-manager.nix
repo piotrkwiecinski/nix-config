@@ -32,5 +32,10 @@ in
       username = "piotr";
       hostname = "thinkpad-x1-g3";
     };
+    "piotr@homeserver" = mkHome {
+      username = "piotr";
+      hostname = "homeserver";
+      system = "aarch64-linux";
+    };
   };
 }
