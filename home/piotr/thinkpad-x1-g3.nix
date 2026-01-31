@@ -29,6 +29,27 @@
     card-timeout = 1;
   };
 
+  # Required for KeePassXC autostart
+  xdg.autostart.enable = true;
+
+  # KeePassXC as secret service provider (replaces gnome-keyring for app secrets)
+  # Supports YubiKey challenge-response for database unlock
+  programs.keepassxc = {
+    enable = true;
+    autostart = true;
+    settings = {
+      General = {
+        ConfigVersion = 2;
+      };
+      FdoSecrets = {
+        Enabled = true;
+      };
+    };
+  };
+
+  # Disable gnome-keyring entirely - GPG agent handles SSH, KeePassXC handles secrets
+  services.gnome-keyring.enable = false;
+
   programs.gh = {
     enable = true;
     package = pkgs.unstable.gh;
