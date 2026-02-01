@@ -28,6 +28,8 @@
   security.pam.yubico = {
     enable = true;
     mode = "challenge-response";
+    # Note: YubiKey ID cannot be moved to sops because it's needed at Nix evaluation time
+    # for PAM configuration. sops secrets are only available at activation time.
     id = [ "32878882" ];
   };
 
