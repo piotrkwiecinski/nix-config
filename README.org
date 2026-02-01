@@ -8,10 +8,61 @@ Multi-host NixOS configuration for my personal devices.
 | Name           | Description               | Type    | Arch         |
 | homelab        | Workstation               | Desktop | x86_64-linux |
 | thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux |
+| homeserver     | Raspberry Pi 4            | Server  | aarch64-linux |
+
+** Usage
+
+*** Local Rebuilds
+
+Enter the development shell, then use the provided commands:
+
+#+begin_src bash
+# Enter development shell
+nix develop
+
+# Rebuild NixOS system configuration
+nix-switch
+
+# Rebuild home-manager configuration
+home-switch
+#+end_src
+
+*** Remote Deployment
+
+Deploy to homeserver from thinkpad (builds locally, deploys remotely):
+
+#+begin_src bash
+nixos-rebuild switch --flake ".#homeserver" \
+  --target-host piotr@homeserver \
+  --build-host localhost
+#+end_src
+
+** Remote Builds
+
+The homeserver (aarch64) delegates builds to thinkpad-x1-g3 (x86_64) using distributed builds with QEMU emulation.
+
+- A =builder= user on thinkpad accepts SSH connections from homeserver
+- The builder SSH key is managed via sops-nix and deployed to =/etc/nix/builder_key=
+- Thinkpad is configured as a trusted builder in homeserver's nix settings
+
+** Secrets Management
+
+Secrets are managed via [[https://github.com/Mic92/sops-nix][sops-nix]] with age encryption. Encrypted secrets are stored in the private repository (=nix-config-private=).
+
+*** Key Types by Host
+
+- *homeserver*: Uses SSH host key (=/etc/ssh/ssh_host_ed25519_key=)
+- *thinkpad-x1-g3*: Uses standalone age key (=/var/lib/sops-nix/key.txt=)
+
+*** Editing Secrets
+
+#+begin_src bash
+cd ~/development/nix-config-private
+sops secrets/homeserver.yaml
+#+end_src
 
 ** Roadmap
 - [ ] Merge Emacs configuration.
-- [ ] Add secret management with [[https://github.com/Mic92/sops-nix][SOPS]].
 - [ ] Add declarative disk partitioning with [[https://github.com/nix-community/disko][Disko]].
 
 ** Resources
