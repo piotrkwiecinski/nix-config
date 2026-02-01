@@ -1,7 +1,9 @@
 {
+  config,
   pkgs,
   inputs,
   outputs,
+  lib,
   ...
 }:
 {
@@ -44,6 +46,7 @@
 
   boot.kernelPackages = pkgs.linuxPackages_latest;
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+  boot.binfmt.registrations.aarch64-linux.fixBinary = true;
 
   boot.kernelParams = [
     "nvidia_drm.modeset=1"
