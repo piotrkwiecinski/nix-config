@@ -155,6 +155,9 @@
       "met"
       "esphome"
       "zha"
+      "wiz"
+      "bluetooth"
+      "mobile_app"
     ];
     config = {
       homeassistant = {
@@ -165,6 +168,7 @@
       http = {
         server_port = 8123;
       };
+      mobile_app = { };
     };
   };
 
