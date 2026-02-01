@@ -44,6 +44,12 @@
       ];
       builders-use-substitutes = true;
       max-jobs = 1; # Allow trivial local builds, heavy builds go remote
+      extra-substituters = [
+        "https://nix-community.cachix.org"
+      ];
+      extra-trusted-public-keys = [
+        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+      ];
     };
 
     distributedBuilds = true;
@@ -54,7 +60,7 @@
         sshKey = config.sops.secrets."builder-key".path;
         system = "aarch64-linux";
         protocol = "ssh-ng";
-        maxJobs = 4;
+        maxJobs = 8;
         speedFactor = 10;
         supportedFeatures = [
           "nixos-test"
