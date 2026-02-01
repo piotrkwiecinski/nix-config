@@ -7,7 +7,11 @@ let
     }:
     inputs.nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ ../hosts/${hostname} ];
+      modules = [
+        ../hosts/${hostname}
+        inputs.private-nix-config.nixosModules.sops
+        inputs.private-nix-config.nixosModules.secrets
+      ];
       specialArgs = {
         inherit inputs;
         outputs = self;
