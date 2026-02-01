@@ -103,6 +103,7 @@
       443 # HTTPS
       8123 # Home Assistant
       4000 # Blocky API
+      28981 # Paperless-ngx
     ];
     allowedUDPPorts = [
       53 # DNS (Blocky)
@@ -219,6 +220,18 @@
 
   # Passwordless sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
+
+  # Paperless-ngx document management
+  services.paperless = {
+    enable = true;
+    package = pkgs.unstable.paperless-ngx;
+    address = "0.0.0.0";
+    database.createLocally = true;
+    passwordFile = config.sops.secrets."paperless-admin-pass".path;
+    settings = {
+      PAPERLESS_ADMIN_USER = "admin";
+    };
+  };
 
   # Disable sleep/suspend on server
   systemd.targets.sleep.enable = false;
