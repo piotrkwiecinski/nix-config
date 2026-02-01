@@ -1,6 +1,7 @@
 {
   pkgs,
   config,
+  lib,
   ...
 }:
 {
@@ -27,22 +28,35 @@
       ];
     };
 
-    includes = [
-      {
-        condition = "hasconfig:remote.*.url:git@github.com:*/**";
-        contents = {
-          user = {
-            email = "2151333+piotrkwiecinski@users.noreply.github.com";
-            signingKey = "EC0DE1CB9D5258B4";
+    includes =
+      let
+        hasSopsTemplate =
+          name: (config ? sops) && (config.sops ? templates) && (config.sops.templates ? ${name});
+      in
+      # Fallback for hosts without sops (homelab, homeserver)
+      lib.optionals (!(hasSopsTemplate "git-personal-github.inc")) [
+        {
+          condition = "hasconfig:remote.*.url:git@github.com:*/**";
+          contents = {
+            user = {
+              email = "2151333+piotrkwiecinski@users.noreply.github.com";
+              signingKey = "EC0DE1CB9D5258B4";
+            };
+
+            commit.gpgSign = true;
+            tag.gpgSign = true;
+
+            core.sshCommand = "ssh -i ~/.ssh/gh_rsa";
           };
-
-          commit.gpgSign = true;
-          tag.gpgSign = true;
-
-          core.sshCommand = "ssh -i ~/.ssh/gh_rsa";
-        };
-      }
-    ];
+        }
+      ]
+      # Use sops template when available
+      ++ lib.optionals (hasSopsTemplate "git-personal-github.inc") [
+        {
+          condition = "hasconfig:remote.*.url:git@github.com:*/**";
+          path = config.sops.templates."git-personal-github.inc".path;
+        }
+      ];
 
     ignores = [
       "*~"

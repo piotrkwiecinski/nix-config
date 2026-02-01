@@ -5,6 +5,8 @@
 }:
 {
   imports = [
+    inputs.private-nix-config.homeManagerModules.sops
+    inputs.private-nix-config.homeManagerModules.sops-config
     inputs.private-nix-config.inputs.calstart.homeManagerModules.default
     inputs.private-nix-config.homeManagerModules.work
     ./global
