@@ -9,6 +9,7 @@
           git
           home-manager
           nil
+          sops
           (writeShellApplication {
             name = "home-switch";
             text = ''home-manager switch -b backup --flake ".#$(whoami)@$(hostname)"'';
