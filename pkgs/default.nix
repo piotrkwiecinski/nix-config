@@ -1,13 +1,20 @@
-pkgs: {
-  tree-sitter-phpdoc = pkgs.tree-sitter.buildGrammar {
-    language = "tree-sitter-phpdoc";
-    version = "0.1.5";
+{ pkgs, pkgs-unstable }:
+{
+  claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
+    pname = "claude-code-ide";
+    version = "0-unstable-2026-02-01";
     src = pkgs.fetchFromGitHub {
-      owner = "claytonrcarter";
-      repo = "tree-sitter-phpdoc";
-      tag = "v0.1.5";
-      hash = "sha256-sQ8jmVvZD0fIc9qlfyl6MaXvP/2ljzViKIl9RgVOJqw=";
+      owner = "manzaltu";
+      repo = "claude-code-ide.el";
+      rev = "a5494523dc8c3031375aa53d6321abfd9bc7288b";
+      hash = "sha256-Mw5MNx4RMk+2oXcjIVclel1jis1jHTj8S3uqTDYN4KQ=";
     };
-    meta.homepage = "https://github.com/claytonrcarter/tree-sitter-phpdoc";
+    packageRequires = with pkgs-unstable.emacsPackages; [
+      vterm
+      websocket
+      transient
+      web-server
+    ];
+    meta.homepage = "https://github.com/manzaltu/claude-code-ide.el";
   };
 }
