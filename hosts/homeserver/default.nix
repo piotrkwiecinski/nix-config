@@ -136,6 +136,10 @@
       "homeserver"
       "192.168.68.106"
     ];
+    extraApps = {
+      inherit (pkgs.nextcloud32Packages.apps) spreed;
+    };
+    extraAppsEnable = true;
   };
 
   services.nginx.virtualHosts."homeserver.local" = {
