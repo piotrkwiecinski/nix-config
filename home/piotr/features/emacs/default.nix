@@ -27,7 +27,7 @@
 
   programs.emacs.enable = true;
   programs.emacs.package = (
-    (pkgs.unstable.emacsPackagesFor pkgs.unstable.emacs30).emacsWithPackages (
+    (pkgs.unstable.emacsPackagesFor pkgs.unstable.emacs30-pgtk).emacsWithPackages (
       epkgs: with epkgs; [
         async
         bats-mode
@@ -113,7 +113,7 @@
           ts.tree-sitter-typescript
           ts.tree-sitter-yaml
           ts.tree-sitter-html
-          pkgs.tree-sitter-phpdoc
+          ts.tree-sitter-phpdoc
         ]))
         vertico
         yasnippet
@@ -121,6 +121,7 @@
         web-mode
         yaml-mode
         uuidgen
+        pkgs.claude-code-ide
         vterm
       ]
     )

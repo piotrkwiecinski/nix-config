@@ -17,12 +17,16 @@ in
   flake.overlays.default =
     final: prev:
     let
-      additions = import ../pkgs final.pkgs;
+      pkgs-unstable = import inputs.nixpkgs-unstable {
+        inherit (final.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      };
+      additions = import ../pkgs {
+        pkgs = final.pkgs;
+        inherit pkgs-unstable;
+      };
       unstable = {
-        unstable = import inputs.nixpkgs-unstable {
-          inherit (final.stdenv.hostPlatform) system;
-          config.allowUnfree = true;
-        };
+        unstable = pkgs-unstable;
       };
       master = {
         master = import inputs.nixpkgs-master {
