@@ -2,12 +2,12 @@
 {
   claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
     pname = "claude-code-ide";
-    version = "0-unstable-2026-02-01";
+    version = "0-unstable-2026-02-02";
     src = pkgs.fetchFromGitHub {
       owner = "manzaltu";
       repo = "claude-code-ide.el";
-      rev = "a5494523dc8c3031375aa53d6321abfd9bc7288b";
-      hash = "sha256-Mw5MNx4RMk+2oXcjIVclel1jis1jHTj8S3uqTDYN4KQ=";
+      rev = "5f12e60c6d2d1802c8c1b7944bbdf935d5db1364";
+      hash = "sha256-tivRvgfI/8XBRImE3wuZ1UD0t2dNWYscv3Aa53BmHZE=";
     };
     packageRequires = with pkgs-unstable.emacsPackages; [
       vterm
