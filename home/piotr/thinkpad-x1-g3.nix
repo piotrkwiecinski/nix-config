@@ -85,6 +85,7 @@
       audacity
       calibre
       gimp3
+      mochi
       nil
       slack
       yt-dlp
