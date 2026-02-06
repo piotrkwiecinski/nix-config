@@ -101,6 +101,7 @@
       53 # DNS (Blocky)
       80 # HTTP (nginx/Nextcloud)
       443 # HTTPS
+      8080 # Calibre server
       8123 # Home Assistant
       4000 # Blocky API
       28981 # Paperless-ngx
@@ -224,6 +225,15 @@
         prefetching = true;
       };
     };
+  };
+
+  # Calibre ebook server
+  services.calibre-server = {
+    enable = true;
+    package = pkgs.unstable.calibre;
+    libraries = [ "/var/lib/calibre-server" ];
+    host = "0.0.0.0";
+    port = 8080;
   };
 
   # Passwordless sudo for wheel group
