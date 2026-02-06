@@ -96,19 +96,30 @@
   # Firewall
   networking.firewall = {
     enable = true;
+    trustedInterfaces = [ "tailscale0" ];
     allowedTCPPorts = [
       22 # SSH
       53 # DNS (Blocky)
-      80 # HTTP (nginx/Nextcloud)
-      443 # HTTPS
-      8080 # Calibre server
-      8123 # Home Assistant
+      80 # HTTP (nginx/Nextcloud LAN)
+      443 # HTTPS (Nextcloud via Tailscale)
+      8080 # Calibre server (LAN)
+      8123 # Home Assistant (LAN)
+      8443 # Home Assistant (Tailscale HTTPS)
+      8444 # Paperless (Tailscale HTTPS)
+      8445 # Calibre (Tailscale HTTPS)
       4000 # Blocky API
-      28981 # Paperless-ngx
+      28981 # Paperless-ngx (LAN)
     ];
     allowedUDPPorts = [
       53 # DNS (Blocky)
+      41641 # Tailscale
     ];
+  };
+
+  # Tailscale VPN
+  services.tailscale = {
+    enable = true;
+    authKeyFile = config.sops.secrets."tailscale-auth-key".path;
   };
 
   # Fail2ban for SSH protection
@@ -132,24 +143,117 @@
     database.createLocally = true;
     configureRedis = true;
     maxUploadSize = "10G";
-    settings.trusted_domains = [
-      "homeserver.local"
-      "homeserver"
-      "192.168.68.106"
-    ];
+    settings = {
+      trusted_domains = [
+        "homeserver.local"
+        "homeserver"
+        "192.168.68.106"
+        "homeserver.tailfbbc95.ts.net"
+      ];
+      trusted_proxies = [ "127.0.0.1" ];
+    };
     extraApps = {
       inherit (pkgs.nextcloud32Packages.apps) spreed;
     };
     extraAppsEnable = true;
   };
 
-  services.nginx.virtualHosts."homeserver.local" = {
-    listen = [
-      {
-        addr = "0.0.0.0";
-        port = 80;
-      }
-    ];
+  services.nginx = {
+    enable = true;
+    recommendedTlsSettings = true;
+    recommendedProxySettings = true;
+    recommendedGzipSettings = true;
+
+    # Existing LAN Nextcloud
+    virtualHosts."homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 80;
+        }
+      ];
+    };
+
+    # Nextcloud via Tailscale HTTPS (port 443)
+    virtualHosts."nextcloud-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:80";
+        proxyWebsockets = true;
+      };
+    };
+
+    # Home Assistant via Tailscale HTTPS (port 8443)
+    virtualHosts."hass-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8443;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8123";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+        '';
+      };
+    };
+
+    # Paperless via Tailscale HTTPS (port 8444)
+    virtualHosts."paperless-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8444;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:28981";
+        proxyWebsockets = true;
+      };
+    };
+
+    # Calibre via Tailscale HTTPS (port 8445)
+    virtualHosts."calibre-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8445;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8080";
+      };
+    };
   };
 
   # Home Assistant
@@ -172,6 +276,11 @@
       };
       http = {
         server_port = 8123;
+        use_x_forwarded_for = true;
+        trusted_proxies = [
+          "127.0.0.1"
+          "::1"
+        ];
       };
       mobile_app = { };
     };
@@ -248,6 +357,59 @@
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
+    };
+  };
+
+  # Tailscale HTTPS certificate provisioning
+  systemd.services.tailscale-cert = {
+    description = "Provision Tailscale HTTPS certificates";
+    after = [ "tailscaled.service" ];
+    wants = [ "tailscaled.service" ];
+    before = [ "nginx.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [
+      pkgs.tailscale
+      pkgs.jq
+    ];
+    script = ''
+      # Wait for Tailscale to be connected
+      until tailscale status --json | jq -e '.Self.Online' > /dev/null 2>&1; do
+        sleep 2
+      done
+
+      mkdir -p /var/lib/tailscale-certs
+
+      # Get the Tailscale hostname
+      TAILSCALE_HOSTNAME=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
+
+      # Fetch certificate from Tailscale (Let's Encrypt)
+      tailscale cert \
+        --cert-file /var/lib/tailscale-certs/homeserver.crt \
+        --key-file /var/lib/tailscale-certs/homeserver.key \
+        "$TAILSCALE_HOSTNAME"
+
+      # Set permissions for nginx
+      chmod 644 /var/lib/tailscale-certs/homeserver.crt
+      chmod 600 /var/lib/tailscale-certs/homeserver.key
+      chown nginx:nginx /var/lib/tailscale-certs/*
+
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+  };
+
+  # Make nginx wait for certs
+  systemd.services.nginx.after = [ "tailscale-cert.service" ];
+  systemd.services.nginx.requires = [ "tailscale-cert.service" ];
+
+  # Timer to renew certs weekly (Tailscale certs expire after 90 days)
+  systemd.timers.tailscale-cert = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "weekly";
+      Persistent = true;
     };
   };
 
