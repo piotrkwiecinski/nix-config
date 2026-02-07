@@ -209,12 +209,6 @@
       locations."/" = {
         proxyPass = "http://127.0.0.1:8123";
         proxyWebsockets = true;
-        extraConfig = ''
-          proxy_set_header Host $host;
-          proxy_set_header X-Real-IP $remote_addr;
-          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-          proxy_set_header X-Forwarded-Proto $scheme;
-        '';
       };
     };
 
@@ -234,6 +228,12 @@
       locations."/" = {
         proxyPass = "http://127.0.0.1:28981";
         proxyWebsockets = true;
+        extraConfig = ''
+          proxy_read_timeout 300;
+          proxy_connect_timeout 300;
+          proxy_send_timeout 300;
+          client_max_body_size 100M;
+        '';
       };
     };
 
@@ -357,6 +357,22 @@
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
+      PAPERLESS_URL = "https://homeserver.tailfbbc95.ts.net:8444";
+      PAPERLESS_ALLOWED_HOSTS = builtins.concatStringsSep "," [
+        "homeserver.tailfbbc95.ts.net"
+        "homeserver.local"
+        "homeserver"
+        "192.168.68.106"
+        "localhost"
+        "127.0.0.1"
+      ];
+      PAPERLESS_CSRF_TRUSTED_ORIGINS = builtins.concatStringsSep "," [
+        "https://homeserver.tailfbbc95.ts.net:8444"
+        "http://homeserver.local:28981"
+        "http://homeserver:28981"
+        "http://192.168.68.106:28981"
+      ];
+      PAPERLESS_PROXY_SSL_HEADER = [ "HTTP_X_FORWARDED_PROTO" "https" ];
     };
   };
 
