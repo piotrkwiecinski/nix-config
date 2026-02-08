@@ -257,6 +257,79 @@
   virtualisation.docker.enable = true;
   users.extraGroups.docker.members = [ "piotr" ];
 
+  services.traefik = {
+    enable = true;
+    group = "docker";
+
+    staticConfigOptions = {
+      api = {
+        insecure = true;
+        dashboard = true;
+      };
+      entryPoints = {
+        web = {
+          address = ":80";
+          reusePort = true;
+        };
+        websecure = {
+          address = ":443";
+          reusePort = true;
+        };
+      };
+      providers.docker = {
+        watch = true;
+        network = "local-dev-proxy";
+        exposedByDefault = false;
+      };
+      log.level = "info";
+      global = {
+        checkNewVersion = false;
+        sendAnonymousUsage = false;
+      };
+      serversTransport.insecureSkipVerify = true;
+      accessLog.filePath = "/var/lib/traefik/access.log";
+    };
+
+    dynamicConfigOptions = {
+      tls = {
+        stores.default.defaultCertificate = {
+          certFile = config.sops.secrets."traefik-cert".path;
+          keyFile = config.sops.secrets."traefik-key".path;
+        };
+        certificates = [
+          {
+            certFile = config.sops.secrets."traefik-cert".path;
+            keyFile = config.sops.secrets."traefik-key".path;
+          }
+        ];
+      };
+    };
+  };
+
+  systemd.services.docker-network-local-dev-proxy = {
+    description = "Create local-dev-proxy Docker network";
+    after = [ "docker.service" ];
+    requires = [ "docker.service" ];
+    wantedBy = [ "multi-user.target" ];
+    path = [ pkgs.docker ];
+    script = ''
+      docker network inspect local-dev-proxy >/dev/null 2>&1 || docker network create local-dev-proxy
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+  };
+
+  systemd.services.traefik = {
+    after = [
+      "docker.service"
+      "docker-network-local-dev-proxy.service"
+    ];
+    requires = [ "docker.service" ];
+    wants = [ "docker-network-local-dev-proxy.service" ];
+  };
+
   programs.firefox.enable = true;
 
   programs.gnupg = {
