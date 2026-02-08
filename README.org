@@ -5,10 +5,21 @@ Multi-host NixOS configuration for my personal devices.
 
 ** Host specification
 
-| Name           | Description               | Type    | Arch         |
-| homelab        | Workstation               | Desktop | x86_64-linux |
-| thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux |
+| Name           | Description               | Type    | Arch          |
+| homelab        | Workstation               | Desktop | x86_64-linux  |
+| thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux  |
 | homeserver     | Raspberry Pi 4            | Server  | aarch64-linux |
+
+*** homeserver services
+- [[https://nextcloud.com/][Nextcloud]] - File sync, calendar, contacts
+- [[https://www.home-assistant.io/][Home Assistant]] - Home automation
+- [[https://github.com/0xERR0R/blocky][Blocky]] - DNS ad blocker
+- [[https://calibre-ebook.com/][Calibre]] - E-book library server
+- [[https://tailscale.com/][Tailscale]] - VPN with HTTPS reverse proxy via Traefik
+
+*** thinkpad-x1-g3 services
+- [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for Docker-based development
+- [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Local DNS for =.test= and =.loc= development domains
 
 ** Usage
 
@@ -62,7 +73,6 @@ sops secrets/homeserver.yaml
 #+end_src
 
 ** Roadmap
-- [ ] Merge Emacs configuration.
 - [ ] Add declarative disk partitioning with [[https://github.com/nix-community/disko][Disko]].
 
 ** Resources
