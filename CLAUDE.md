@@ -11,10 +11,11 @@ Multi-host NixOS configuration using flake-parts for modular management. Manages
 
 ## Commands
 
-Enter the development shell first, then use the provided commands:
+Commands like `nix-switch`, `home-switch`, and `treefmt` are provided by the dev shell. If a command is not found, run it via `nix develop`:
 
 ```bash
-nix develop              # Enter dev shell with tools (git, home-manager, nil, sops)
+nix develop --command bash -c 'nix-switch'    # Run a dev shell command directly
+nix develop                                    # Or enter the shell interactively
 nix-switch               # Rebuild NixOS: sudo nixos-rebuild switch --flake ".#$(hostname)"
 home-switch              # Rebuild home-manager: home-manager switch -b backup --flake ".#$(whoami)@$(hostname)"
 treefmt                  # Format all Nix files with nixfmt
