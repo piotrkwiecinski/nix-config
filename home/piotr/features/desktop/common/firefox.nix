@@ -23,6 +23,7 @@
         Enabled = true;
         Locked = true;
       };
+      Certificates.ImportEnterpriseRoots = true;
       DontCheckDefaultBrowser = true;
     };
     profiles.piotr = {
