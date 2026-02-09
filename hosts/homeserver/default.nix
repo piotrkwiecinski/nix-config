@@ -33,6 +33,7 @@
   boot.loader.generic-extlinux-compatible.enable = true;
 
   networking.hostName = "homeserver";
+  networking.hosts."192.168.68.103" = [ "thinkpad-x1-g3.local" ];
 
   nix = {
     settings = {
@@ -403,22 +404,28 @@
       SSH_KEY="${config.sops.secrets."builder-key".path}"
       SSH_OPTS="-o StrictHostKeyChecking=accept-new"
       REMOTE="builder@thinkpad-x1-g3.local"
-      REMOTE_DIR="backup/paperless"
+      REMOTE_DIR="/data/backups/paperless"
 
       # Compress export into timestamped archive
       mkdir -p "$BACKUP_DIR"
-      tar -C "$EXPORT_DIR" -cf - . | zstd -o "$BACKUP_DIR/$ARCHIVE"
+      tar -C "$EXPORT_DIR" -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
+
+      # Verify archive was created and is non-empty
+      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
+        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
+        exit 1
+      fi
 
       # Send to thinkpad
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p ~/$REMOTE_DIR"
-      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:~/$REMOTE_DIR/"
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
+      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
 
       # Cleanup local (keep 3)
       ls -t "$BACKUP_DIR"/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
 
       # Cleanup remote (keep 3)
       ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
-        "ls -t ~/$REMOTE_DIR/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+        "ls -t $REMOTE_DIR/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
     '';
     serviceConfig.Type = "oneshot";
   };

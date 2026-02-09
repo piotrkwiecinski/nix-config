@@ -372,6 +372,15 @@
     ];
   };
 
+  # SSH for remote nix builds from homeserver
+  services.openssh = {
+    enable = true;
+    settings = {
+      PermitRootLogin = "no";
+      PasswordAuthentication = false;
+    };
+  };
+
   # Builder user for remote nix builds from homeserver
   users.users.builder = {
     isNormalUser = true;
@@ -385,6 +394,10 @@
     "root"
     "piotr"
     "builder"
+  ];
+
+  systemd.tmpfiles.rules = [
+    "d /data/backups/paperless 0755 builder users -"
   ];
 
   # This value determines the NixOS release from which the default
