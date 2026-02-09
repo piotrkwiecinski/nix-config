@@ -8,6 +8,8 @@
 }:
 {
   imports = [
+    inputs.disko.nixosModules.disko
+    ./disk-config.nix
     inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen3
     ./hardware-configuration.nix

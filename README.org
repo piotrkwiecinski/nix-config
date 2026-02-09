@@ -20,6 +20,7 @@ Multi-host NixOS configuration for my personal devices.
 *** thinkpad-x1-g3 services
 - [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for Docker-based development
 - [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Local DNS for =.test= and =.loc= development domains
+- [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (adoption mode)
 
 ** Usage
 
@@ -71,9 +72,6 @@ Secrets are managed via [[https://github.com/Mic92/sops-nix][sops-nix]] with age
 cd ~/development/nix-config-private
 sops secrets/homeserver.yaml
 #+end_src
-
-** Roadmap
-- [ ] Add declarative disk partitioning with [[https://github.com/nix-community/disko][Disko]].
 
 ** Resources
 - [[https://nix.dev/][Official Nix Documentation]]
