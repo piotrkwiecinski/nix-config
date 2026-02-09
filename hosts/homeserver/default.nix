@@ -355,6 +355,10 @@
     address = "0.0.0.0";
     database.createLocally = true;
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
+    exporter = {
+      enable = true;
+      onCalendar = "daily";
+    };
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
       PAPERLESS_URL = "https://homeserver.tailfbbc95.ts.net:8444";
@@ -372,8 +376,51 @@
         "http://homeserver:28981"
         "http://192.168.68.106:28981"
       ];
-      PAPERLESS_PROXY_SSL_HEADER = [ "HTTP_X_FORWARDED_PROTO" "https" ];
+      PAPERLESS_PROXY_SSL_HEADER = [
+        "HTTP_X_FORWARDED_PROTO"
+        "https"
+      ];
     };
+  };
+
+  # Paperless backup: compress export and send to thinkpad after successful export
+  systemd.services.paperless-exporter.onSuccess = [ "paperless-backup-sync.service" ];
+
+  systemd.services.paperless-backup-sync = {
+    description = "Compress and send Paperless export to thinkpad";
+    path = with pkgs; [
+      gnutar
+      zstd
+      openssh
+      coreutils
+    ];
+    script = ''
+      set -euo pipefail
+      EXPORT_DIR="/var/lib/paperless/export"
+      BACKUP_DIR="/var/lib/paperless/backup"
+      TIMESTAMP=$(date +%Y%m%d)
+      ARCHIVE="paperless-''${TIMESTAMP}.tar.zst"
+      SSH_KEY="${config.sops.secrets."builder-key".path}"
+      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+      REMOTE="builder@thinkpad-x1-g3.local"
+      REMOTE_DIR="backup/paperless"
+
+      # Compress export into timestamped archive
+      mkdir -p "$BACKUP_DIR"
+      tar -C "$EXPORT_DIR" -cf - . | zstd -o "$BACKUP_DIR/$ARCHIVE"
+
+      # Send to thinkpad
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p ~/$REMOTE_DIR"
+      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:~/$REMOTE_DIR/"
+
+      # Cleanup local (keep 3)
+      ls -t "$BACKUP_DIR"/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
+
+      # Cleanup remote (keep 3)
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
+        "ls -t ~/$REMOTE_DIR/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+    '';
+    serviceConfig.Type = "oneshot";
   };
 
   # Tailscale HTTPS certificate provisioning
