@@ -52,4 +52,23 @@
       };
     };
   };
+
+  # 1TB data drive — btrfs subvolumes (already formatted, adoption only)
+  fileSystems."/data/backups" = {
+    device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
+    fsType = "btrfs";
+    options = [ "subvol=@backups" ];
+  };
+
+  fileSystems."/data/shared" = {
+    device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
+    fsType = "btrfs";
+    options = [ "subvol=@shared" ];
+  };
+
+  fileSystems."/data/media" = {
+    device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
+    fsType = "btrfs";
+    options = [ "subvol=@media" ];
+  };
 }
