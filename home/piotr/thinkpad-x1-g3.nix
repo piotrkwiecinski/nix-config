@@ -85,7 +85,6 @@
       audacity
       calibre
       gimp3
-      mochi
       nil
       slack
       yt-dlp
@@ -111,7 +110,7 @@
     inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs.nodePackages) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
-    inherit (pkgs.master) claude-code-bin;
+    inherit (pkgs.master) claude-code-bin mochi;
   };
 
   programs.bash = {
