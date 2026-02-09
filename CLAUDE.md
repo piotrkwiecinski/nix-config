@@ -47,6 +47,7 @@ The configuration uses flake-parts for composability. Main entry point is `flake
 hosts/                     # Per-host NixOS configurations
   {hostname}/
     default.nix            # Host-specific system config
+    disk-config.nix        # Disko declarative disk layout (optional)
     hardware-configuration.nix  # Auto-generated hardware config
 
 home/piotr/                # Home-manager configurations
@@ -62,6 +63,15 @@ overlays/modifications/    # Package overlays (auto-loaded)
 
 pkgs/                      # Custom package definitions
 ```
+
+### Disko (Declarative Disk Management)
+
+Disk layouts are declared with [disko](https://github.com/nix-community/disko). Currently used on thinkpad-x1-g3 in **adoption mode** (manages mount configuration only — never run `disko format` on an existing disk).
+
+- Flake input: `inputs.disko`
+- NixOS module: `inputs.disko.nixosModules.disko` (imported in host `default.nix`)
+- Disk config: `hosts/{hostname}/disk-config.nix`
+- Disko replaces `fileSystems.*` and `swapDevices` in `hardware-configuration.nix`; those entries should be removed when adopting disko
 
 ### Key Patterns
 
