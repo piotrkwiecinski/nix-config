@@ -138,20 +138,34 @@
   nix = {
     settings = {
       auto-optimise-store = true;
+      max-jobs = 4;
+      cores = 4;
+      max-substitution-jobs = 32;
+      http-connections = 50;
+      connect-timeout = 5;
+      stalled-download-timeout = 15;
+      download-attempts = 3;
+      narinfo-cache-negative-ttl = 300;
       extra-substituters = [
-        "https://emacs-ci.cachix.org"
-        "https://devenv.cachix.org"
-        "https://nix-community.cachix.org"
+        "https://nix-community.cachix.org?priority=41"
+        "https://emacs-ci.cachix.org?priority=42"
+        "https://devenv.cachix.org?priority=43"
       ];
       extra-trusted-public-keys = [
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
       ];
+      flake-registry = "";
       keep-outputs = true;
       keep-derivations = true;
       experimental-features = "nix-command flakes";
     };
+    daemonCPUSchedPolicy = "batch";
+    daemonIOSchedClass = "best-effort";
+    daemonIOSchedPriority = 4;
+    channel.enable = false;
+    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
     gc = {
       automatic = true;
       dates = "weekly";
