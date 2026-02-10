@@ -358,7 +358,7 @@
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
     exporter = {
       enable = true;
-      onCalendar = "daily";
+      onCalendar = "*-*-* 23:00:00";
     };
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
