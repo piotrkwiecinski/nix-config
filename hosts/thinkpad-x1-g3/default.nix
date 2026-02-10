@@ -214,16 +214,13 @@
         "wlp0s20f3"
         "docker0"
       ];
-      bind-interfaces = true;
+      bind-dynamic = true;
       address = [
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
       ];
     };
   };
-
-  systemd.services.dnsmasq.requires = [ "docker.service" ];
-  systemd.services.dnsmasq.after = [ "docker.service" ];
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
@@ -287,7 +284,10 @@
       ;
   };
 
-  virtualisation.docker.enable = true;
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
   users.extraGroups.docker.members = [ "piotr" ];
 
   services.traefik = {
@@ -343,7 +343,7 @@
     description = "Create local-dev-proxy Docker network";
     after = [ "docker.service" ];
     requires = [ "docker.service" ];
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = lib.mkForce [ "docker.service" ];
     path = [ pkgs.docker ];
     script = ''
       docker network inspect local-dev-proxy >/dev/null 2>&1 || docker network create local-dev-proxy
