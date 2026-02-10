@@ -57,19 +57,29 @@
     "nvidia_drm.fbdev=1"
     "i915.enable_psr=0" # Prevents flickering on ThinkPad X1
     "i915.enable_fbc=1" # Framebuffer compression for power saving
+    "quiet"
+    "loglevel=3"
+    "systemd.show_status=auto"
+    "rd.udev.log_level=3"
   ];
 
-  boot.initrd.kernelModules = [
+  # NVIDIA modules load during normal boot (not initrd) -- Intel iGPU
+  # drives the display in PRIME offload mode, so early KMS is unnecessary.
+  boot.initrd.kernelModules = lib.mkForce [ ];
+  boot.kernelModules = [
     "nvidia"
     "nvidia_modeset"
     "nvidia_uvm"
     "nvidia_drm"
   ];
 
+  boot.consoleLogLevel = 0;
+
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 3;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.timeout = 0;
 
   zramSwap = {
     enable = true;
@@ -118,6 +128,8 @@
     };
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
+
+  systemd.services.NetworkManager-wait-online.enable = false;
 
   # Enable networking
   networking.networkmanager = {
@@ -192,6 +204,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.browsed.enable = false;
 
   services.dnsmasq = {
     enable = true;
