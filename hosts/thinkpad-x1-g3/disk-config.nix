@@ -44,6 +44,10 @@
               subvolumes = {
                 "@" = {
                   mountpoint = "/";
+                  mountOptions = [
+                    "noatime"
+                    "compress=zstd:1"
+                  ];
                 };
               };
             };
@@ -57,18 +61,30 @@
   fileSystems."/data/backups" = {
     device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
     fsType = "btrfs";
-    options = [ "subvol=@backups" ];
+    options = [
+      "subvol=@backups"
+      "noatime"
+      "compress=zstd:3"
+    ];
   };
 
   fileSystems."/data/shared" = {
     device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
     fsType = "btrfs";
-    options = [ "subvol=@shared" ];
+    options = [
+      "subvol=@shared"
+      "noatime"
+      "compress=zstd:3"
+    ];
   };
 
   fileSystems."/data/media" = {
     device = "/dev/disk/by-uuid/d83ca419-d19d-428d-a89c-e6b80cad73d4";
     fsType = "btrfs";
-    options = [ "subvol=@media" ];
+    options = [
+      "subvol=@media"
+      "noatime"
+      "compress=zstd:3"
+    ];
   };
 }
