@@ -257,7 +257,7 @@
   services.pulseaudio.enable = false;
   hardware.nvidia = {
     open = false;
-    nvidiaPersistenced = true; # Faster GPU wake-up
+    nvidiaPersistenced = false; # Disabled: allows GPU D3 sleep with finegrained PM
 
     powerManagement = {
       enable = true;
@@ -301,9 +301,6 @@
   };
 
   environment.sessionVariables = {
-    GBM_BACKEND = "nvidia-drm";
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
-
     NVD_BACKEND = "direct";
   };
 
