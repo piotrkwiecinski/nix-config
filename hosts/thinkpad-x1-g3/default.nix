@@ -221,6 +221,14 @@
     user = "piotr";
   };
 
+  services.gnome.localsearch.enable = false;
+  services.gnome.tinysparql.enable = false;
+  services.gnome.gnome-browser-connector.enable = false;
+  services.gnome.gnome-initial-setup.enable = false;
+  services.gnome.gnome-remote-desktop.enable = false;
+  services.gnome.rygel.enable = false;
+  services.gnome.gnome-user-share.enable = false;
+
   systemd.services."getty@tty1".enable = false;
   systemd.services."autovt@tty1".enable = false;
 
@@ -294,7 +302,6 @@
 
   xdg.portal = {
     enable = true;
-    wlr.enable = true;
     extraPortals = with pkgs; [
       xdg-desktop-portal-gnome
     ];
