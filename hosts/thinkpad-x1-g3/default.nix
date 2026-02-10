@@ -301,6 +301,50 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+
+    extraConfig.pipewire."92-low-latency" = {
+      "context.properties" = {
+        "default.clock.rate" = 48000;
+        "default.clock.quantum" = 256;
+        "default.clock.min-quantum" = 64;
+        "default.clock.max-quantum" = 1024;
+      };
+    };
+
+    extraConfig.pipewire-pulse."92-low-latency" = {
+      "pulse.properties" = {
+        "pulse.min.req" = "64/48000";
+        "pulse.default.req" = "256/48000";
+        "pulse.max.req" = "1024/48000";
+        "pulse.min.quantum" = "64/48000";
+        "pulse.max.quantum" = "1024/48000";
+      };
+    };
+
+    wireplumber.extraConfig."99-disable-suspend" = {
+      "monitor.alsa.rules" = [
+        {
+          matches = [
+            { "node.name" = "~alsa_output.*"; }
+          ];
+          actions = {
+            update-props = {
+              "session.suspend-timeout-seconds" = 0;
+            };
+          };
+        }
+        {
+          matches = [
+            { "node.name" = "~alsa_input.*"; }
+          ];
+          actions = {
+            update-props = {
+              "session.suspend-timeout-seconds" = 0;
+            };
+          };
+        }
+      ];
+    };
   };
 
   hardware.graphics = {
