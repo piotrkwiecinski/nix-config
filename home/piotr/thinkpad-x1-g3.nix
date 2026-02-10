@@ -52,6 +52,34 @@
   # Disable gnome-keyring entirely - GPG agent handles SSH, KeePassXC handles secrets
   services.gnome-keyring.enable = false;
 
+  dconf.settings = {
+    "org/gnome/mutter" = {
+      experimental-features = [
+        "variable-refresh-rate"
+      ];
+    };
+
+    "org/gnome/desktop/interface" = {
+      enable-animations = false;
+    };
+
+    "org/gnome/software" = {
+      download-updates = false;
+      allow-updates = false;
+    };
+
+    "org/gnome/desktop/search-providers" = {
+      disabled = [
+        "org.gnome.Nautilus.desktop"
+        "org.gnome.Calendar.desktop"
+        "org.gnome.Contacts.desktop"
+        "org.gnome.Characters.desktop"
+        "org.gnome.clocks.desktop"
+        "org.gnome.Software.desktop"
+      ];
+    };
+  };
+
   programs.gh = {
     enable = true;
     package = pkgs.unstable.gh;
