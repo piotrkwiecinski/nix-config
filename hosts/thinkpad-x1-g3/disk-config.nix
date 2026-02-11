@@ -49,6 +49,13 @@
                     "compress=zstd:1"
                   ];
                 };
+                "@var-log" = {
+                  mountpoint = "/var/log";
+                  mountOptions = [
+                    "noatime"
+                    "compress=zstd:1"
+                  ];
+                };
               };
             };
           };
