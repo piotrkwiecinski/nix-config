@@ -1,6 +1,5 @@
 {
   pkgs,
-  config,
   ...
 }:
 {
@@ -18,12 +17,8 @@
     jetbrains-mono
   ];
 
-  xdg.configFile."emacs/load-path.el".source = pkgs.writeText "load-path.el" ''
-    (let ((default-directory (file-name-as-directory
-                           "${config.programs.emacs.finalPackage.deps}/share/emacs/site-lisp/"))
-          (normal-top-level-add-subdirs-inode-list nil))
-    (normal-top-level-add-subdirs-to-load-path))
-  '';
+  xdg.configFile."emacs/init.el".source = ./init.el;
+  xdg.configFile."emacs/early-init.el".source = ./early-init.el;
 
   programs.emacs.enable = true;
   programs.emacs.package = (
@@ -36,18 +31,12 @@
         compat
         composer
         consult
-        consult-yasnippet
-        copilot
         corfu
         dap-mode
         debbugs
-        diminish
         dired-hacks-utils
-        dired-preview
         dired-subtree
-        direnv
         docker
-        doom-modeline
         editorconfig
         eglot
         eldoc
@@ -71,7 +60,6 @@
         nerd-icons-dired
         nerd-icons-corfu
         no-littering
-        notmuch
         nix-mode
         nix-ts-mode
         lsp-mode
@@ -79,10 +67,8 @@
         olivetti
         orderless
         org-modern
-        org-present
         org-roam
         org-roam-ui
-        org-transclusion
         org-web-tools
         package-lint
         paredit
