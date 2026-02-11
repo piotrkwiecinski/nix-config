@@ -1,7 +1,7 @@
 #+title: My NixOS config
 
 ** Overview
-Multi-host NixOS configuration for my personal devices.
+Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-parts][flake-parts]] for modular management. Uses three nixpkgs channels (stable, unstable, master), [[https://github.com/nix-community/home-manager][home-manager]] for user environments, [[https://github.com/Mic92/sops-nix][sops-nix]] for secrets, and [[https://github.com/nix-community/disko][disko]] for declarative disk layouts.
 
 ** Host specification
 
@@ -13,14 +13,17 @@ Multi-host NixOS configuration for my personal devices.
 *** homeserver services
 - [[https://nextcloud.com/][Nextcloud]] - File sync, calendar, contacts
 - [[https://www.home-assistant.io/][Home Assistant]] - Home automation
-- [[https://github.com/0xERR0R/blocky][Blocky]] - DNS ad blocker
+- [[https://github.com/0xERR0R/blocky][Blocky]] - DNS ad blocker (Pi-hole alternative)
+- [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management with automated backups to thinkpad
 - [[https://calibre-ebook.com/][Calibre]] - E-book library server
-- [[https://tailscale.com/][Tailscale]] - VPN with HTTPS reverse proxy via Traefik
+- [[https://tailscale.com/][Tailscale]] - VPN with auto-provisioned Let's Encrypt HTTPS via nginx reverse proxy
 
 *** thinkpad-x1-g3 services
 - [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for Docker-based development
 - [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Local DNS for =.test= and =.loc= development domains
-- [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (adoption mode)
+- [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (btrfs, adoption mode)
+- YubiKey PAM authentication (challenge-response)
+- NVIDIA PRIME offload (Intel iGPU primary, NVIDIA dGPU on demand)
 
 ** Usage
 
@@ -37,6 +40,9 @@ nix-switch
 
 # Rebuild home-manager configuration
 home-switch
+
+# Format all Nix files
+nix fmt
 #+end_src
 
 *** Remote Deployment
@@ -49,13 +55,92 @@ nixos-rebuild switch --flake ".#homeserver" \
   --build-host localhost
 #+end_src
 
+** Adding a New Host
+
+1. Create =hosts/{hostname}/default.nix= with system configuration. This file should import:
+   - =inputs.home-manager.nixosModules.home-manager=
+   - =./hardware-configuration.nix=
+   - =../../users/piotr= (user account module)
+   - Any relevant =inputs.private-nix-config.nixosModules.*= for secrets
+   - Optionally: =inputs.hardware.nixosModules.{profile}=, =inputs.disko.nixosModules.disko=
+
+2. Create =hosts/{hostname}/hardware-configuration.nix= (generate with =nixos-generate-config= or copy from an existing host)
+
+3. Create =home/piotr/{hostname}.nix= — this is the home-manager entry point for the host:
+   - Always import =./global= for shared config (git, nix settings)
+   - Selectively import features: =./features/emacs=, =./features/direnv.nix=, =./features/desktop/common/firefox.nix=
+   - For servers: disable desktop features with =lib.mkForce false=
+
+4. Register the host in =parts/nixos.nix=:
+   #+begin_src nix
+   new-host = mkHost { hostname = "new-host"; };
+   # For aarch64: mkHost { hostname = "new-host"; system = "aarch64-linux"; };
+   #+end_src
+
+5. Register the home config in =parts/home-manager.nix=:
+   #+begin_src nix
+   "piotr@new-host" = mkHome { username = "piotr"; hostname = "new-host"; };
+   #+end_src
+
+6. Stage all new files: =git add hosts/new-host/ home/piotr/new-host.nix= (flakes only see git-tracked files)
+
+7. Build: =nixos-rebuild switch --flake ".#new-host"=
+
+** Raspberry Pi Setup
+
+The homeserver runs on a Raspberry Pi 4B booting from a USB SSD.
+
+*** Initial SD Card Image
+
+Build the SD card image from an x86_64 machine (thinkpad has QEMU aarch64 emulation enabled):
+
+#+begin_src bash
+nix build .#nixosConfigurations.homeserver.config.system.build.sdImage
+#+end_src
+
+Flash the resulting image from =result/sd-image/= to an SD card using =dd= or a tool like Etcher.
+
+*** Boot and Migrate to USB SSD
+
+1. Boot the Pi from the SD card
+2. Copy the root filesystem to the USB SSD (label it =NIXOS_SD= to match =hardware-configuration.nix=)
+3. Copy the boot partition to the SSD (label it =FIRMWARE=)
+4. Update the Pi's EEPROM to prefer USB boot: =sudo raspi-config= or =rpi-eeprom-config=
+
+*** Hardware Configuration
+
+The homeserver uses =nixos-hardware.nixosModules.raspberry-pi-4= and the standard =sd-image-aarch64= installer module. Key details:
+
+- Boot loader: =generic-extlinux-compatible= (no GRUB)
+- Root filesystem: ext4 on USB SSD (labeled =NIXOS_SD=)
+- Boot partition: vfat (labeled =FIRMWARE=) mounted at =/boot/firmware=
+- 4GB swap file at =/swapfile=
+- =max-jobs = 1= locally; heavy builds are delegated to thinkpad via distributed builds
+
+*** Deploying Updates
+
+From the thinkpad (which cross-compiles via QEMU):
+
+#+begin_src bash
+nixos-rebuild switch --flake ".#homeserver" \
+  --target-host piotr@homeserver \
+  --build-host localhost
+#+end_src
+
+Or from the homeserver itself (builds remotely on thinkpad via distributed builds):
+
+#+begin_src bash
+sudo nixos-rebuild switch --flake "/home/piotr/projects/nix-config#homeserver"
+#+end_src
+
 ** Remote Builds
 
 The homeserver (aarch64) delegates builds to thinkpad-x1-g3 (x86_64) using distributed builds with QEMU emulation.
 
 - A =builder= user on thinkpad accepts SSH connections from homeserver
 - The builder SSH key is managed via sops-nix and deployed to =/etc/nix/builder_key=
-- Thinkpad is configured as a trusted builder in homeserver's nix settings
+- Thinkpad enables =boot.binfmt.emulatedSystems = [ "aarch64-linux" ]= for cross-compilation
+- Homeserver sets =max-jobs = 1= locally so trivial builds happen on-device
 
 ** Secrets Management
 
@@ -71,6 +156,29 @@ Secrets are managed via [[https://github.com/Mic92/sops-nix][sops-nix]] with age
 #+begin_src bash
 cd ~/development/nix-config-private
 sops secrets/homeserver.yaml
+#+end_src
+
+** Directory Layout
+
+#+begin_src
+hosts/                     # Per-host NixOS configurations
+  {hostname}/
+    default.nix            # Host-specific system config
+    disk-config.nix        # Disko declarative disk layout (optional)
+    hardware-configuration.nix
+
+home/piotr/                # Home-manager configurations
+  global/                  # Shared across all hosts (git, nix settings)
+  features/                # Optional modules (emacs, direnv, firefox)
+  {hostname}.nix           # Host-specific user config
+
+users/piotr/               # User account NixOS module (dynamic hostname-based import)
+
+parts/                     # Flake-parts modules (nixos, home-manager, overlays, dev-shell, formatter, packages)
+
+overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
+
+pkgs/                      # Custom package definitions
 #+end_src
 
 ** Resources
