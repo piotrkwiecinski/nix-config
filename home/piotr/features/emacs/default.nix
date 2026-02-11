@@ -21,67 +21,12 @@
   xdg.configFile."emacs/early-init.el".source = ./early-init.el;
 
   programs.emacs.enable = true;
-  programs.emacs.package = (
-    (pkgs.unstable.emacsPackagesFor pkgs.unstable.emacs30-pgtk).emacsWithPackages (
+  programs.emacs.package = pkgs.unstable.emacsWithPackagesFromUsePackage {
+    config = ./init.el;
+    package = pkgs.unstable.emacs30-pgtk;
+    alwaysEnsure = true;
+    extraEmacsPackages =
       epkgs: with epkgs; [
-        async
-        bats-mode
-        cape
-        csv-mode
-        compat
-        composer
-        consult
-        corfu
-        dap-mode
-        debbugs
-        dired-hacks-utils
-        dired-subtree
-        docker
-        editorconfig
-        eglot
-        eldoc
-        elfeed
-        elfeed-tube
-        elfeed-tube-mpv
-        embark
-        embark-consult
-        emms
-        envrc
-        exec-path-from-shell
-        forge
-        graphql-ts-mode
-        hide-mode-line
-        marginalia
-        markdown-mode
-        modus-themes
-        mpv
-        mixed-pitch
-        nerd-icons
-        nerd-icons-dired
-        nerd-icons-corfu
-        no-littering
-        nix-mode
-        nix-ts-mode
-        lsp-mode
-        ob-php
-        olivetti
-        orderless
-        org-modern
-        org-roam
-        org-roam-ui
-        org-web-tools
-        package-lint
-        paredit
-        pdf-tools
-        php-mode
-        phpunit
-        psysh
-        rainbow-mode
-        rainbow-delimiters
-        rg
-        rustic
-        spacious-padding
-        sxhkdrc-mode
         (treesit-grammars.with-grammars (ts: [
           ts.tree-sitter-bash
           ts.tree-sitter-css
@@ -101,17 +46,9 @@
           ts.tree-sitter-html
           ts.tree-sitter-phpdoc
         ]))
-        vertico
-        yasnippet
-        yasnippet-capf
-        web-mode
-        yaml-mode
-        uuidgen
         pkgs.claude-code-ide
-        vterm
-      ]
-    )
-  );
+      ];
+  };
 
   services.emacs = {
     enable = true;
