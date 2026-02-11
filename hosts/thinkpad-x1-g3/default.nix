@@ -65,7 +65,8 @@
 
   # NVIDIA modules load during normal boot (not initrd) -- Intel iGPU
   # drives the display in PRIME offload mode, so early KMS is unnecessary.
-  boot.initrd.kernelModules = lib.mkForce [ ];
+  # Note: Do not use mkForce here as disko needs to add btrfs module for root mount.
+  boot.initrd.kernelModules = [ ];
   boot.kernelModules = [
     "nvidia"
     "nvidia_modeset"
