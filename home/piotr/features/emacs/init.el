@@ -265,7 +265,10 @@
   (load-theme 'modus-vivendi :no-confirm))
 
 (use-package nerd-icons)
-(add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
+(use-package nerd-icons-corfu
+  :after (nerd-icons corfu)
+  :config
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
 (use-package nerd-icons-dired
   :hook
