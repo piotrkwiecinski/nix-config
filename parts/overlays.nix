@@ -20,6 +20,7 @@ in
       pkgs-unstable = import inputs.nixpkgs-unstable {
         inherit (final.stdenv.hostPlatform) system;
         config.allowUnfree = true;
+        overlays = [ inputs.emacs-overlay.overlays.default ];
       };
       additions = import ../pkgs {
         pkgs = final.pkgs;
