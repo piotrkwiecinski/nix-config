@@ -41,6 +41,14 @@ The configuration uses flake-parts for composability. Main entry point is `flake
 - `parts/packages.nix` - Custom packages from `pkgs/`
 - `parts/formatter.nix` - Treefmt configuration
 
+**Helper signatures:**
+```nix
+mkHost { hostname = "name"; system ? "x86_64-linux"; }  # imports hosts/{hostname}/
+mkHome { username = "name"; hostname = "name"; system ? "x86_64-linux"; }  # imports home/{username}/{hostname}.nix
+```
+
+Both helpers pass `inputs` and `outputs` via `specialArgs`/`extraSpecialArgs`.
+
 ### Directory Layout
 
 ```
@@ -72,6 +80,25 @@ Disk layouts are declared with [disko](https://github.com/nix-community/disko). 
 - NixOS module: `inputs.disko.nixosModules.disko` (imported in host `default.nix`)
 - Disk config: `hosts/{hostname}/disk-config.nix`
 - Disko replaces `fileSystems.*` and `swapDevices` in `hardware-configuration.nix`; those entries should be removed when adopting disko
+
+### Adding a New Host
+
+1. Create `hosts/{hostname}/default.nix` (imports home-manager, hardware, user module, private-nix-config modules)
+2. Create `hosts/{hostname}/hardware-configuration.nix`
+3. Create `home/piotr/{hostname}.nix` (imports `./global` and desired features)
+4. Add `mkHost` call in `parts/nixos.nix`
+5. Add `mkHome` call in `parts/home-manager.nix`
+6. `git add` all new files before building
+
+### Adding Overlays and Packages
+
+**Overlay**: Create `overlays/modifications/{name}.nix` with signature:
+```nix
+{ inputs }: final: prev: { /* modifications */ }
+```
+Files are auto-discovered; no registration needed.
+
+**Custom package**: Add to `pkgs/default.nix`. Each package receives `pkgs` and `pkgs-unstable`. Packages are auto-loaded into the overlay.
 
 ### Key Patterns
 
@@ -107,6 +134,10 @@ The homeserver (aarch64) delegates builds to thinkpad-x1-g3 (x86_64) using:
 - QEMU emulation support on thinkpad
 - `builder` user accepting SSH connections
 - Builder SSH key managed via sops-nix at `/etc/nix/builder_key`
+
+### Project Tracking
+
+Planned changes are tracked in `issues/` as markdown files (`{number}-{slug}.md`). Completed issues are deleted.
 
 ## Code Style
 
