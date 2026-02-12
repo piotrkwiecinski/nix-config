@@ -225,11 +225,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1770677335,
-        "narHash": "sha256-N3HKHwsILVLErDgfvlvBWw8JguCSqnfJBjDtyz3z5rY=",
+        "lastModified": 1770918165,
+        "narHash": "sha256-CkBXJos25y/+DX1YvW71TNRXdN6kz6Wq19f3tvsyUxg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b29d602e857b09ef00706f894c8c6f1ed5b6c439",
+        "rev": "c7662e1dde5d15f099ed5adbca9d0c2af8d90f06",
         "type": "github"
       },
       "original": {
@@ -311,11 +311,11 @@
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1770561563,
-        "narHash": "sha256-aI/ZPbSRMq8EDCAdiuSctQkmOor9/Lz3hMe0xjO0NM8=",
+        "lastModified": 1770918684,
+        "narHash": "sha256-qbIC61y8h2O4t7SliCQ4L/w15BLhRH240PROvlSxaYM=",
         "ref": "refs/heads/main",
-        "rev": "6816a90f4771a81b421fb738e26a1fda9f926aa7",
-        "revCount": 38,
+        "rev": "6e13d7a698db1e90a43e3f1cf2892f2550b650fa",
+        "revCount": 39,
         "type": "git",
         "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
