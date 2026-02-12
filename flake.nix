@@ -48,6 +48,7 @@
         ./parts/packages.nix
         ./parts/nixos.nix
         ./parts/home-manager.nix
+        ./parts/iso.nix
       ];
 
       systems = import inputs.systems;

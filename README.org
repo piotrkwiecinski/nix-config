@@ -9,6 +9,7 @@ Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-part
 | homelab        | Workstation               | Desktop | x86_64-linux  |
 | thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux  |
 | homeserver     | Raspberry Pi 4            | Server  | aarch64-linux |
+| iso            | LiveCD for setup/restore  | ISO     | x86_64-linux  |
 
 *** homeserver services
 - [[https://nextcloud.com/][Nextcloud]] - File sync, calendar, contacts
@@ -85,6 +86,33 @@ nixos-rebuild switch --flake ".#homeserver" \
 6. Stage all new files: =git add hosts/new-host/ home/piotr/new-host.nix= (flakes only see git-tracked files)
 
 7. Build: =nixos-rebuild switch --flake ".#new-host"=
+
+** LiveCD ISO
+
+A bootable LiveCD ISO for new host setup (disk partitioning, =nixos-install=) and configuration restore (btrfs maintenance, nix store migration).
+
+*** Building the ISO
+
+#+begin_src bash
+nix build .#nixosConfigurations.iso.config.system.build.isoImage
+#+end_src
+
+The ISO is written to =result/iso/nixos-setup.iso=.
+
+*** Writing to USB
+
+#+begin_src bash
+dd if=result/iso/nixos-setup.iso of=/dev/sdX bs=4M status=progress
+#+end_src
+
+*** Included Tools
+
+The ISO boots into a GNOME desktop with:
+- *Editor & AI*: Emacs, Claude Code, git
+- *Nix tooling*: nil (LSP), nix-output-monitor, nixfmt
+- *Disk & filesystem*: disko, btrfs-progs, parted, gptfdisk, dosfstools
+- *Secrets*: sops, age, ssh-to-age
+- *Utilities*: ripgrep, htop, jq, rsync, pciutils, usbutils
 
 ** Raspberry Pi Setup
 
@@ -174,7 +202,7 @@ home/piotr/                # Home-manager configurations
 
 users/piotr/               # User account NixOS module (dynamic hostname-based import)
 
-parts/                     # Flake-parts modules (nixos, home-manager, overlays, dev-shell, formatter, packages)
+parts/                     # Flake-parts modules (nixos, home-manager, iso, overlays, dev-shell, formatter, packages)
 
 overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
 
