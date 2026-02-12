@@ -315,8 +315,6 @@ $0`(yas-escape-text yas-selected-text)`")
   "Replace text in yasnippet template."
   (yas-expand-snippet (buffer-string) (point-min) (point-max)))
 
-(use-package sxhkdrc-mode)
-
 (use-package envrc
   :init
   (envrc-global-mode))
@@ -579,9 +577,6 @@ $0`(yas-escape-text yas-selected-text)`")
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
   (require 'org-protocol))
 
-(use-package org-web-tools
-  :after org)
-
 (use-package org-roam
       :if (file-directory-p "~/projects/second-brain/")
       :after org
@@ -644,25 +639,8 @@ $0`(yas-escape-text yas-selected-text)`")
   :config
   (claude-code-ide-emacs-tools-setup))
 
-(defun myip ()
-  "Displays current IP address."
-  (interactive)
-  (let ((output-buffer-name "*MyIP Output*"))
-    (async-shell-command "dig +short myip.opendns.com @resolver1.opendns.com" output-buffer-name)))
-
-(defun pk-myip ()
-  "Returns my current IP address."
-  (let ((output (shell-command-to-string "dig +short myip.opendns.com @resolver1.opendns.com")))
-    (string-trim output)))
-
-(defun pk-myip-abbrev ()
-  "Returns my current IP address for abbrev mode."
-  (insert (pk-myip)))
-
 (use-package abbrev
-  :hook ((prog-mode text-mode) . abbrev-mode)
-  :init
-  (define-abbrev global-abbrev-table "myip" "" 'pk-myip-abbrev))
+  :hook ((prog-mode text-mode) . abbrev-mode))
 
 (use-package work
   :load-path "lisp-private")
