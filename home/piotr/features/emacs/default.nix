@@ -15,6 +15,7 @@
     unstable.phpactor
     lua-language-server
     jetbrains-mono
+    pandoc
   ];
 
   xdg.configFile."emacs/init.el".source = ./init.el;
