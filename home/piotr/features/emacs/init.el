@@ -461,6 +461,31 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package yaml-mode)
 
+;;;;; Markdown
+
+(use-package markdown-mode
+  :custom
+  (markdown-command "pandoc")
+  (markdown-xhtml-header-content
+   "<script type=\"module\">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: false });
+document.addEventListener('DOMContentLoaded', () => {
+  for (const code of document.querySelectorAll('code.language-mermaid, code.sourceCode.mermaid')) {
+    const pre = document.createElement('pre');
+    pre.className = 'mermaid';
+    pre.textContent = code.textContent;
+    const container = code.closest('.sourceCode') || code.parentElement;
+    container.replaceWith(pre);
+  }
+  for (const pre of document.querySelectorAll('pre.mermaid')) {
+    const code = pre.querySelector('code');
+    if (code) pre.textContent = code.textContent;
+  }
+  mermaid.run();
+});
+</script>"))
+
 ;;; Tools
 
 (use-package man
