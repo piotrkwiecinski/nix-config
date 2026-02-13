@@ -18,7 +18,7 @@ nix develop --command bash -c 'nix-switch'    # Run a dev shell command directly
 nix develop                                    # Or enter the shell interactively
 nix-switch               # Rebuild NixOS: sudo nixos-rebuild switch --flake ".#$(hostname)"
 home-switch              # Rebuild home-manager: home-manager switch -b backup --flake ".#$(whoami)@$(hostname)"
-treefmt                  # Format all Nix files with nixfmt
+nix fmt                  # Format all Nix files with nixfmt
 ```
 
 Remote deployment to homeserver:
