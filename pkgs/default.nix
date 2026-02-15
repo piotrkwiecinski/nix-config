@@ -1,5 +1,54 @@
 { pkgs, pkgs-unstable }:
 {
+  dm = pkgs.writeShellApplication {
+    name = "dm";
+    text = ''
+      find_compose_dir() {
+        local dir
+        dir=$(pwd)
+
+        while [ "$dir" != "/" ]; do
+          if [ -f "$dir/compose.yaml" ] || [ -f "$dir/docker-compose.yml" ]; then
+            echo "$dir"
+            return 0
+          fi
+          dir=$(dirname "$dir")
+        done
+
+        return 1
+      }
+
+      docker_root=$(find_compose_dir) || {
+        echo "No compose.yaml or docker-compose.yml file found."
+        exit 1
+      }
+
+      docker_bin_dir="''${docker_root}/bin"
+
+      if [[ "$#" -eq 0 ]]; then
+        echo "dm [COMMAND]"
+        echo ""
+        echo "Available commands:"
+        echo ""
+        ls -1 "$docker_bin_dir"
+        exit 0
+      fi
+
+      command="$1"
+
+      if [ ! -f "''${docker_bin_dir}/''${command}" ]; then
+        echo "Command ''${command} not found."
+        ls -1 "$docker_bin_dir"
+        exit 1
+      fi
+
+      shift
+      pushd "''${docker_root}"
+      ./bin/"''${command}" "''${@}"
+      popd
+    '';
+  };
+
   claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
     pname = "claude-code-ide";
     version = "0-unstable-2026-02-02";
