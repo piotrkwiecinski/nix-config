@@ -7,7 +7,7 @@
         local dir
         dir=$(pwd)
 
-        while [ "$dir" != "/" ]; do
+        while [ "$dir" != "$HOME" ] && [ "$dir" != "/" ]; do
           if [ -f "$dir/compose.yaml" ] || [ -f "$dir/docker-compose.yml" ]; then
             echo "$dir"
             return 0
