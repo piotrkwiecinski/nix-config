@@ -100,6 +100,7 @@
 
   home.packages = builtins.attrValues {
     inherit (pkgs)
+      dm
       fira-code
       fira-code-symbols
       htop
@@ -148,7 +149,6 @@
     shellAliases = {
       "bhc" = "bluetoothctl connect 00:16:94:22:81:6C";
       "c2" = "dm composer";
-      "dm" = "~/bin/dm";
       "m2" = "dm magento";
       "mr2" = "dm n98-magerun2";
       "ls" = "ls --color=auto";
