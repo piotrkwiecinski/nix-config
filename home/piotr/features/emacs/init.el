@@ -347,7 +347,23 @@ $0`(yas-escape-text yas-selected-text)`")
    :hook (lsp-completion-mode . my/lsp-mode-setup-completion)
    :hook (php-ts-mode . lsp-deferred))
 
-(use-package dap-mode)
+(use-package dap-mode
+  :config
+  (dap-auto-configure-mode))
+
+(use-package dap-php
+  :after dap-mode
+  :custom
+  (dap-php-debug-path (locate-user-emacs-file "dap-php-debug"))
+  (dap-php-debug-program `("node" ,(expand-file-name "out/phpDebug.js"
+                                                      (locate-user-emacs-file "dap-php-debug"))))
+  :config
+  (dap-register-debug-template "PHP Listen for Xdebug"
+                               (list :type "php"
+                                     :request "launch"
+                                     :name "PHP Listen for Xdebug"
+                                     :port 9003
+                                     :stopOnEntry nil)))
 
 (defun project-environment-command (command)
   "Run project environment related command."
