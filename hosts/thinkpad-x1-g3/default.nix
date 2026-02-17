@@ -388,7 +388,7 @@
     enable = true;
     group = "docker";
 
-    staticConfigOptions = {
+    staticConfigFile = (pkgs.formats.toml { }).generate "traefik-static.toml" {
       api = {
         insecure = true;
         dashboard = true;
@@ -408,6 +408,10 @@
         network = "local-dev-proxy";
         exposedByDefault = false;
       };
+      providers.file = {
+        directory = "/home/piotr/.config/traefik/dynamic";
+        watch = true;
+      };
       log.level = "info";
       global = {
         checkNewVersion = false;
@@ -415,21 +419,6 @@
       };
       serversTransport.insecureSkipVerify = true;
       accessLog.filePath = "/var/lib/traefik/access.log";
-    };
-
-    dynamicConfigOptions = {
-      tls = {
-        stores.default.defaultCertificate = {
-          certFile = config.sops.secrets."traefik-cert".path;
-          keyFile = config.sops.secrets."traefik-key".path;
-        };
-        certificates = [
-          {
-            certFile = config.sops.secrets."traefik-cert".path;
-            keyFile = config.sops.secrets."traefik-key".path;
-          }
-        ];
-      };
     };
   };
 
@@ -455,6 +444,10 @@
     ];
     requires = [ "docker.service" ];
     wants = [ "docker-network-local-dev-proxy.service" ];
+    serviceConfig = {
+      ProtectHome = lib.mkForce "tmpfs";
+      BindReadOnlyPaths = [ "/home/piotr/.config/traefik/dynamic" ];
+    };
   };
 
   programs.firefox.enable = true;
@@ -521,9 +514,24 @@
     "builder"
   ];
 
-  systemd.tmpfiles.rules = [
-    "d /data/backups/paperless 0755 builder users -"
-  ];
+  systemd.tmpfiles.rules =
+    let
+      traefikTlsConfig = pkgs.writeText "traefik-tls.toml" ''
+        [[tls.certificates]]
+        certFile = "${config.sops.secrets."traefik-cert".path}"
+        keyFile = "${config.sops.secrets."traefik-key".path}"
+
+        [tls.stores.default.defaultCertificate]
+        certFile = "${config.sops.secrets."traefik-cert".path}"
+        keyFile = "${config.sops.secrets."traefik-key".path}"
+      '';
+    in
+    [
+      "d /data/backups/paperless 0755 builder users -"
+      "d /home/piotr/.config/traefik 0755 piotr users -"
+      "d /home/piotr/.config/traefik/dynamic 0755 piotr users -"
+      "L+ /home/piotr/.config/traefik/dynamic/tls.toml - - - - ${traefikTlsConfig}"
+    ];
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
