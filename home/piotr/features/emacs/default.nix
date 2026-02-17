@@ -20,6 +20,8 @@
 
   xdg.configFile."emacs/init.el".source = ./init.el;
   xdg.configFile."emacs/early-init.el".source = ./early-init.el;
+  xdg.configFile."emacs/dap-php-debug".source =
+    "${pkgs.vscode-extensions.xdebug.php-debug}/share/vscode/extensions/xdebug.php-debug";
 
   programs.emacs.enable = true;
   programs.emacs.package = pkgs.unstable.emacsWithPackagesFromUsePackage {
