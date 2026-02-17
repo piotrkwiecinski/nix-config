@@ -76,4 +76,6 @@
     ];
     meta.homepage = "https://github.com/manzaltu/claude-code-ide.el";
   };
+
+  magento-cache-clean = pkgs.callPackage ./magento-cache-clean.nix { };
 }
