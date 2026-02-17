@@ -101,6 +101,7 @@
   home.packages = builtins.attrValues {
     inherit (pkgs)
       dm
+      magento-cache-clean
       fira-code
       fira-code-symbols
       htop
