@@ -48,7 +48,7 @@
   home-manager.backupFileExtension = "backup";
   home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_6_18;
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
   boot.binfmt.registrations.aarch64-linux.fixBinary = true;
 
