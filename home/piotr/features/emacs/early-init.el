@@ -13,6 +13,7 @@
 (push '(tool-bar-lines . 0) default-frame-alist)
 (push '(menu-bar-lines . 0) default-frame-alist)
 (push '(vertical-scroll-bars) default-frame-alist)
+(push '(undecorated . t) default-frame-alist)
 
 (customize-set-variable 'initial-major-mode 'fundamental-mode)
 ;;; early-init.el ends here
