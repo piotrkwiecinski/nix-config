@@ -222,6 +222,7 @@
   # Enable the GNOME Desktop Environment.
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+  services.desktopManager.cosmic.enable = true;
   environment.gnome.excludePackages = builtins.attrValues {
     inherit (pkgs)
       epiphany
@@ -232,7 +233,7 @@
   };
 
   services.displayManager.autoLogin = {
-    enable = true;
+    enable = false;
     user = "piotr";
   };
 
@@ -243,9 +244,6 @@
   services.gnome.gnome-remote-desktop.enable = false;
   services.gnome.rygel.enable = false;
   services.gnome.gnome-user-share.enable = false;
-
-  systemd.services."getty@tty1".enable = false;
-  systemd.services."autovt@tty1".enable = false;
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -363,6 +361,7 @@
     enable = true;
     extraPortals = with pkgs; [
       xdg-desktop-portal-gnome
+      xdg-desktop-portal-cosmic
     ];
   };
 
