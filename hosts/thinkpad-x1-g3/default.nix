@@ -375,6 +375,7 @@
       libnotify
       yubioath-flutter
       ;
+    inherit (pkgs.master) opencode;
   };
 
   virtualisation.docker = {
