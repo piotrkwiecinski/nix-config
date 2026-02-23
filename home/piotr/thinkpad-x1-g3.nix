@@ -88,6 +88,41 @@
     };
   };
 
+  # opencode local model provider via Ollama.
+  # Models: qwen2.5:3b (fast, in VRAM), translategemma:4b (translation),
+  # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
+  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
+    "$schema" = "https://opencode.ai/config.json";
+    provider.ollama = {
+      npm = "@ai-sdk/openai-compatible";
+      name = "Ollama (local)";
+      options.baseURL = "http://localhost:11434/v1";
+      models = {
+        "qwen2.5:3b" = {
+          name = "Qwen2.5 3B (GPU, fast)";
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
+        "translategemma:4b" = {
+          name = "TranslateGemma 4B (GPU, EN/IT/PL/JA)";
+          limit = {
+            context = 128000;
+            output = 8192;
+          };
+        };
+        "deepseek-r1:7b" = {
+          name = "DeepSeek R1 7B (CPU, reasoning)";
+          limit = {
+            context = 131072;
+            output = 16384;
+          };
+        };
+      };
+    };
+  };
+
   xdg.configFile."autostart/emacsclient.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -146,6 +181,18 @@
   programs.bash = {
     enable = true;
     enableCompletion = true;
+
+    # Source the sops-rendered Ollama env file so OLLAMA_API_KEY is available
+    # to all tools (Claude Code, opencode, shell scripts) in the login session.
+    # OPENAI_API_KEY is also set to the same value because @ai-sdk/openai-compatible
+    # (used by opencode) falls back to OPENAI_API_KEY when no apiKey is set in config.
+    profileExtra = ''
+      if [ -f "$HOME/.config/ollama/env" ]; then
+        . "$HOME/.config/ollama/env"
+        export OLLAMA_API_KEY
+        export OPENAI_API_KEY="$OLLAMA_API_KEY"
+      fi
+    '';
 
     shellAliases = {
       "bhc" = "bluetoothctl connect 00:16:94:22:81:6C";
