@@ -96,7 +96,10 @@
     provider.ollama = {
       npm = "@ai-sdk/openai-compatible";
       name = "Ollama (local)";
-      options.baseURL = "http://localhost:11434/v1";
+      options = {
+        baseURL = "http://localhost:11434/v1";
+        apiKey = "{file:~/.config/ollama/api-key}";
+      };
       models = {
         "qwen2.5:3b" = {
           name = "Qwen2.5 3B (GPU, fast)";
@@ -182,15 +185,13 @@
     enable = true;
     enableCompletion = true;
 
-    # Source the sops-rendered Ollama env file so OLLAMA_API_KEY is available
-    # to all tools (Claude Code, opencode, shell scripts) in the login session.
-    # OPENAI_API_KEY is also set to the same value because @ai-sdk/openai-compatible
-    # (used by opencode) falls back to OPENAI_API_KEY when no apiKey is set in config.
+    # Source the sops-rendered Ollama env file in login shells (terminals,
+    # SSH sessions).  Graphical apps get OLLAMA_API_KEY via the
+    # ollama-env systemd user service instead.
     profileExtra = ''
       if [ -f "$HOME/.config/ollama/env" ]; then
         . "$HOME/.config/ollama/env"
         export OLLAMA_API_KEY
-        export OPENAI_API_KEY="$OLLAMA_API_KEY"
       fi
     '';
 
