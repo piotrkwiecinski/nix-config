@@ -23,6 +23,7 @@ Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-part
 - [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for Docker-based development
 - [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Local DNS for =.test= and =.loc= development domains
 - [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (btrfs, adoption mode)
+- [[https://cosmic.system76.com/][COSMIC]] desktop environment (alongside GNOME)
 - YubiKey PAM authentication (challenge-response)
 - NVIDIA PRIME offload (Intel iGPU primary, NVIDIA dGPU on demand)
 
@@ -206,7 +207,7 @@ parts/                     # Flake-parts modules (nixos, home-manager, iso, over
 
 overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
 
-pkgs/                      # Custom package definitions
+pkgs/                      # Custom package definitions (dm, claude-code-ide, magento-cache-clean)
 #+end_src
 
 ** Resources

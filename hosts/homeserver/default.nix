@@ -103,11 +103,15 @@
       53 # DNS (Blocky)
       80 # HTTP (nginx/Nextcloud LAN)
       443 # HTTPS (Nextcloud via Tailscale)
+      6600 # MPD
       8080 # Calibre server (LAN)
+      8096 # Jellyfin (LAN)
       8123 # Home Assistant (LAN)
       8443 # Home Assistant (Tailscale HTTPS)
       8444 # Paperless (Tailscale HTTPS)
       8445 # Calibre (Tailscale HTTPS)
+      8446 # Jellyfin (Tailscale HTTPS)
+      8600 # MPD HTTP stream
       4000 # Blocky API
       28981 # Paperless-ngx (LAN)
     ];
@@ -238,6 +242,28 @@
       };
     };
 
+    # Jellyfin via Tailscale HTTPS (port 8446)
+    virtualHosts."jellyfin-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8446;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8096";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_buffering off;
+        '';
+      };
+    };
+
     # Calibre via Tailscale HTTPS (port 8445)
     virtualHosts."calibre-tailscale" = {
       listen = [
@@ -345,6 +371,42 @@
     host = "0.0.0.0";
     port = 8080;
   };
+
+  # Shared media group and music directory
+  users.groups.media = { };
+  systemd.tmpfiles.rules = [
+    "d /var/lib/music 2775 root media - -"
+  ];
+
+  # Jellyfin media server
+  services.jellyfin = {
+    enable = true;
+    openFirewall = false;
+  };
+  users.users.jellyfin.extraGroups = [ "media" ];
+
+  # MPD music daemon
+  services.mpd = {
+    enable = true;
+    musicDirectory = "/var/lib/music";
+    network = {
+      listenAddress = "any";
+      port = 6600;
+    };
+    extraConfig = ''
+      audio_output {
+        type "httpd"
+        name "HTTP Stream"
+        encoder "lame"
+        port "8600"
+        bitrate "192"
+        format "44100:16:2"
+        always_on "yes"
+        tags "yes"
+      }
+    '';
+  };
+  users.users.mpd.extraGroups = [ "media" ];
 
   # Passwordless sudo for wheel group
   security.sudo.wheelNeedsPassword = false;

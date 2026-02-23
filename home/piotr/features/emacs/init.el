@@ -671,8 +671,13 @@ document.addEventListener('DOMContentLoaded', () => {
 (use-package emms
   :config
   (require 'emms-setup)
+  (require 'emms-player-mpd)
   (emms-all)
-  (setq emms-player-list '(emms-player-mpv)))
+  (setq emms-player-list '(emms-player-mpd emms-player-mpv))
+  (setq emms-player-mpd-server-name "homeserver.tailfbbc95.ts.net")
+  (setq emms-player-mpd-server-port "6600")
+  (setq emms-player-mpd-music-directory "/var/lib/music")
+  (setq emms-info-functions '(emms-info-mpd)))
 
 ;;;; llm
 (use-package claude-code-ide

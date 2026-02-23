@@ -370,7 +370,7 @@
   };
 
   environment.systemPackages = builtins.attrValues {
-    inherit (pkgs) gnome-tweaks;
+    inherit (pkgs) gnome-tweaks tmux;
     inherit (pkgs.unstable)
       libnotify
       yubioath-flutter

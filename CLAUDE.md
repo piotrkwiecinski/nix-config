@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Multi-host NixOS configuration using flake-parts for modular management. Manages three hosts:
+Multi-host NixOS configuration using flake-parts for modular management. Manages three hosts plus a LiveCD ISO:
 - **homelab**: Desktop workstation (x86_64-linux)
-- **thinkpad-x1-g3**: Laptop with NVIDIA/Intel GPU, YubiKey (x86_64-linux)
+- **thinkpad-x1-g3**: Laptop with NVIDIA/Intel GPU, YubiKey, COSMIC desktop (x86_64-linux)
 - **homeserver**: Raspberry Pi 4 running Nextcloud, Home Assistant, Blocky DNS (aarch64-linux)
+- **iso**: LiveCD for host setup and configuration restore (x86_64-linux)
 
 ## Commands
 
@@ -35,6 +36,7 @@ nixos-rebuild switch --flake ".#homeserver" --target-host piotr@homeserver --sud
 The configuration uses flake-parts for composability. Main entry point is `flake.nix`, which imports:
 
 - `parts/nixos.nix` - Creates nixosConfigurations using `mkHost` helper
+- `parts/iso.nix` - Creates the `iso` nixosConfiguration (LiveCD, uses nixpkgs directly, not `mkHost`)
 - `parts/home-manager.nix` - Creates homeConfigurations using `mkHome` helper
 - `parts/dev-shell.nix` - Development shell with `nix-switch` and `home-switch` commands
 - `parts/overlays.nix` - Dynamic overlay loading from `overlays/modifications/`
@@ -57,6 +59,8 @@ hosts/                     # Per-host NixOS configurations
     default.nix            # Host-specific system config
     disk-config.nix        # Disko declarative disk layout (optional)
     hardware-configuration.nix  # Auto-generated hardware config
+  iso/
+    default.nix            # LiveCD configuration (GNOME installer base)
 
 home/piotr/                # Home-manager configurations
   global/                  # Shared across all hosts (git, nix settings)
@@ -81,6 +85,24 @@ Disk layouts are declared with [disko](https://github.com/nix-community/disko). 
 - Disk config: `hosts/{hostname}/disk-config.nix`
 - Disko replaces `fileSystems.*` and `swapDevices` in `hardware-configuration.nix`; those entries should be removed when adopting disko
 
+### LiveCD ISO
+
+The `iso` nixosConfiguration produces a bootable GNOME-based installer ISO named `nixos-setup`. It is built via `parts/iso.nix` which uses `inputs.nixpkgs.lib.nixosSystem` directly (not `mkHost`) and imports the NixOS graphical GNOME installer base module.
+
+Build the ISO:
+```bash
+nix build .#nixosConfigurations.iso.config.system.build.isoImage
+```
+
+The ISO includes:
+- **Editor & AI**: Emacs 30 (pgtk, from unstable), `claude-code-bin` (from master), git
+- **Nix tooling**: `nil`, `nix-output-monitor`, `nixfmt-rfc-style`
+- **Disk & filesystem**: `disko`, `btrfs-progs`, `parted`, `gptfdisk`, `dosfstools`
+- **Secrets & security**: `sops`, `age`, `ssh-to-age`
+- **General utilities**: `ripgrep`, `htop`, `jq`, `rsync`, `pciutils`, `usbutils`
+
+The ISO uses the repo's overlay (`outputs.overlays.default`) so custom packages are available.
+
 ### Adding a New Host
 
 1. Create `hosts/{hostname}/default.nix` (imports home-manager, hardware, user module, private-nix-config modules)
@@ -99,6 +121,11 @@ Disk layouts are declared with [disko](https://github.com/nix-community/disko). 
 Files are auto-discovered; no registration needed.
 
 **Custom package**: Add to `pkgs/default.nix`. Each package receives `pkgs` and `pkgs-unstable`. Packages are auto-loaded into the overlay.
+
+Current custom packages:
+- `dm` — Docker Compose helper: walks up directories to find `compose.yaml`, then dispatches to `./bin/<command>`
+- `claude-code-ide` — Emacs package built from GitHub (`manzaltu/claude-code-ide.el`) with upstream patches applied
+- `magento-cache-clean` — Magento 2 cache watcher (Node.js wrapper)
 
 ### Key Patterns
 
@@ -141,6 +168,6 @@ Planned changes are tracked in `issues/` as markdown files (`{number}-{slug}.md`
 
 ## Code Style
 
-- Format: nixfmt (run `treefmt`)
+- Format: nixfmt (run `nix fmt`)
 - Indentation: 2 spaces
 - Excluded from formatting: `hardware-configuration.nix` files (auto-generated)
