@@ -384,6 +384,29 @@
   };
   users.extraGroups.docker.members = [ "piotr" ];
 
+  # Local LLM inference via Ollama with NVIDIA CUDA acceleration.
+  # PRIME offload env vars are required because the Ollama systemd service
+  # doesn't automatically use the dGPU (unlike user-session apps).
+  # OLLAMA_API_KEY is injected via a sops-rendered EnvironmentFile so the
+  # secret never appears as plaintext in the Nix store.
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-cuda;
+    loadModels = [
+      "qwen2.5:3b" # 1.9 GB — fits in 4 GB VRAM; fast general coding/chat
+      "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
+      "deepseek-r1:7b" # 4.7 GB — CPU+RAM; reasoning and research tasks
+    ];
+    environmentVariables = {
+      __NV_PRIME_RENDER_OFFLOAD = "1";
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      CUDA_VISIBLE_DEVICES = "0";
+    };
+  };
+
+  systemd.services.ollama.serviceConfig.EnvironmentFile =
+    config.sops.templates."ollama-env".path;
+
   services.traefik = {
     enable = true;
     group = "docker";
