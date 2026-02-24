@@ -270,6 +270,7 @@
       address = [
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
+        "/homeserver.local/192.168.68.106"
       ];
     };
   };
@@ -404,8 +405,7 @@
     };
   };
 
-  systemd.services.ollama.serviceConfig.EnvironmentFile =
-    config.sops.templates."ollama-env".path;
+  systemd.services.ollama.serviceConfig.EnvironmentFile = config.sops.templates."ollama-env".path;
 
   services.traefik = {
     enable = true;

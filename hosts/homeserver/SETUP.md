@@ -102,11 +102,13 @@ Secrets (including the remote builder SSH key) are managed declaratively via sop
    ```
 
 4. Access web interfaces:
-   - Nextcloud: http://homeserver.local or http://<ip>
-   - Home Assistant: http://homeserver.local:8123
-   - Paperless: http://homeserver.local:28981
-   - Calibre: http://homeserver.local:8080
-   - Blocky API: http://homeserver.local:4000
+   - Nextcloud: https://nextcloud.homeserver.local
+   - Home Assistant: https://hass.homeserver.local
+   - Paperless: https://paperless.homeserver.local
+   - Calibre: https://calibre.homeserver.local
+   - Jellyfin: https://jellyfin.homeserver.local
+   - Forgejo: https://forgejo.homeserver.local
+   - Blocky API: https://blocky.homeserver.local
 
 ## Deploying Future Updates
 
@@ -129,15 +131,15 @@ sudo nixos-rebuild switch --flake ".#homeserver"
 |-----------------------------|-------|
 | SSH                         | 22    |
 | DNS (Blocky)                | 53    |
-| HTTP (Nextcloud LAN)        | 80    |
-| HTTPS (Nextcloud Tailscale) | 443   |
-| Blocky API                  | 4000  |
-| Calibre (LAN)               | 8080  |
-| Home Assistant (LAN)        | 8123  |
+| HTTP (redirect to HTTPS)    | 80    |
+| HTTPS (LAN + Tailscale)     | 443   |
+| MPD                         | 6600  |
 | Home Assistant (Tailscale)  | 8443  |
 | Paperless (Tailscale)       | 8444  |
 | Calibre (Tailscale)         | 8445  |
-| Paperless (LAN)             | 28981 |
+| Jellyfin (Tailscale)        | 8446  |
+| Forgejo (Tailscale)         | 8447  |
+| MPD HTTP stream             | 8600  |
 
 ## Verification Checklist
 
@@ -145,10 +147,12 @@ sudo nixos-rebuild switch --flake ".#homeserver"
 - [x] SSH access works: `ssh piotr@homeserver`
 - [ ] Secrets decrypted: `ls /run/secrets/`
 - [ ] Remote build works: builds happen on thinkpad
-- [ ] Nextcloud accessible and can create account
-- [ ] Home Assistant accessible at :8123
-- [ ] Paperless accessible at :28981
-- [ ] Calibre accessible at :8080
+- [ ] Nextcloud accessible at https://nextcloud.homeserver.local
+- [ ] Home Assistant accessible at https://hass.homeserver.local
+- [ ] Paperless accessible at https://paperless.homeserver.local
+- [ ] Calibre accessible at https://calibre.homeserver.local
+- [ ] Jellyfin accessible at https://jellyfin.homeserver.local
+- [ ] Forgejo accessible at https://forgejo.homeserver.local
 - [ ] Blocky DNS responds: `dig @homeserver google.com`
 - [ ] Ad blocking works: `dig @homeserver ads.google.com` returns 0.0.0.0
 - [ ] Tailscale connected: `tailscale status`
@@ -210,3 +214,5 @@ Add the key to `nix-config-private/.sops.yaml` and re-encrypt secrets.
 | `builder-key` | SSH key for remote builds to thinkpad |
 | `piotr-password-hash` | User login password hash |
 | `tailscale-auth-key` | Tailscale authentication key |
+| `homeserver-lan-cert` | mkcert wildcard TLS certificate for *.homeserver.local |
+| `homeserver-lan-key` | mkcert wildcard TLS private key |
