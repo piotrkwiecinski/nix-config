@@ -6,6 +6,12 @@
   lib,
   ...
 }:
+let
+  lanSslConfig = ''
+    ssl_certificate ${config.sops.secrets."homeserver-lan-cert".path};
+    ssl_certificate_key ${config.sops.secrets."homeserver-lan-key".path};
+  '';
+in
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
@@ -79,7 +85,15 @@
     registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
-  networking.networkmanager.enable = true;
+  networking.networkmanager = {
+    enable = true;
+    dns = "none"; # Don't let NM overwrite resolv.conf; managed via networking.nameservers
+  };
+
+  # Point resolv.conf at Blocky (127.0.0.1) instead of Tailscale MagicDNS.
+  # Blocky forwards *.tailfbbc95.ts.net to MagicDNS via customDNS, so peer
+  # name resolution still works.
+  networking.nameservers = [ "127.0.0.1" ];
 
   time.timeZone = "Europe/Rome";
 
@@ -101,19 +115,15 @@
     allowedTCPPorts = [
       22 # SSH
       53 # DNS (Blocky)
-      80 # HTTP (nginx/Nextcloud LAN)
-      443 # HTTPS (Nextcloud via Tailscale)
+      80 # HTTP (redirect to HTTPS)
+      443 # HTTPS (LAN subdomains + Tailscale Nextcloud)
       6600 # MPD
-      8080 # Calibre server (LAN)
-      8096 # Jellyfin (LAN)
-      8123 # Home Assistant (LAN)
       8443 # Home Assistant (Tailscale HTTPS)
       8444 # Paperless (Tailscale HTTPS)
       8445 # Calibre (Tailscale HTTPS)
       8446 # Jellyfin (Tailscale HTTPS)
+      8447 # Forgejo (Tailscale HTTPS)
       8600 # MPD HTTP stream
-      4000 # Blocky API
-      28981 # Paperless-ngx (LAN)
     ];
     allowedUDPPorts = [
       53 # DNS (Blocky)
@@ -125,6 +135,9 @@
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets."tailscale-auth-key".path;
+    # Don't let Tailscale overwrite resolv.conf with MagicDNS (100.100.100.100).
+    # resolv.conf is managed via networking.nameservers pointing to Blocky instead.
+    extraUpFlags = [ "--accept-dns=false" ];
   };
 
   # Fail2ban for SSH protection
@@ -138,7 +151,7 @@
   services.nextcloud = {
     enable = true;
     package = pkgs.nextcloud32;
-    hostName = "homeserver.local";
+    hostName = "nextcloud.homeserver.local";
     https = false;
     config = {
       adminuser = "admin";
@@ -149,10 +162,9 @@
     configureRedis = true;
     maxUploadSize = "10G";
     settings = {
+      overwriteprotocol = "https";
       trusted_domains = [
-        "homeserver.local"
-        "homeserver"
-        "192.168.68.106"
+        "nextcloud.homeserver.local"
         "homeserver.tailfbbc95.ts.net"
       ];
       trusted_proxies = [ "127.0.0.1" ];
@@ -169,18 +181,39 @@
     recommendedProxySettings = true;
     recommendedGzipSettings = true;
 
-    # Existing LAN Nextcloud
-    virtualHosts."homeserver.local" = {
+    # HTTP -> HTTPS redirect (catch-all)
+    virtualHosts."_redirect" = {
+      serverName = "_";
       listen = [
         {
           addr = "0.0.0.0";
           port = 80;
         }
       ];
+      extraConfig = ''
+        return 301 https://$host$request_uri;
+      '';
     };
 
-    # Nextcloud via Tailscale HTTPS (port 443)
+    # Nextcloud LAN HTTPS + internal backend (auto-generated vhost from services.nextcloud)
+    virtualHosts."nextcloud.homeserver.local" = {
+      listen = [
+        {
+          addr = "127.0.0.1";
+          port = 8081;
+        }
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+    };
+
+    # Nextcloud via Tailscale HTTPS (port 443, SNI)
     virtualHosts."nextcloud-tailscale" = {
+      serverName = "homeserver.tailfbbc95.ts.net";
       listen = [
         {
           addr = "0.0.0.0";
@@ -193,8 +226,114 @@
         ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
       '';
       locations."/" = {
-        proxyPass = "http://127.0.0.1:80";
+        proxyPass = "http://127.0.0.1:8081";
         proxyWebsockets = true;
+      };
+    };
+
+    # Home Assistant LAN HTTPS
+    virtualHosts."hass.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8123";
+        proxyWebsockets = true;
+      };
+    };
+
+    # Paperless LAN HTTPS
+    virtualHosts."paperless.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:28981";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_read_timeout 300;
+          proxy_connect_timeout 300;
+          proxy_send_timeout 300;
+          client_max_body_size 100M;
+        '';
+      };
+    };
+
+    # Calibre LAN HTTPS
+    virtualHosts."calibre.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8080";
+      };
+    };
+
+    # Jellyfin LAN HTTPS
+    virtualHosts."jellyfin.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8096";
+        proxyWebsockets = true;
+        extraConfig = ''
+          proxy_buffering off;
+        '';
+      };
+    };
+
+    # Forgejo LAN HTTPS
+    virtualHosts."forgejo.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:3000";
+        proxyWebsockets = true;
+        extraConfig = ''
+          client_max_body_size 512M;
+        '';
+      };
+    };
+
+    # Blocky LAN HTTPS
+    virtualHosts."blocky.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:4000";
       };
     };
 
@@ -281,6 +420,28 @@
         proxyPass = "http://127.0.0.1:8080";
       };
     };
+
+    # Forgejo via Tailscale HTTPS (port 8447)
+    virtualHosts."forgejo-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8447;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:3000";
+        proxyWebsockets = true;
+        extraConfig = ''
+          client_max_body_size 512M;
+        '';
+      };
+    };
   };
 
   # Home Assistant
@@ -302,6 +463,7 @@
         time_zone = "Europe/Rome";
       };
       http = {
+        server_host = "127.0.0.1";
         server_port = 8123;
         use_x_forwarded_for = true;
         trusted_proxies = [
@@ -360,6 +522,15 @@
         maxTime = "30m";
         prefetching = true;
       };
+      # Forward Tailscale peer names to MagicDNS so *.tailfbbc95.ts.net resolves
+      # even though Tailscale no longer manages resolv.conf.
+      customDNS = {
+        customTTL = "1h";
+        mapping = {
+          "tailfbbc95.ts.net" = "100.100.100.100";
+          "homeserver.local" = "192.168.68.106";
+        };
+      };
     };
   };
 
@@ -368,8 +539,26 @@
     enable = true;
     package = pkgs.unstable.calibre;
     libraries = [ "/var/lib/calibre-server" ];
-    host = "0.0.0.0";
+    host = "127.0.0.1";
     port = 8080;
+  };
+
+  # Forgejo git forge
+  services.forgejo = {
+    enable = true;
+    database.type = "sqlite3";
+    lfs.enable = true;
+    settings = {
+      server = {
+        DOMAIN = "forgejo.homeserver.local";
+        ROOT_URL = "https://forgejo.homeserver.local/";
+        HTTP_ADDR = "127.0.0.1";
+        HTTP_PORT = 3000;
+      };
+      service.DISABLE_REGISTRATION = true;
+      session.COOKIE_SECURE = true;
+      actions.ENABLED = true;
+    };
   };
 
   # Shared media group and music directory
@@ -424,20 +613,16 @@
     };
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
-      PAPERLESS_URL = "https://homeserver.tailfbbc95.ts.net:8444";
+      PAPERLESS_URL = "https://paperless.homeserver.local";
       PAPERLESS_ALLOWED_HOSTS = builtins.concatStringsSep "," [
+        "paperless.homeserver.local"
         "homeserver.tailfbbc95.ts.net"
-        "homeserver.local"
-        "homeserver"
-        "192.168.68.106"
         "localhost"
         "127.0.0.1"
       ];
       PAPERLESS_CSRF_TRUSTED_ORIGINS = builtins.concatStringsSep "," [
+        "https://paperless.homeserver.local"
         "https://homeserver.tailfbbc95.ts.net:8444"
-        "http://homeserver.local:28981"
-        "http://homeserver:28981"
-        "http://192.168.68.106:28981"
       ];
       PAPERLESS_PROXY_SSL_HEADER = [
         "HTTP_X_FORWARDED_PROTO"
