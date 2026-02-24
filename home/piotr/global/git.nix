@@ -56,6 +56,28 @@
           condition = "hasconfig:remote.*.url:git@github.com:*/**";
           path = config.sops.templates."git-personal-github.inc".path;
         }
+      ]
+      # Forgejo homeserver - fallback for hosts without sops
+      ++ lib.optionals (!(hasSopsTemplate "git-forgejo-homeserver.inc")) [
+        {
+          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
+          contents = {
+            user = {
+              email = "piotr@noreply.forgejo.homeserver.local";
+              signingKey = "EC0DE1CB9D5258B4";
+            };
+            commit.gpgSign = true;
+            tag.gpgSign = true;
+            core.sshCommand = "ssh -i ~/.ssh/forgejo_homeserver";
+          };
+        }
+      ]
+      # Use sops template when available
+      ++ lib.optionals (hasSopsTemplate "git-forgejo-homeserver.inc") [
+        {
+          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
+          path = config.sops.templates."git-forgejo-homeserver.inc".path;
+        }
       ];
 
     ignores = [
@@ -83,6 +105,12 @@
         user = "git";
         hostname = "github.com";
         identityFile = "~/.ssh/gh_rsa";
+        identitiesOnly = true;
+      };
+      "forgejo.homeserver.local" = {
+        user = "forgejo";
+        hostname = "forgejo.homeserver.local";
+        identityFile = "~/.ssh/forgejo_homeserver";
         identitiesOnly = true;
       };
     };
