@@ -149,9 +149,10 @@
       bc
       dig
       ;
+    # calibre pinned to stable; unstable 8.16.2 is broken (missing qmake)
+    inherit (pkgs) calibre;
     inherit (pkgs.unstable)
       audacity
-      calibre
       gimp3
       nil
       slack
