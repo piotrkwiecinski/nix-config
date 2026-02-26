@@ -537,7 +537,8 @@ in
   # Calibre ebook server
   services.calibre-server = {
     enable = true;
-    package = pkgs.unstable.calibre;
+    # pinned to stable; unstable 8.16.2 is broken (missing qmake)
+    package = pkgs.calibre;
     libraries = [ "/var/lib/calibre-server" ];
     host = "127.0.0.1";
     port = 8080;
