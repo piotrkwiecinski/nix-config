@@ -683,7 +683,24 @@ document.addEventListener('DOMContentLoaded', () => {
 (use-package claude-code-ide
   :bind ("C-c C-'" . claude-code-ide-menu)
   :config
-  (claude-code-ide-emacs-tools-setup))
+  (claude-code-ide-emacs-tools-setup)
+
+  (defun my/claude-code-propagate-envrc (orig-fun &rest args)
+    "Propagate envrc environment variables to Claude Code terminal sessions."
+    (let* ((envrc-env (when (bound-and-true-p envrc--status)
+                        (cl-set-difference
+                         (buffer-local-value 'process-environment (current-buffer))
+                         (default-value 'process-environment)
+                         :test #'string=)))
+           ;; For vterm: add to vterm-environment (dynamically scoped)
+           (vterm-environment (append envrc-env (when (boundp 'vterm-environment)
+                                                  vterm-environment)))
+           ;; For eat: add to process-environment
+           (process-environment (append envrc-env process-environment)))
+      (apply orig-fun args)))
+
+  (advice-add 'claude-code-ide--create-terminal-session
+              :around #'my/claude-code-propagate-envrc))
 
 (use-package abbrev
   :hook ((prog-mode text-mode) . abbrev-mode))
