@@ -67,6 +67,10 @@
         url = "https://github.com/manzaltu/claude-code-ide.el/commit/24d75f9b6e8a8a4ae2126b0f503d47b63b9592bd.patch";
         hash = "sha256-s12dx6JUx2scZ/KHnBcf4KeggGsD179SS1oKVxI6MCk=";
       })
+      (pkgs.fetchpatch {
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/158.patch";
+        hash = "sha256-6k/vVxDcQxqN7zNWPMpObW9nPWVKZeGH+giCQnnbJew=";
+      })
     ];
     packageRequires = with pkgs-unstable.emacsPackages; [
       vterm
