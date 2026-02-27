@@ -9,9 +9,7 @@
     nodePackages.typescript
     nodePackages.typescript-language-server
     nodePackages.yaml-language-server
-    rust-analyzer
-    rustc
-    rustfmt
+    lldb
     unstable.phpactor
     lua-language-server
     jetbrains-mono
