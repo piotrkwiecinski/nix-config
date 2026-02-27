@@ -280,12 +280,31 @@
   :hook ((prog-mode . column-number-mode)
          (prog-mode . display-line-numbers-mode)))
 
+(use-package flymake
+  :bind (:map flymake-mode-map
+         ("M-n" . flymake-goto-next-error)
+         ("M-p" . flymake-goto-prev-error)))
+
 (use-package eldoc
   :hook (prog-mode . eldoc-mode))
 
 (use-package eglot
   :config
-  (add-to-list 'eglot-server-programs '(nix-mode . ("nil"))))
+  (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
+  (add-to-list 'eglot-server-programs
+               '((rust-ts-mode rust-mode) .
+                 ("rust-analyzer" :initializationOptions
+                  (:check (:command "clippy")
+                   :procMacro (:enable t
+                               :attributes (:enable t))
+                   :cargo (:buildScripts (:enable t)
+                           :features "all")
+                   :diagnostics (:disabled ["unresolved-proc-macro"])
+                   :inlayHints (:bindingModeHints (:enable t)
+                                :closingBraceHints (:minLines 20)
+                                :closureReturnTypeHints (:enable "with_block")
+                                :lifetimeElisionHints (:enable "skip_trivial"))))))
+  :hook (eglot-managed-mode . eglot-inlay-hints-mode))
 
 (use-package editorconfig
   :hook (prog-mode . editorconfig-mode))
@@ -346,6 +365,25 @@ $0`(yas-escape-text yas-selected-text)`")
 
    :hook (lsp-completion-mode . my/lsp-mode-setup-completion)
    :hook (php-ts-mode . lsp-deferred))
+
+(use-package dape
+  :custom
+  (dape-buffer-window-arrangement 'right)
+  :config
+  (add-to-list 'dape-configs
+               `(rust-lldb
+                 modes (rust-ts-mode rust-mode)
+                 command "lldb-dap"
+                 :type "lldb"
+                 command-cwd dape-command-cwd
+                 :program (lambda ()
+                            (let ((root (project-root (project-current t))))
+                              (expand-file-name
+                               (concat "target/debug/"
+                                       (file-name-nondirectory
+                                        (directory-file-name root)))
+                               root)))
+                 :cwd dape-command-cwd)))
 
 (use-package dap-mode
   :config
@@ -459,10 +497,31 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;;;;; Rust
 
+(use-package rust-ts-mode
+  :mode "\\.rs\\'"
+  :hook (rust-ts-mode . eglot-ensure))
+
 (use-package rustic
+  :after rust-ts-mode
   :custom
   (rustic-lsp-client 'eglot)
-  (rustic-analyzer-command "rust-analyzer"))
+  (rustic-lsp-setup-p nil)
+  (rustic-format-on-save t)
+  (rustic-format-trigger 'on-save)
+  (rustic-cargo-use-last-stored-arguments t)
+  :bind (:map rust-ts-mode-map
+         ("C-c C-c t" . rustic-cargo-current-test)
+         ("C-c C-c r" . rustic-cargo-run)
+         ("C-c C-c b" . rustic-cargo-build)
+         ("C-c C-c l" . rustic-cargo-clippy))
+  :config
+  (setq auto-mode-alist (delete '("\\.rs\\'" . rustic-mode) auto-mode-alist)))
+
+;;;;; TOML
+
+(use-package toml-ts-mode
+  :if (treesit-available-p)
+  :mode ("Cargo\\.toml\\'" "\\.toml\\'"))
 
 ;;;;; Web
 (use-package web-mode
