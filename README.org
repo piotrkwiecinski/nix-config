@@ -207,7 +207,7 @@ parts/                     # Flake-parts modules (nixos, home-manager, iso, over
 
 overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
 
-pkgs/                      # Custom package definitions (dm, claude-code-ide, magento-cache-clean)
+pkgs/                      # Custom package definitions (claude-code-ide, magento-cache-clean)
 #+end_src
 
 ** Resources
