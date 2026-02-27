@@ -164,7 +164,9 @@
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-abbrev)
   (add-to-list 'completion-at-point-functions #'yasnippet-capf)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-symbol))
+  (add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
+  (setq completion-at-point-functions
+        (remove 'ispell-completion-at-point completion-at-point-functions)))
 
 ;;; User interface
 (set-face-attribute 'default nil
