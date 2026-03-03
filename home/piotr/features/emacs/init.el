@@ -266,7 +266,11 @@
   :init
   (load-theme 'modus-vivendi :no-confirm))
 
-(use-package nerd-icons)
+(use-package nerd-icons
+  :config
+  (if (daemonp)
+      (add-hook 'server-after-make-frame-hook #'nerd-icons-set-font)
+    (nerd-icons-set-font)))
 (use-package nerd-icons-corfu
   :after (nerd-icons corfu)
   :config
