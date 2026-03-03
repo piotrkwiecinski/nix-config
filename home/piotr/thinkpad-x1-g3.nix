@@ -31,6 +31,8 @@
     card-timeout = 1;
   };
 
+  fonts.fontconfig.enable = true;
+
   # Required for KeePassXC autostart
   xdg.autostart.enable = true;
 
