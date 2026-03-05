@@ -26,6 +26,51 @@ in
         pkgs = final.pkgs;
         inherit pkgs-unstable;
       };
+      cosmicNames = [
+        "cosmic-applets"
+        "cosmic-applibrary"
+        "cosmic-bg"
+        "cosmic-comp"
+        "cosmic-design-demo"
+        "cosmic-edit"
+        "cosmic-ext-applet-caffeine"
+        "cosmic-ext-applet-external-monitor-brightness"
+        "cosmic-ext-applet-minimon"
+        "cosmic-ext-applet-privacy-indicator"
+        "cosmic-ext-applet-sysinfo"
+        "cosmic-ext-applet-weather"
+        "cosmic-ext-calculator"
+        "cosmic-ext-ctl"
+        "cosmic-ext-tweaks"
+        "cosmic-files"
+        "cosmic-greeter"
+        "cosmic-icons"
+        "cosmic-idle"
+        "cosmic-initial-setup"
+        "cosmic-launcher"
+        "cosmic-notifications"
+        "cosmic-osd"
+        "cosmic-panel"
+        "cosmic-player"
+        "cosmic-protocols"
+        "cosmic-randr"
+        "cosmic-reader"
+        "cosmic-screenshot"
+        "cosmic-session"
+        "cosmic-settings"
+        "cosmic-settings-daemon"
+        "cosmic-store"
+        "cosmic-tasks"
+        "cosmic-term"
+        "cosmic-wallpapers"
+        "cosmic-workspaces-epoch"
+      ];
+      cosmicPackages = builtins.listToAttrs (
+        map (name: {
+          inherit name;
+          value = pkgs-unstable.${name};
+        }) cosmicNames
+      );
       unstable = {
         unstable = pkgs-unstable;
       };
@@ -35,7 +80,7 @@ in
           config.allowUnfree = true;
         };
       };
-      base = additions // unstable // master;
+      base = additions // cosmicPackages // unstable // master;
     in
     base // (composeModifications modifications final (prev // base));
 }
