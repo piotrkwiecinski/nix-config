@@ -48,6 +48,7 @@
           ts.tree-sitter-phpdoc
         ]))
         pkgs.claude-code-ide
+        pkgs.claude-code-ide-extras
         ob-php
       ];
   };

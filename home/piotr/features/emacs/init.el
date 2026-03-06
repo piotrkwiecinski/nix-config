@@ -770,6 +770,10 @@ document.addEventListener('DOMContentLoaded', () => {
   (advice-add 'claude-code-ide--create-terminal-session
               :around #'my/claude-code-propagate-envrc))
 
+(use-package claude-code-ide-extras
+  :config
+  (claude-code-ide-extras-project-switch-mode 1))
+
 (use-package abbrev
   :hook ((prog-mode text-mode) . abbrev-mode))
 
