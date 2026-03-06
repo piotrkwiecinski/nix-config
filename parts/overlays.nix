@@ -22,6 +22,7 @@ in
         config.allowUnfree = true;
         overlays = [ inputs.emacs-overlay.overlays.default ];
       };
+      claude-code = (inputs.claude-code-overlay.overlays.default final prev).claude-code;
       additions = import ../pkgs {
         pkgs = final.pkgs;
         inherit pkgs-unstable;
@@ -80,7 +81,7 @@ in
           config.allowUnfree = true;
         };
       };
-      base = additions // cosmicPackages // unstable // master;
+      base = additions // cosmicPackages // unstable // master // { inherit claude-code; };
     in
     base // (composeModifications modifications final (prev // base));
 }
