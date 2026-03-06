@@ -15,7 +15,7 @@
   environment.systemPackages = with pkgs; [
     # -- Editor & AI --
     unstable.emacs30-pgtk
-    master.claude-code-bin
+    claude-code
     git
 
     # -- Nix tooling --

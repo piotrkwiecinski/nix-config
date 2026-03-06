@@ -179,7 +179,8 @@
     inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs.nodePackages) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
-    inherit (pkgs.master) claude-code-bin mochi;
+    inherit (pkgs) claude-code;
+    inherit (pkgs.master) mochi;
   };
 
   programs.bash = {
