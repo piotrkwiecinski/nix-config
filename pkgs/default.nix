@@ -28,5 +28,4 @@
     meta.homepage = "https://github.com/piotrkwiecinski/claude-code-ide.el";
   };
 
-  magento-cache-clean = pkgs.callPackage ./magento-cache-clean.nix { };
 }
