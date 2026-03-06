@@ -6,39 +6,6 @@
   lib,
   ...
 }:
-let
-  flakeDir = "/home/piotr/projects/nix-config";
-
-  updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
-    set -euo pipefail
-    export HOME=/home/piotr
-
-    cd ${lib.escapeShellArg flakeDir}
-
-    cp flake.lock flake.lock.bak
-    trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
-
-    runuser -u piotr -- nix flake update claude-code-overlay nixpkgs-master
-
-    if runuser -u piotr -- git diff --quiet flake.lock; then
-      rm flake.lock.bak
-      echo "No flake.lock changes, nothing to do."
-      exit 0
-    fi
-
-    if nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
-      nixos-rebuild switch --flake ".#thinkpad-x1-g3"
-      runuser -u piotr -- git add flake.lock
-      runuser -u piotr -- git commit -m "flake: auto-update claude-code-overlay and nixpkgs-master"
-      runuser -u piotr -- git push
-      rm flake.lock.bak
-    else
-      echo "Build failed, rolling back flake.lock"
-      mv flake.lock.bak flake.lock
-      exit 1
-    fi
-  '';
-in
 {
   imports = [
     inputs.disko.nixosModules.disko
@@ -570,6 +537,18 @@ in
     "builder"
   ];
 
+  security.sudo.extraRules = [
+    {
+      users = [ "piotr" ];
+      commands = [
+        {
+          command = "/run/current-system/sw/bin/nixos-rebuild";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
+
   systemd.tmpfiles.rules =
     let
       traefikTlsConfig = pkgs.writeText "traefik-tls.toml" ''
@@ -587,36 +566,9 @@ in
       "d /home/piotr/.config/traefik 0755 piotr users -"
       "d /home/piotr/.config/traefik/dynamic 0755 piotr users -"
       "L+ /home/piotr/.config/traefik/dynamic/tls.toml - - - - ${traefikTlsConfig}"
+      # Enable lingering so piotr's user services run without an active login session
+      "f /var/lib/systemd/linger/piotr 0644 root root -"
     ];
-
-  systemd.services.update-claude-code-flake = {
-    description = "Auto-update claude-code-overlay and nixpkgs-master flake inputs";
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    path = [
-      config.nix.package
-      pkgs.git
-      pkgs.util-linux
-      pkgs.nixos-rebuild
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = updateClaudeCodeScript;
-    };
-  };
-
-  systemd.timers.update-claude-code-flake = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = [
-        "*-*-* 08:00:00"
-        "*-*-* 12:00:00"
-        "*-*-* 16:00:00"
-        "*-*-* 20:00:00"
-      ];
-      Persistent = false;
-    };
-  };
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

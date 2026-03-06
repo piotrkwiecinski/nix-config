@@ -1,8 +1,41 @@
 {
   pkgs,
   inputs,
+  lib,
   ...
 }:
+let
+  flakeDir = "/home/piotr/projects/nix-config";
+
+  updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
+    set -euo pipefail
+
+    cd ${lib.escapeShellArg flakeDir}
+
+    cp flake.lock flake.lock.bak
+    trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
+
+    nix flake update claude-code-overlay nixpkgs-master
+
+    if git diff --quiet flake.lock; then
+      rm flake.lock.bak
+      echo "No flake.lock changes, nothing to do."
+      exit 0
+    fi
+
+    if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
+      sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
+      git add flake.lock
+      git commit -m "flake: auto-update claude-code-overlay and nixpkgs-master"
+      git push
+      rm flake.lock.bak
+    else
+      echo "Build failed, rolling back flake.lock"
+      mv flake.lock.bak flake.lock
+      exit 1
+    fi
+  '';
+in
 {
   imports = [
     inputs.private-nix-config.homeManagerModules.sops
@@ -250,5 +283,37 @@
         identityFile = "~/.ssh/homelab";
       };
     };
+  };
+
+  systemd.user.services.update-claude-code-flake = {
+    Unit = {
+      Description = "Auto-update claude-code-overlay and nixpkgs-master flake inputs";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${updateClaudeCodeScript}";
+      Environment = "PATH=${
+        lib.makeBinPath [
+          pkgs.nix
+          pkgs.git
+        ]
+      }:/run/wrappers/bin:/run/current-system/sw/bin";
+    };
+  };
+
+  systemd.user.timers.update-claude-code-flake = {
+    Unit.Description = "Timer for claude-code-overlay and nixpkgs-master update";
+    Timer = {
+      OnCalendar = [
+        "*-*-* 08:00:00"
+        "*-*-* 12:00:00"
+        "*-*-* 16:00:00"
+        "*-*-* 20:00:00"
+      ];
+      Persistent = false;
+    };
+    Install.WantedBy = [ "timers.target" ];
   };
 }
