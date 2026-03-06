@@ -75,13 +75,7 @@ in
       unstable = {
         unstable = pkgs-unstable;
       };
-      master = {
-        master = import inputs.nixpkgs-master {
-          inherit (final.stdenv.hostPlatform) system;
-          config.allowUnfree = true;
-        };
-      };
-      base = additions // cosmicPackages // unstable // master // { inherit claude-code; };
+      base = additions // cosmicPackages // unstable // { inherit claude-code; };
     in
     base // (composeModifications modifications final (prev // base));
 }

@@ -1,7 +1,7 @@
 #+title: My NixOS config
 
 ** Overview
-Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-parts][flake-parts]] for modular management. Uses three nixpkgs channels (stable, unstable, master), [[https://github.com/nix-community/home-manager][home-manager]] for user environments, [[https://github.com/Mic92/sops-nix][sops-nix]] for secrets, and [[https://github.com/nix-community/disko][disko]] for declarative disk layouts.
+Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-parts][flake-parts]] for modular management. Uses two nixpkgs channels (stable, unstable), [[https://github.com/nix-community/home-manager][home-manager]] for user environments, [[https://github.com/Mic92/sops-nix][sops-nix]] for secrets, and [[https://github.com/nix-community/disko][disko]] for declarative disk layouts.
 
 ** Host specification
 
