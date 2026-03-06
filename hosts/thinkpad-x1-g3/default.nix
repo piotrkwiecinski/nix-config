@@ -41,6 +41,7 @@
     };
     overlays = [
       inputs.emacs-overlay.overlays.default
+      inputs.opencode-nix.overlays.default
       outputs.overlays.default
     ];
   };
@@ -376,7 +377,7 @@
       libnotify
       yubioath-flutter
       ;
-    inherit (pkgs.master) opencode;
+    inherit (pkgs) opencode;
   };
 
   virtualisation.docker = {

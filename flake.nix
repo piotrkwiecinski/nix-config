@@ -37,6 +37,7 @@
     private-nix-config.url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
 
     claude-code-overlay.url = "github:ryoppippi/claude-code-overlay";
+    opencode-nix.url = "github:dan-online/opencode-nix";
   };
 
   outputs =

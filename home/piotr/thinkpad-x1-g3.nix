@@ -15,7 +15,7 @@ let
     cp flake.lock flake.lock.bak
     trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
 
-    nix flake update claude-code-overlay nixpkgs-master
+    nix flake update claude-code-overlay opencode-nix nixpkgs-master
 
     if git diff --quiet flake.lock; then
       rm flake.lock.bak
@@ -26,7 +26,7 @@ let
     if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
       sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
       git add flake.lock
-      git commit -m "flake: auto-update claude-code-overlay and nixpkgs-master"
+      git commit -m "flake: auto-update claude-code-overlay, opencode-nix and nixpkgs-master"
       git push
       rm flake.lock.bak
     else
@@ -287,7 +287,7 @@ in
 
   systemd.user.services.update-claude-code-flake = {
     Unit = {
-      Description = "Auto-update claude-code-overlay and nixpkgs-master flake inputs";
+      Description = "Auto-update claude-code-overlay, opencode-nix and nixpkgs-master flake inputs";
       After = [ "network-online.target" ];
       Wants = [ "network-online.target" ];
     };
@@ -304,7 +304,7 @@ in
   };
 
   systemd.user.timers.update-claude-code-flake = {
-    Unit.Description = "Timer for claude-code-overlay and nixpkgs-master update";
+    Unit.Description = "Timer for claude-code-overlay, opencode-nix and nixpkgs-master update";
     Timer = {
       OnCalendar = [
         "*-*-* 08:00:00"
