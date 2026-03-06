@@ -23,6 +23,7 @@ in
         overlays = [ inputs.emacs-overlay.overlays.default ];
       };
       claude-code = (inputs.claude-code-overlay.overlays.default final prev).claude-code;
+      magento-pkgs = inputs.magento-overlay.overlays.default final prev;
       additions = import ../pkgs {
         pkgs = final.pkgs;
         inherit pkgs-unstable;
@@ -75,7 +76,7 @@ in
       unstable = {
         unstable = pkgs-unstable;
       };
-      base = additions // cosmicPackages // unstable // { inherit claude-code; };
+      base = additions // magento-pkgs // cosmicPackages // unstable // { inherit claude-code; };
     in
     base // (composeModifications modifications final (prev // base));
 }
