@@ -50,7 +50,7 @@ in
         "piotr"
       ];
       builders-use-substitutes = true;
-      max-jobs = 1; # Allow trivial local builds, heavy builds go remote
+      max-jobs = 4;
       extra-substituters = [
         "https://nix-community.cachix.org"
       ];
@@ -124,11 +124,24 @@ in
       8446 # Jellyfin (Tailscale HTTPS)
       8447 # Forgejo (Tailscale HTTPS)
       8600 # MPD HTTP stream
+      5000 # Harmonia binary cache (LAN)
     ];
     allowedUDPPorts = [
       53 # DNS (Blocky)
       41641 # Tailscale
     ];
+  };
+
+  # Binary cache for LAN clients (thinkpad fetches pre-built aarch64 paths)
+  users.users.harmonia = {
+    isSystemUser = true;
+    group = "harmonia";
+  };
+  users.groups.harmonia = { };
+  services.harmonia = {
+    enable = true;
+    signKeyPaths = [ config.sops.secrets."harmonia-signing-key".path ];
+    settings.bind = "[::]:5000";
   };
 
   # Tailscale VPN
