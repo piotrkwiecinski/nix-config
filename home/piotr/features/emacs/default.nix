@@ -49,6 +49,7 @@
         ]))
         pkgs.claude-code-ide
         pkgs.claude-code-ide-extras
+        pkgs.magento-cache-clean-el
         ob-php
       ];
   };
