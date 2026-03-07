@@ -149,11 +149,13 @@
       download-attempts = 3;
       narinfo-cache-negative-ttl = 300;
       extra-substituters = [
+        "http://homeserver:5000?priority=40"
         "https://nix-community.cachix.org?priority=41"
         "https://emacs-ci.cachix.org?priority=42"
         "https://devenv.cachix.org?priority=43"
       ];
       extra-trusted-public-keys = [
+        "homeserver-cache:GnyJnLGzLHN2pdm9D6kzkSd3s3IHMb6SNDh0y9Akoz4="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
@@ -223,7 +225,6 @@
   # Enable the GNOME Desktop Environment.
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
-  services.desktopManager.cosmic.enable = true;
   environment.gnome.excludePackages = builtins.attrValues {
     inherit (pkgs)
       epiphany
@@ -363,7 +364,6 @@
     enable = true;
     extraPortals = with pkgs; [
       xdg-desktop-portal-gnome
-      xdg-desktop-portal-cosmic
     ];
   };
 
