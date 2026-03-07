@@ -27,11 +27,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1772760623,
-        "narHash": "sha256-033mHW/9iSGX4/rb7+HMpQFF9KSJKYKhe6XSC7CYWf8=",
+        "lastModified": 1772841847,
+        "narHash": "sha256-Qre73BGBcw1YlhBTTT+T/rVoqVtlCgHYYExUreIJoYs=",
         "owner": "ryoppippi",
         "repo": "claude-code-overlay",
-        "rev": "2320cb504db68e273f264f0d1a7f76af8c4b6e54",
+        "rev": "871c9fa0d37c0d6b3bdbf30341a8d08a75b1793b",
         "type": "github"
       },
       "original": {
@@ -218,11 +218,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1772818718,
-        "narHash": "sha256-sYCsyF4mfHo51gItigF7XADQd+Rjbz/xFCD6DMknL5I=",
+        "lastModified": 1772828483,
+        "narHash": "sha256-URTfl8u51sUMwHrmvrRgND0JEtGc2Imh/7ulQt/RdV0=",
         "owner": "codemanufacture",
         "repo": "magento-package-overlay",
-        "rev": "c1cea6e45dbad384f56d992dcb58f15c42504205",
+        "rev": "6aef3fe0c9a3f10054d778e088402e5a7be1ecc6",
         "type": "github"
       },
       "original": {
@@ -416,11 +416,11 @@
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1771951851,
-        "narHash": "sha256-tZQk02SyUe6by74c1R0Hp8MKrkreVOnUQWDjXX1B0FI=",
+        "lastModified": 1772829983,
+        "narHash": "sha256-8smrtzbPLIRzUNLTJGQsmQUg4iF24VOw8W3XpYbPkNc=",
         "ref": "refs/heads/main",
-        "rev": "780f3d2c53b9dcb175dc2f7b6beeb064ce13f946",
-        "revCount": 48,
+        "rev": "8fbed410025418ece2df97b5573fe09ad73da980",
+        "revCount": 50,
         "type": "git",
         "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
