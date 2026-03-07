@@ -483,6 +483,8 @@ $0`(yas-escape-text yas-selected-text)`")
                '(("etc/module\\.xml\\'" . "Magento 2 module.xml") . ["magento/module.xml" autoinsert-yas-expand]))
   (add-to-list 'auto-insert-alist '(("\\.php\\'" . "PHP class") . "skeleton.php")))
 
+(use-package magento-cache-clean)
+
 (use-package composer)
 
 (defun php-types ()
