@@ -2,7 +2,7 @@
 
 Remote deployment to homeserver:
 ```bash
-nixos-rebuild switch --flake ".#homeserver" --target-host piotr@homeserver --sudo
+nixos-rebuild switch --flake ".#homeserver" --build-host piotr@homeserver --target-host piotr@homeserver --sudo
 ```
 
 **Important**: New files must be staged with `git add` before running nix builds. Flakes only see files tracked by git.
