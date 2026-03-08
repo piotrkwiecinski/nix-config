@@ -48,6 +48,21 @@
   :init
   (savehist-mode 1))
 
+(use-package easysession
+  :custom
+  (easysession-save-interval 600)
+  :init
+  (if (daemonp)
+      (add-hook 'server-after-make-frame-hook
+                (defun my/easysession-load-on-first-frame ()
+                  (easysession-load-including-geometry)
+                  (easysession-save-mode 1)
+                  (remove-hook 'server-after-make-frame-hook
+                               #'my/easysession-load-on-first-frame)))
+    (add-hook 'after-init-hook #'easysession-load-including-geometry))
+  :config
+  (easysession-save-mode 1))
+
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq initial-scratch-message nil)
 
