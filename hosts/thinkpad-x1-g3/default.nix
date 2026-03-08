@@ -189,6 +189,7 @@
   };
 
   networking.firewall = {
+    trustedInterfaces = [ "tailscale0" ];
     allowedTCPPorts = [
       3000
       9001
@@ -198,7 +199,12 @@
       8123
       8282
     ];
+    allowedUDPPorts = [
+      41641 # Tailscale
+    ];
   };
+
+  services.tailscale.enable = true;
 
   # Set your time zone.
   time.timeZone = "Europe/Rome";
