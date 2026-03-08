@@ -642,7 +642,11 @@ in
         "HTTP_X_FORWARDED_PROTO"
         "https"
       ];
+      PAPERLESS_GMAIL_OAUTH_CLIENT_ID = "277222441434-ecser4h8qrin4uu0tiak5cbqolue2rou.apps.googleusercontent.com";
+      PAPERLESS_OAUTH_CALLBACK_BASE_URL = "https://homeserver.tailfbbc95.ts.net:8444";
+      PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
     };
+    environmentFile = config.sops.secrets."paperless-gmail-oauth-secret".path;
   };
 
   # Paperless backup: compress export and send to thinkpad after successful export
