@@ -48,7 +48,7 @@
           ts.tree-sitter-phpdoc
         ]))
         pkgs.claude-code-ide
-        pkgs.claude-code-ide-extras
+        pkgs.claude-code-ide-companion
         pkgs.magento-cache-clean-el
         ob-php
       ];

@@ -18,17 +18,17 @@ rec {
     meta.homepage = "https://github.com/manzaltu/claude-code-ide.el";
   };
 
-  claude-code-ide-extras = pkgs-unstable.emacsPackages.trivialBuild {
-    pname = "claude-code-ide-extras";
+  claude-code-ide-companion = pkgs-unstable.emacsPackages.trivialBuild {
+    pname = "claude-code-ide-companion";
     version = "0.1.0";
     src = pkgs.fetchFromGitHub {
       owner = "piotrkwiecinski";
-      repo = "claude-code-ide-extras.el";
-      rev = "e766e9c0082ebdff7343c008b75ce0f935541f49";
-      hash = "sha256-TkphvvnOAaKtv/qpEKvQ51l1iZFZHG47wDdxfmwy/g8=";
+      repo = "claude-code-ide-companion.el";
+      rev = "120445f0dc249e80fdf8be85f35b130655c917c0";
+      hash = "sha256-tuRwdDtW8ctTSZyj7g7ohdhfJj0nfV8uFyPAHYzphqM=";
     };
     packageRequires = [ claude-code-ide ];
-    meta.homepage = "https://github.com/piotrkwiecinski/claude-code-ide-extras.el";
+    meta.homepage = "https://github.com/piotrkwiecinski/claude-code-ide-companion.el";
   };
 
 }
