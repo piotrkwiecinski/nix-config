@@ -61,7 +61,23 @@
                                #'my/easysession-load-on-first-frame)))
     (add-hook 'after-init-hook #'easysession-load-including-geometry))
   :config
-  (easysession-save-mode 1))
+  (easysession-save-mode 1)
+  (with-eval-after-load 'claude-code-ide
+    (easysession-define-handler
+      "_claude-code"
+      (lambda (session-data)
+        (dolist (entry session-data)
+          (let ((dir (alist-get 'default-directory (cdr entry))))
+            (when (and dir (file-directory-p dir))
+              (let ((default-directory dir))
+                (claude-code-ide-continue))))))
+      (lambda (buffers)
+        (easysession-save-handler-dolist-buffers
+          buffers
+          (when (claude-code-ide--session-buffer-p (current-buffer))
+            (cons (buffer-name)
+                  (list (cons 'default-directory
+                              default-directory)))))))))
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq initial-scratch-message nil)
