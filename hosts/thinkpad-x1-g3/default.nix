@@ -69,6 +69,7 @@
   # Note: Do not use mkForce here as disko needs to add btrfs module for root mount.
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [
+    "iwlwifi"
     "nvidia"
     "nvidia_modeset"
     "nvidia_uvm"
