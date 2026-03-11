@@ -128,6 +128,23 @@ in
   # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
+    mcp = {
+      pantry = {
+        type = "local";
+        command = [ "/home/piotr/projects/pantry-app-v2/db/pantry-mcp-run.sh" ];
+      };
+      translate = {
+        type = "local";
+        command = [
+          "node"
+          "/home/piotr/.local/share/mcp-translate/index.mjs"
+        ];
+        environment = {
+          OLLAMA_HOST = "http://localhost:11434";
+          OLLAMA_MODEL = "gemma3:4b";
+        };
+      };
+    };
     provider.ollama = {
       npm = "@ai-sdk/openai-compatible";
       name = "Ollama (local)";
