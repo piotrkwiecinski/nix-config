@@ -48,37 +48,6 @@
   :init
   (savehist-mode 1))
 
-(use-package easysession
-  :custom
-  (easysession-save-interval 600)
-  :init
-  (if (daemonp)
-      (add-hook 'server-after-make-frame-hook
-                (defun my/easysession-load-on-first-frame ()
-                  (easysession-load-including-geometry)
-                  (easysession-save-mode 1)
-                  (remove-hook 'server-after-make-frame-hook
-                               #'my/easysession-load-on-first-frame)))
-    (add-hook 'after-init-hook #'easysession-load-including-geometry))
-  :config
-  (easysession-save-mode 1)
-  (with-eval-after-load 'claude-code-ide
-    (easysession-define-handler
-      "_claude-code"
-      (lambda (session-data)
-        (dolist (entry session-data)
-          (let ((dir (alist-get 'default-directory (cdr entry))))
-            (when (and dir (file-directory-p dir))
-              (let ((default-directory dir))
-                (claude-code-ide-continue))))))
-      (lambda (buffers)
-        (easysession-save-handler-dolist-buffers
-          buffers
-          (when (claude-code-ide--session-buffer-p (current-buffer))
-            (cons (buffer-name)
-                  (list (cons 'default-directory
-                              default-directory)))))))))
-
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (setq initial-scratch-message nil)
 
@@ -248,27 +217,6 @@
 (use-package term
   :hook (term-mode . compilation-shell-minor-mode))
 
-(use-package spacious-padding
-  :custom
-  (spacious-padding-widths  '(:internal-border-width 50
-                              :right-divider-width 0
-                              :scroll-bar-width 0))
-  :config
-  (spacious-padding-mode t))
-
-(defun my-modeline-style (&optional _theme)
-  "Subtle modeline style"
-  (let ((subtle (face-foreground 'shadow)))
-    (custom-set-faces
-     `(mode-line ((t :background unspecified :box ,subtle)))
-     `(mode-line-inactive ((t :background unspecified :foreground ,subtle :box ,subtle))))))
-
-(add-hook 'after-make-frame-functions #'my-modeline-style)
-
-(add-hook 'enable-theme-functions #'my-modeline-style)
-
-(add-hook 'window-setup-hook #'my-modeline-style)
-
 (use-package olivetti
   :bind (("C-c t o" . olivetti-mode))
   :custom
@@ -295,13 +243,80 @@
           (6 . (variable-pitch 1.3))
           (7 . (variable-pitch 1.2))))
   :init
-  (load-theme 'modus-vivendi :no-confirm))
+  (load-theme 'modus-vivendi :no-confirm)
+  (defun pk--apply-ui-padding ()
+    "Apply padding to mode-line and tab-bar faces based on current theme colors."
+    (let ((ml-active-bg (face-attribute 'mode-line :background nil t))
+          (ml-inactive-bg (face-attribute 'mode-line-inactive :background nil t))
+          (bar-bg (face-attribute 'tab-bar :background (selected-frame)))
+          (tab-active-bg (face-attribute 'tab-bar-tab :background (selected-frame)))
+          (tab-inactive-bg (face-attribute 'tab-bar-tab-inactive :background (selected-frame))))
+      (set-face-attribute 'mode-line-active nil
+                          :box (list :line-width '(5 . 5) :color ml-active-bg)
+                          :height 1.0)
+      (set-face-attribute 'mode-line-inactive nil
+                          :box (list :line-width '(5 . 5) :color ml-inactive-bg)
+                          :height 1.0)
+      (set-face-attribute 'tab-bar nil :box (list :line-width '(5 . 5) :color bar-bg))
+      (set-face-attribute 'tab-bar-tab nil :box (list :line-width '(10 . 5) :color tab-active-bg))
+      (set-face-attribute 'tab-bar-tab-inactive nil :box (list :line-width '(10 . 5) :color tab-inactive-bg))))
+  (add-hook 'server-after-make-frame-hook #'pk--apply-ui-padding)
+  (unless (daemonp) (pk--apply-ui-padding)))
+
+(setq-default line-prefix (propertize " " 'display '(space :width (15))))
+(defun pk--disable-line-prefix ()
+  "Disable line-prefix in terminal buffers."
+  (setq-local line-prefix nil))
+(add-hook 'vterm-mode-hook #'pk--disable-line-prefix)
+
+(use-package tab-bar
+  :custom
+  (tab-bar-close-button-show nil)
+  (tab-bar-separator " ")
+  (tab-bar-format '(tab-bar-format-history tab-bar-separator tab-bar-format-tabs))
+  (tab-bar-tab-name-format-function
+   (lambda (tab _i)
+     (propertize (concat " " (alist-get 'name tab))
+                 'face (if (eq (car tab) 'current-tab)
+                           'tab-bar-tab
+                         'tab-bar-tab-inactive)))))
 
 (use-package nerd-icons
   :config
   (if (daemonp)
       (add-hook 'server-after-make-frame-hook #'nerd-icons-set-font)
     (nerd-icons-set-font)))
+
+;;;; Mode line
+(defun pk-modeline--major-mode-icon ()
+  "Return a nerd-icon for the current major mode."
+  (let ((icon (nerd-icons-icon-for-mode major-mode)))
+    (if (stringp icon) (concat icon " ") "")))
+
+(defun pk-modeline--right-align (right)
+  "Return a space string that right-aligns RIGHT in the mode line."
+  (let ((rlen (string-width (format-mode-line right))))
+    (propertize " " 'display `(space :align-to (- right ,rlen)))))
+
+(defun pk-modeline--vc-branch ()
+  "Return the current VC branch name, or empty string if detached/not tracked."
+  (when-let* ((vc vc-mode)
+              (branch (substring-no-properties vc))
+              ((string-match "^ Git[:-]\\(.+\\)" branch)))
+    (let ((name (match-string 1 branch)))
+      (unless (string-match-p "\\`[0-9a-f]\\{7,\\}\\'" name)
+        (concat " " (nerd-icons-octicon "nf-oct-git_branch") " " name)))))
+
+(defvar pk-modeline--right-segment
+  '("" (:eval (pk-modeline--vc-branch)) "  %l:%c"))
+
+(setq-default mode-line-format
+              '(" "
+                (:eval (pk-modeline--major-mode-icon))
+                "%b"
+                (:eval (pk-modeline--right-align pk-modeline--right-segment))
+                (:eval (pk-modeline--vc-branch))
+                "  %l:%c "))
 (use-package nerd-icons-corfu
   :after (nerd-icons corfu)
   :config
