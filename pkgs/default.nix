@@ -9,6 +9,23 @@ rec {
       rev = "5f12e60c6d2d1802c8c1b7944bbdf935d5db1364";
       hash = "sha256-tivRvgfI/8XBRImE3wuZ1UD0t2dNWYscv3Aa53BmHZE=";
     };
+    patches = [
+      (pkgs.fetchpatch {
+        name = "anti-flicker-fixes.patch";
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/158.patch";
+        hash = "sha256-CLWld5QbZSGRX/0Ip8ZszeaNESaBRWtYSNVr30I0Wy0=";
+      })
+      (pkgs.fetchpatch {
+        name = "fix-hl-line-range-function.patch";
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/164.patch";
+        hash = "sha256-PSBrgsECPhvMDYYzdS7nRn9qaSe7OkuJm+3IIwXaE6Q=";
+      })
+      (pkgs.fetchpatch {
+        name = "fix-restore-buffer-read-only-after-ediff.patch";
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/167.patch";
+        hash = "sha256-s12dx6JUx2scZ/KHnBcf4KeggGsD179SS1oKVxI6MCk=";
+      })
+    ];
     packageRequires = with pkgs-unstable.emacsPackages; [
       vterm
       websocket
