@@ -400,7 +400,7 @@
   # secret never appears as plaintext in the Nix store.
   services.ollama = {
     enable = true;
-    package = pkgs.ollama-cuda;
+    package = pkgs.unstable.ollama-cuda;
     loadModels = [
       "qwen2.5:3b" # 1.9 GB — fits in 4 GB VRAM; fast general coding/chat
       "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
@@ -480,6 +480,8 @@
       BindReadOnlyPaths = [ "/home/piotr/.config/traefik/dynamic" ];
     };
   };
+
+  programs.ydotool.enable = true;
 
   programs.firefox.enable = true;
 
