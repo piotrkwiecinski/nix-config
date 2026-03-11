@@ -207,6 +207,7 @@ in
 
   home.packages = builtins.attrValues {
     inherit (pkgs)
+      sox
       magento-cache-clean
       fira-code
       fira-code-symbols
