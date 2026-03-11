@@ -136,10 +136,11 @@ in
         apiKey = "{file:~/.config/ollama/api-key}";
       };
       models = {
-        "qwen2.5:3b" = {
-          name = "Qwen2.5 3B (GPU, fast)";
+        "qwen3:4b" = {
+          name = "Qwen3 4B (GPU, fast)";
+          tools = true;
           limit = {
-            context = 32768;
+            context = 256000;
             output = 8192;
           };
         };

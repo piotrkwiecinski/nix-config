@@ -402,7 +402,7 @@
     enable = true;
     package = pkgs.unstable.ollama-cuda;
     loadModels = [
-      "qwen2.5:3b" # 1.9 GB — fits in 4 GB VRAM; fast general coding/chat
+      "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; fast general coding/chat, 256K context
       "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
       "deepseek-r1:7b" # 4.7 GB — CPU+RAM; reasoning and research tasks
     ];
