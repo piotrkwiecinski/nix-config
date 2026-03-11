@@ -9,6 +9,8 @@
       "audio"
       "video"
       "plugdev"
+      "input"
+      "ydotool"
     ];
     packages = [ pkgs.home-manager ];
   };
