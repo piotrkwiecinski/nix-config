@@ -168,6 +168,22 @@ in
             output = 8192;
           };
         };
+        "llama3.2:3b" = {
+          name = "Llama 3.2 3B (GPU, tools)";
+          tools = true;
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
+        "mistral:7b" = {
+          name = "Mistral 7B (GPU, tools)";
+          tools = true;
+          limit = {
+            context = 4096;
+            output = 4096;
+          };
+        };
         "deepseek-r1:7b" = {
           name = "DeepSeek R1 7B (CPU, reasoning)";
           limit = {
