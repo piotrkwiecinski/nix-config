@@ -221,6 +221,7 @@ in
     inherit (pkgs.unstable)
       calibre
       audacity
+      ghostty
       gimp3
       nil
       slack
