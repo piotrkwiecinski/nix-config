@@ -5,7 +5,6 @@
   ];
 
   # Disable desktop-specific features for server
-  programs.obs-studio.enable = lib.mkForce false;
   xdg.mime.enable = lib.mkForce false;
 
   home.packages = with pkgs; [
