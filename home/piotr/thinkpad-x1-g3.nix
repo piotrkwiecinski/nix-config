@@ -124,7 +124,7 @@ in
   };
 
   # opencode local model provider via Ollama.
-  # Models: qwen2.5:3b (fast, in VRAM), translategemma:4b (translation),
+  # Models: qwen3:4b-32k (fast, tools, 32k ctx), translategemma:4b (translation),
   # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
@@ -153,11 +153,12 @@ in
         apiKey = "{file:~/.config/ollama/api-key}";
       };
       models = {
-        "qwen3:4b" = {
-          name = "Qwen3 4B (GPU, fast)";
+        "qwen3:4b-32k" = {
+          name = "Qwen3 4B (GPU, 32k tools)";
           tools = true;
+          reasoning = true;
           limit = {
-            context = 256000;
+            context = 32768;
             output = 8192;
           };
         };
@@ -219,8 +220,9 @@ in
       dig
       ;
     inherit (pkgs.unstable)
-      calibre
       audacity
+      bun
+      calibre
       ghostty
       gimp3
       nil

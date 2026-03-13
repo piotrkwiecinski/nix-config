@@ -402,7 +402,7 @@
     enable = true;
     package = pkgs.unstable.ollama-cuda;
     loadModels = [
-      "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; fast general coding/chat, 256K context
+      "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; base model for qwen3:4b-32k custom variant
       "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
       "deepseek-r1:7b" # 4.7 GB — CPU+RAM; reasoning and research tasks
     ];
@@ -410,6 +410,7 @@
       __NV_PRIME_RENDER_OFFLOAD = "1";
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       CUDA_VISIBLE_DEVICES = "0";
+      OLLAMA_CONTEXT_LENGTH = "32768";
     };
   };
 
