@@ -469,11 +469,11 @@
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1773405130,
-        "narHash": "sha256-ugkDyttzcZJfYA81QHek/eWCJA81zkMS7kK1xHKg4hU=",
+        "lastModified": 1773413806,
+        "narHash": "sha256-d6xklYz6VzK9yaKErLXfXeftQrGBcvbFJtebCTGFT44=",
         "ref": "refs/heads/main",
-        "rev": "b9198158eddc4e865ebb7e6ce00148233e9474be",
-        "revCount": 52,
+        "rev": "722459be37c92271a35e5d4bb5be144d763ac334",
+        "revCount": 53,
         "type": "git",
         "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
