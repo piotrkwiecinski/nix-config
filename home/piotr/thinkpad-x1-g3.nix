@@ -64,6 +64,8 @@ in
     card-timeout = 1;
   };
 
+  xdg.mime.enable = true;
+
   programs.obs-studio = {
     enable = true;
     package = (

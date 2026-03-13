@@ -7,6 +7,8 @@
     ./features/desktop/common/firefox.nix
   ];
 
+  xdg.mime.enable = true;
+
   home.packages = with pkgs; [
     nodejs_20
     htop

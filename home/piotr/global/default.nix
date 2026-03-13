@@ -45,8 +45,6 @@
 
   news.display = "silent";
 
-  xdg.mime.enable = true;
-
   programs.home-manager.enable = true;
 
   systemd.user.startServices = "sd-switch";
