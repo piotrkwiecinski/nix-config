@@ -466,8 +466,12 @@ in
           ssl = true;
         }
       ];
+      root = "/run/discourse/public";
       extraConfig = lanSslConfig;
       locations."/" = {
+        tryFiles = "$uri @discourse";
+      };
+      locations."@discourse" = {
         proxyPass = "http://unix:/run/discourse/sockets/unicorn.sock";
         proxyWebsockets = true;
         extraConfig = ''
@@ -486,11 +490,15 @@ in
           ssl = true;
         }
       ];
+      root = "/run/discourse/public";
       extraConfig = ''
         ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
         ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
       '';
       locations."/" = {
+        tryFiles = "$uri @discourse";
+      };
+      locations."@discourse" = {
         proxyPass = "http://unix:/run/discourse/sockets/unicorn.sock";
         proxyWebsockets = true;
         extraConfig = ''
