@@ -1,11 +1,8 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 {
   imports = [
     ./global
   ];
-
-  # Disable desktop-specific features for server
-  xdg.mime.enable = lib.mkForce false;
 
   home.packages = with pkgs; [
     htop
