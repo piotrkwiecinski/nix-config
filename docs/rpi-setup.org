@@ -1,0 +1,169 @@
+#+TITLE: Raspberry Pi 4B Host Setup
+#+DESCRIPTION: Setting up a new NixOS Raspberry Pi 4B host with USB SSD boot
+
+* Prerequisites
+
+- Raspberry Pi 4B with USB boot enabled (most units shipped after 2020 have this)
+- USB 3.0 SATA SSD
+- Access to workstation for building the SD image (cross-compiled via QEMU binfmt)
+
+#+begin_quote
+*Check USB boot support*: If unsure, temporarily boot Raspberry Pi OS from SD card and run:
+=vcgencmd bootloader_config | grep BOOT_ORDER=.
+If it includes =0x4= (USB), you're set. Otherwise: =sudo raspi-config= → Advanced → Boot Order → USB Boot.
+#+end_quote
+
+* Step 1: Add the host to nix-config
+
+Create the following files (using =homeserver= or =homerpilab= as reference):
+
+| File                                   | Purpose                                      |
+|----------------------------------------+----------------------------------------------|
+| =hosts/<hostname>/default.nix=         | System configuration                         |
+| =hosts/<hostname>/hardware-configuration.nix= | RPi 4B aarch64 hardware config (USB SSD boot) |
+| =home/piotr/<hostname>.nix=            | Home-manager config                          |
+
+Register the host in flake-parts:
+
+- =parts/nixos.nix=: add ~<hostname> = mkHost { hostname = "<hostname>"; system = "aarch64-linux"; };~
+- =parts/home-manager.nix=: add ~"piotr@<hostname>" = mkHome { username = "piotr"; hostname = "<hostname>"; system = "aarch64-linux"; };~
+
+Stage new files (flakes only see git-tracked files):
+
+#+begin_src bash
+git add hosts/<hostname>/ home/piotr/<hostname>.nix
+#+end_src
+
+* Step 2: Set up sops secrets
+
+In =nix-config-private=:
+
+1. Create =modules/nixos/<hostname>-secrets.nix= defining the needed secrets (at minimum: =piotr-password-hash=, =tailscale-auth-key=, =builder-key=)
+2. Export the module in =flake.nix=: ~<hostname>-secrets = import ./modules/nixos/<hostname>-secrets.nix;~
+3. Add a placeholder key and creation rule to =.sops.yaml=:
+   #+begin_src yaml
+   keys:
+     - &<hostname> PLACEHOLDER_REPLACE_WITH_AGE_KEY_AFTER_FIRST_BOOT
+
+   creation_rules:
+     - path_regex: secrets/<hostname>\.yaml$
+       key_groups:
+         - age:
+             - *<hostname>
+             - *admin
+   #+end_src
+4. Create a placeholder =secrets/<hostname>.yaml=
+5. Commit and push nix-config-private
+6. In nix-config, update the flake input and push:
+   #+begin_src bash
+   nix flake update private-nix-config
+   git commit -a -m "flake: update private-nix-config for <hostname>-secrets module"
+   git push
+   #+end_src
+
+* Step 3: Build and flash the SD image
+
+#+begin_src bash
+nix build .#nixosConfigurations.<hostname>.config.system.build.sdImage
+sudo dd if=result/sd-image/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress conv=fsync && sync
+#+end_src
+
+* Step 4: First boot
+
+1. Connect SSD to Pi and power on
+2. Discover the Pi via mDNS (if Avahi is enabled in config): =ping <hostname>.local=
+   - If Avahi is not enabled, find the IP via router DHCP leases or =nmap -sn 192.168.68.0/24=
+3. SSH in: =ssh piotr@<hostname>.local=
+
+* Step 5: Activate secrets
+
+The first boot runs without sops secrets (the age key placeholder prevents encryption). Now obtain the real key and activate:
+
+1. Get the host's age public key from its SSH host key:
+   #+begin_src bash
+   ssh-keyscan <hostname>.local 2>/dev/null | nix-shell -p ssh-to-age --run ssh-to-age
+   #+end_src
+
+2. In =nix-config-private=:
+   - Replace the placeholder in =.sops.yaml= with the real age key
+   - Create the encrypted secrets file:
+     #+begin_src bash
+     sops secrets/<hostname>.yaml
+     #+end_src
+     Add the required keys: =piotr-password-hash=, =tailscale-auth-key=, =builder-key=
+   - Commit and push
+
+3. In =nix-config=, update the flake input again:
+   #+begin_src bash
+   nix flake update private-nix-config
+   git commit -a -m "flake: update private-nix-config with <hostname> secrets"
+   git push
+   #+end_src
+
+4. Deploy to the Pi:
+   #+begin_src bash
+   ssh piotr@<hostname>.local "cd ~/nix-config && git pull && sudo nixos-rebuild switch --flake .#<hostname>"
+   #+end_src
+
+* Step 6: Verify
+
+#+begin_src bash
+ssh piotr@<hostname>.local
+ls -la /run/secrets/              # Secrets decrypted
+systemctl status tailscaled       # Tailscale running
+systemctl status sshd             # SSH running
+nix build nixpkgs#hello --rebuild # Remote build delegates to thinkpad
+#+end_src
+
+* Optional: Static IP
+
+When you have a LAN IP assigned, add to =hosts/<hostname>/default.nix=:
+
+#+begin_src nix
+networking.interfaces.end0.ipv4.addresses = [{
+  address = "192.168.68.XXX";
+  prefixLength = 24;
+}];
+networking.defaultGateway = "192.168.68.1";
+networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
+#+end_src
+
+Alternatively, create a DHCP reservation in your router for the Pi's MAC address.
+
+* Optional: Router DNS
+
+To use the Pi as a DNS server (e.g. for ad-blocking via Blocky), point client DNS settings or router DNS to the Pi's IP.
+
+* Deploying future updates
+
+#+begin_src bash
+# Recommended: build on the Pi itself (fetches from cache.nixos.org)
+ssh piotr@<hostname>.local "cd ~/nix-config && git pull && sudo nixos-rebuild switch --flake .#<hostname>"
+#+end_src
+
+* Troubleshooting
+
+** Remote builds not working
+1. Verify thinkpad is reachable: =ping thinkpad-x1-g3.local=
+2. Test SSH: =ssh -i /etc/nix/builder_key builder@thinkpad-x1-g3.local=
+3. Check key permissions: =ls -la /etc/nix/builder_key= (should be 600)
+4. Verify builder is in =nix.settings.trusted-users= on thinkpad
+
+** Secrets not decrypting
+1. Check sops-nix service: =systemctl status sops-nix=
+2. Verify SSH host key exists: =ls -la /etc/ssh/ssh_host_ed25519_key=
+3. Confirm age key in =.sops.yaml= matches: =cat /etc/ssh/ssh_host_ed25519_key.pub | nix-shell -p ssh-to-age --run ssh-to-age=
+
+** Editing secrets
+
+#+begin_src bash
+cd ~/projects/nix-config-private
+sops secrets/<hostname>.yaml
+#+end_src
+
+First-time admin key setup:
+#+begin_src bash
+age-keygen -o ~/.config/sops/age/keys.txt
+export SOPS_AGE_KEY_FILE=~/.config/sops/age/keys.txt
+# Add public key as &admin in .sops.yaml
+#+end_src
