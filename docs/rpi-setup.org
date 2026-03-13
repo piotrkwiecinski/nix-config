@@ -40,19 +40,36 @@ In =nix-config-private=:
 
 1. Create =modules/nixos/<hostname>-secrets.nix= defining the needed secrets (at minimum: =piotr-password-hash=, =tailscale-auth-key=, =builder-key=)
 2. Export the module in =flake.nix=: ~<hostname>-secrets = import ./modules/nixos/<hostname>-secrets.nix;~
-3. Add a placeholder key and creation rule to =.sops.yaml=:
+3. Add a creation rule to =.sops.yaml= with *admin key only* (host key is added after first boot):
    #+begin_src yaml
    keys:
-     - &<hostname> PLACEHOLDER_REPLACE_WITH_AGE_KEY_AFTER_FIRST_BOOT
+     # <hostname>: replace after first boot with real age key derived from SSH host key
+     # - &<hostname> REPLACE_AFTER_FIRST_BOOT
 
    creation_rules:
      - path_regex: secrets/<hostname>\.yaml$
        key_groups:
          - age:
-             - *<hostname>
              - *admin
    #+end_src
-4. Create a placeholder =secrets/<hostname>.yaml=
+4. Create =secrets/<hostname>.yaml= with placeholder values and encrypt it:
+   #+begin_src bash
+   # Write plaintext YAML with the required keys
+   cat > secrets/<hostname>.yaml <<'EOF'
+   piotr-password-hash: CHANGE_ME_AFTER_FIRST_BOOT
+   tailscale-auth-key: CHANGE_ME_AFTER_FIRST_BOOT
+   builder-key: CHANGE_ME_AFTER_FIRST_BOOT
+   EOF
+   # Encrypt in place (uses admin key per creation rule)
+   sops -e -i secrets/<hostname>.yaml
+   #+end_src
+
+   #+begin_quote
+   *Important*: The secrets file must be valid sops-encrypted YAML, not plaintext.
+   The SD image build runs =sops-install-secrets= which validates that all declared
+   secret keys exist in the encrypted file. A plaintext placeholder will fail the build.
+   #+end_quote
+
 5. Commit and push nix-config-private
 6. In nix-config, update the flake input and push:
    #+begin_src bash
@@ -65,8 +82,10 @@ In =nix-config-private=:
 
 #+begin_src bash
 nix build .#nixosConfigurations.<hostname>.config.system.build.sdImage
-sudo dd if=result/sd-image/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progress conv=fsync && sync
+zstdcat result/sd-image/nixos-image-sd-card-*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync && sync
 #+end_src
+
+The image is zstd-compressed (~1.5GB). =zstdcat= decompresses on the fly during flashing.
 
 * Step 4: First boot
 
@@ -75,9 +94,9 @@ sudo dd if=result/sd-image/nixos-sd-image-*.img of=/dev/sdX bs=4M status=progres
    - If Avahi is not enabled, find the IP via router DHCP leases or =nmap -sn 192.168.68.0/24=
 3. SSH in: =ssh piotr@<hostname>.local=
 
-* Step 5: Activate secrets
+* Step 5: Re-key secrets with real host key
 
-The first boot runs without sops secrets (the age key placeholder prevents encryption). Now obtain the real key and activate:
+The first boot has encrypted secrets but with dummy values and only the admin key can decrypt them. The host itself cannot yet decrypt its own secrets. Now obtain the real host key and re-key:
 
 1. Get the host's age public key from its SSH host key:
    #+begin_src bash
@@ -85,12 +104,29 @@ The first boot runs without sops secrets (the age key placeholder prevents encry
    #+end_src
 
 2. In =nix-config-private=:
-   - Replace the placeholder in =.sops.yaml= with the real age key
-   - Create the encrypted secrets file:
+   - Uncomment and set the real age key in =.sops.yaml=:
+     #+begin_src yaml
+     keys:
+       - &<hostname> age1...the-real-key...
+     #+end_src
+   - Add =*<hostname>= to the creation rule:
+     #+begin_src yaml
+     creation_rules:
+       - path_regex: secrets/<hostname>\.yaml$
+         key_groups:
+           - age:
+               - *<hostname>
+               - *admin
+     #+end_src
+   - Edit secrets to replace dummy values with real ones:
      #+begin_src bash
      sops secrets/<hostname>.yaml
      #+end_src
-     Add the required keys: =piotr-password-hash=, =tailscale-auth-key=, =builder-key=
+     Set: =piotr-password-hash= (output of =mkpasswd -m sha-512=), =tailscale-auth-key= (from Tailscale admin console), =builder-key= (SSH private key for remote builds)
+   - Re-key so the host can decrypt:
+     #+begin_src bash
+     sops updatekeys secrets/<hostname>.yaml
+     #+end_src
    - Commit and push
 
 3. In =nix-config=, update the flake input again:
