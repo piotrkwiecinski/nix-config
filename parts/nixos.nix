@@ -26,5 +26,9 @@ in
       hostname = "homeserver";
       system = "aarch64-linux";
     };
+    homerpilab = mkHost {
+      hostname = "homerpilab";
+      system = "aarch64-linux";
+    };
   };
 }
