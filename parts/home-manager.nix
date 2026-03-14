@@ -42,5 +42,9 @@ in
       hostname = "homerpilab";
       system = "aarch64-linux";
     };
+    "piotr@discourse" = mkHome {
+      username = "piotr";
+      hostname = "discourse";
+    };
   };
 }
