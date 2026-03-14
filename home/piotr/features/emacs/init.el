@@ -264,10 +264,26 @@
   (unless (daemonp) (pk--apply-ui-padding)))
 
 (setq-default line-prefix (propertize " " 'display '(space :width (15))))
-(defun pk--disable-line-prefix ()
-  "Disable line-prefix in terminal buffers."
-  (setq-local line-prefix nil))
-(add-hook 'vterm-mode-hook #'pk--disable-line-prefix)
+(use-package vterm
+  :commands (vterm vterm-other-window)
+  :hook (vterm-mode . pk--disable-line-prefix)
+  :init
+  (defun pk--disable-line-prefix ()
+    "Disable line-prefix in terminal buffers."
+    (setq-local line-prefix nil))
+  (defun vterm-project ()
+    "Open a vterm buffer in the current project's root directory."
+    (interactive)
+    (defvar vterm-buffer-name)
+    (let* ((default-directory (project-root (project-current t)))
+           (vterm-buffer-name (project-prefixed-buffer-name "vterm"))
+           (vterm-buffer (get-buffer vterm-buffer-name)))
+      (if (and vterm-buffer (not current-prefix-arg))
+          (pop-to-buffer vterm-buffer (bound-and-true-p display-comint-buffer-action))
+        (vterm-other-window t))))
+  (with-eval-after-load 'project
+    (add-to-list 'project-switch-commands '(vterm-project "vterm" "t") t)
+    (keymap-set project-prefix-map "t" #'vterm-project)))
 
 (use-package tab-bar
   :custom
