@@ -1,0 +1,94 @@
+#+TITLE: Emacs on Android — Connect to Thinkpad
+#+DATE: 2026-03-14
+
+* Overview
+
+Run Emacs natively on Android and connect to thinkpad-x1-g3 via SSH/TRAMP
+to edit files remotely and access org-mode notes. Uses Tailscale for
+networking (already configured on both devices).
+
+No nix-config changes are needed — SSH and Tailscale are already enabled
+on the thinkpad.
+
+* Install Apps from F-Droid
+
+- *GNU Emacs 30* — native Android GUI app (search "GNU Emacs" on F-Droid)
+- *Termux* — terminal emulator, provides SSH/git (install from F-Droid, not Google Play)
+- *Unexpected Keyboard* — keyboard with Ctrl/Meta/Esc keys, essential for Emacs
+
+* Set Up Termux
+
+Open Termux and install packages:
+
+#+begin_src bash
+pkg update && pkg upgrade
+pkg install openssh git
+#+end_src
+
+* SSH Key Setup
+
+Generate a key and authorize it on the thinkpad:
+
+#+begin_src bash
+ssh-keygen -t ed25519 -C "piotr@android"
+ssh-copy-id piotr@<thinkpad-tailscale-ip>
+#+end_src
+
+Alternatively, add the key the nix way in
+=hosts/thinkpad-x1-g3/default.nix=:
+
+#+begin_src nix
+users.users.piotr.openssh.authorizedKeys.keys = [
+  # ... existing keys ...
+  "ssh-ed25519 AAAA... piotr@android"
+];
+#+end_src
+
+* SSH Config
+
+Create =~/.ssh/config= in Termux:
+
+#+begin_src conf
+Host thinkpad
+  HostName <thinkpad-tailscale-hostname-or-ip>
+  User piotr
+#+end_src
+
+Test: =ssh thinkpad= from Termux should connect.
+
+* Emacs TRAMP Configuration
+
+Add to your phone's Emacs =init.el=:
+
+#+begin_src emacs-lisp
+;; TRAMP setup for remote editing
+(require 'tramp)
+(setq tramp-default-method "ssh")
+
+;; Org-mode pointing to remote files
+(setq org-directory "/ssh:thinkpad:~/org/")
+(setq org-agenda-files (list org-directory))
+#+end_src
+
+* Usage
+
+| Action              | Keys / Command                          |
+|---------------------+-----------------------------------------|
+| Open remote file    | =C-x C-f /ssh:thinkpad:~/projects/=    |
+| Remote dired        | =C-x d /ssh:thinkpad:~/=               |
+| Org agenda (remote) | =C-c o a= (with org-directory set)      |
+
+* Alternatives for Org Sync
+
+TRAMP over mobile networks can be slow. For faster org access:
+
+- *Syncthing* — sync =~/org/= to the phone for local access (available on F-Droid)
+- *Nextcloud* — already running on homeserver, sync org files there
+- *Git* — clone org repo in Termux, use magit or CLI git to sync
+
+* Verification Checklist
+
+- [ ] Emacs + Termux + Unexpected Keyboard installed on phone
+- [ ] =ssh thinkpad= works from Termux
+- [ ] =C-x C-f /ssh:thinkpad:~/= opens remote dired in Emacs
+- [ ] Org agenda loads remote org files
