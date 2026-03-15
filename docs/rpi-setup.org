@@ -17,11 +17,11 @@ If it includes =0x4= (USB), you're set. Otherwise: =sudo raspi-config= → Advan
 
 Create the following files (using =homeserver= or =homerpilab= as reference):
 
-| File                                   | Purpose                                      |
-|----------------------------------------+----------------------------------------------|
-| =hosts/<hostname>/default.nix=         | System configuration                         |
+| File                                          | Purpose                                       |
+|-----------------------------------------------+-----------------------------------------------|
+| =hosts/<hostname>/default.nix=                | System configuration                          |
 | =hosts/<hostname>/hardware-configuration.nix= | RPi 4B aarch64 hardware config (USB SSD boot) |
-| =home/piotr/<hostname>.nix=            | Home-manager config                          |
+| =home/piotr/<hostname>.nix=                   | Home-manager config                           |
 
 Register the host in flake-parts:
 

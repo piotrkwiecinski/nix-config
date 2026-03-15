@@ -54,7 +54,7 @@
   services.openssh = {
     enable = true;
     settings = {
-      PermitRootLogin = "prohibit-password";
+      PermitRootLogin = "no";
       PasswordAuthentication = false;
     };
   };
@@ -104,7 +104,7 @@
         username = "AKIAWZ4AMUABORGSD272";
         passwordFile = config.sops.secrets."discourse-smtp-password".path;
         authentication = "plain";
-        forceTLS = true;
+        forceTLS = false;
         domain = "codemanufacture.com";
       };
     };

@@ -139,8 +139,11 @@ in
   };
 
   # opencode local model provider via Ollama.
-  # Models: qwen3:4b-32k (fast, tools, 32k ctx), translategemma:4b (translation),
-  # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
+  # Tool calling models ranked by MikeVeerman/tool-calling-benchmark (Round 3, 20 runs):
+  #   qwen3:1.7b  — 0.960 agent score, best accuracy, ~10.7s (benchmark champion)
+  #   lfm2.5:1.2b — 0.920 agent score, ~1.6s (7x faster, best speed/accuracy)
+  #   phi4-mini    — native function calling, 3.8B, good all-rounder
+  # Also: qwen3:4b-32k (larger context), deepseek-r1:7b (reasoning), translategemma:4b
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     mcp = {
@@ -168,6 +171,31 @@ in
         apiKey = "{file:~/.config/ollama/api-key}";
       };
       models = {
+        "qwen3:1.7b" = {
+          name = "Qwen3 1.7B (GPU, best tool calling)";
+          tools = true;
+          reasoning = true;
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
+        "hf.co/LiquidAI/LFM2.5-1.2B-Instruct-GGUF" = {
+          name = "LFM2.5 1.2B (GPU, fast tools)";
+          tools = true;
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
+        "phi4-mini" = {
+          name = "Phi-4 Mini 3.8B (GPU, tools)";
+          tools = true;
+          limit = {
+            context = 16384;
+            output = 8192;
+          };
+        };
         "qwen3:4b-32k" = {
           name = "Qwen3 4B (GPU, 32k tools)";
           tools = true;
@@ -182,22 +210,6 @@ in
           limit = {
             context = 128000;
             output = 8192;
-          };
-        };
-        "llama3.2:3b" = {
-          name = "Llama 3.2 3B (GPU, tools)";
-          tools = true;
-          limit = {
-            context = 32768;
-            output = 8192;
-          };
-        };
-        "mistral:7b" = {
-          name = "Mistral 7B (GPU, tools)";
-          tools = true;
-          limit = {
-            context = 4096;
-            output = 4096;
           };
         };
         "deepseek-r1:7b" = {
