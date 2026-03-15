@@ -30,6 +30,9 @@ in
       hostname = "homerpilab";
       system = "aarch64-linux";
     };
-    discourse = mkHost { hostname = "discourse"; };
+    discourse = mkHost {
+      hostname = "discourse";
+      system = "aarch64-linux";
+    };
   };
 }

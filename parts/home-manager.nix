@@ -45,6 +45,7 @@ in
     "piotr@discourse" = mkHome {
       username = "piotr";
       hostname = "discourse";
+      system = "aarch64-linux";
     };
   };
 }

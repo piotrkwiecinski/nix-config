@@ -101,7 +101,7 @@
       outgoing = {
         serverAddress = "email-smtp.eu-west-1.amazonaws.com";
         port = 587;
-        username = "REPLACE_WITH_SES_SMTP_USERNAME";
+        username = "AKIAWZ4AMUABORGSD272";
         passwordFile = config.sops.secrets."discourse-smtp-password".path;
         authentication = "plain";
         forceTLS = true;
@@ -138,7 +138,7 @@
   users.users."piotr" = {
     hashedPasswordFile = config.sops.secrets."piotr-password-hash".path;
     openssh.authorizedKeys.keys = [
-      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC1AkWOqdmzCuLtD1hbJHNbli12oqco1Zh8BHf1tif7zFAz6sNgkFGSp4+gySMIBv+Qk2SbNpGCI1XL2kpgTFUu2LbF3tfOjdP5uXGZfb1Af+rv/ESprBJjjiM8YuvD1TZ4Q25ie1eIyjcey30JJReA4K9nvHPr/nthpch7xfgnoO7Pkyf1OlEeZbp1Luo1s8mqb+oFYW9mcIfDzn5R7YvPshfflMQMXfbgXQ4usKpLNNrr5NjKpBETu9/wf/T9OUD/+2BFyiMrRZkJWtM3QCoXEYDWqcW0qvc4uSXMUyCYbHNtrxuhU1VIbDXDx2Gmkcs58NPnpxw9ONdkA5XS2pfEihElYNc8jF7uh24mjs1MICFZqFgsWWz6S9bYkqW1y/MDuhKy8IA2vdHiSFxVZbSFv6jf8LMQXDbxIHNhGoF8wTJCK/zNRtmOmSQnzi1DQcncYxy0WqoHTlR/beiPqtyaUNSEEyapr9vwagePvuY/4BKMTpamfEe/nGADJpBfcvs= piotr@piotr-laptop"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPlX+YupoTzwRASKq0nZV1l+pInQLHsiBmWTP6OdQSGp piotr@thinkpad-x1-g3"
     ];
   };
 
