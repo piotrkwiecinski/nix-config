@@ -123,7 +123,6 @@ in
       8445 # Calibre (Tailscale HTTPS)
       8446 # Jellyfin (Tailscale HTTPS)
       8447 # Forgejo (Tailscale HTTPS)
-      8448 # Discourse (Tailscale HTTPS)
       8600 # MPD HTTP stream
       5000 # Harmonia binary cache (LAN)
     ];
@@ -457,56 +456,6 @@ in
       };
     };
 
-    # Discourse LAN HTTPS
-    virtualHosts."discourse.homeserver.local" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      root = "/run/discourse/public";
-      extraConfig = lanSslConfig;
-      locations."/" = {
-        tryFiles = "$uri @discourse";
-      };
-      locations."@discourse" = {
-        proxyPass = "http://unix:/run/discourse/sockets/unicorn.sock";
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_read_timeout 60;
-          client_max_body_size 20M;
-        '';
-      };
-    };
-
-    # Discourse via Tailscale HTTPS (port 8448)
-    virtualHosts."discourse-tailscale" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 8448;
-          ssl = true;
-        }
-      ];
-      root = "/run/discourse/public";
-      extraConfig = ''
-        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
-        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
-      '';
-      locations."/" = {
-        tryFiles = "$uri @discourse";
-      };
-      locations."@discourse" = {
-        proxyPass = "http://unix:/run/discourse/sockets/unicorn.sock";
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_read_timeout 60;
-          client_max_body_size 20M;
-        '';
-      };
-    };
   };
 
   # Home Assistant
@@ -626,27 +575,6 @@ in
       actions.ENABLED = true;
     };
   };
-
-  # Discourse forum
-  services.discourse = {
-    enable = true;
-    hostname = "discourse.homeserver.local";
-    database.createLocally = true;
-    database.ignorePostgresqlVersion = true;
-    secretKeyBaseFile = config.sops.secrets."discourse-secret-key-base".path;
-    admin = {
-      email = "piotr.kwiecinski@codemanufacture.com";
-      username = "admin";
-      fullName = "Piotr";
-      passwordFile = config.sops.secrets."discourse-admin-pass".path;
-    };
-    mail.notificationEmailAddress = "noreply@homeserver.local";
-    mail.contactEmailAddress = "piotr.kwiecinski@codemanufacture.com";
-    sidekiqProcesses = 1;
-    unicornTimeout = 60;
-    nginx.enable = false;
-  };
-  users.users.nginx.extraGroups = [ "discourse" ];
 
   # Shared media group and music directory
   users.groups.media = { };
