@@ -78,6 +78,34 @@ Add to your phone's Emacs =init.el=:
 | Remote dired        | =C-x d /ssh:thinkpad:~/=               |
 | Org agenda (remote) | =C-c o a= (with org-directory set)      |
 
+* Accessing Termux Home from Emacs
+
+Emacs and Termux are separate Android apps with sandboxed filesystems.
+Emacs cannot directly read Termux's home at
+=/data/data/com.termux/files/home/=. Use shared storage as a bridge:
+
+1. In Termux, enable shared storage access (one-time):
+
+   #+begin_src bash
+   termux-setup-storage
+   #+end_src
+
+   This creates =~/storage/shared/= pointing to =/storage/emulated/0/=,
+   which both apps can access.
+
+2. Symlink what you need into shared storage:
+
+   #+begin_src bash
+   ln -s ~/.ssh /storage/emulated/0/termux-ssh
+   #+end_src
+
+3. In Emacs, open =/storage/emulated/0/termux-ssh/=.
+
+Alternatively, skip sharing entirely — Emacs has its own home at
+=/data/data/org.gnu.emacs/files/=. You can create =.ssh/= there with
+its own key and config (=M-x shell= gives a shell where =~= is
+Emacs's home). This avoids the cross-app filesystem issue.
+
 * Alternatives for Org Sync
 
 TRAMP over mobile networks can be slow. For faster org access:
