@@ -1,0 +1,123 @@
+* Paperless-ngx + Proton Mail via Official Bridge
+
+** Context
+
+Paperless-ngx on the homeserver (RPi 4) currently consumes documents from Gmail via OAuth. The goal is to add Proton Mail as an additional mail source. Proton Mail requires a local bridge for IMAP access since it doesn't expose standard IMAP.
+
+The official =protonmail-bridge= (v3.21.2) is available in nixpkgs for aarch64-linux. It depends on =libsecret= and needs a secret-service provider for credential storage. The existing NixOS module (=services.protonmail-bridge=) targets =graphical-session.target= and creates a user service — not suitable for a headless server. A custom system service is needed.
+
+** Implementation
+
+*** Step 1: Set up =pass= (password-store) for headless keychain
+
+The bridge uses =libsecret= but supports =pass= as a backend via the =PROTONMAIL_BRIDGE_KEYCHAIN=pass= environment variable.
+
+In =hosts/homeserver/default.nix=:
+- Create a dedicated =protonmail-bridge= system user
+- Install =pass= and =gnupg= in the service path
+- Generate a GPG key for the bridge user (one-time manual step)
+- Initialize =pass= for the bridge user (one-time manual step)
+
+*** Step 2: Create custom systemd system service
+
+In =hosts/homeserver/default.nix=, add:
+
+#+begin_src nix
+# Proton Mail Bridge - local IMAP for Paperless
+users.users.protonmail-bridge = {
+  isSystemUser = true;
+  group = "protonmail-bridge";
+  home = "/var/lib/protonmail-bridge";
+  createHome = true;
+};
+users.groups.protonmail-bridge = {};
+
+systemd.services.protonmail-bridge = {
+  description = "Proton Mail Bridge";
+  after = [ "network-online.target" ];
+  wants = [ "network-online.target" ];
+  wantedBy = [ "multi-user.target" ];
+
+  environment = {
+    PROTONMAIL_BRIDGE_KEYCHAIN = "pass";
+    HOME = "/var/lib/protonmail-bridge";
+    GNUPGHOME = "/var/lib/protonmail-bridge/.gnupg";
+    PASSWORD_STORE_DIR = "/var/lib/protonmail-bridge/.password-store";
+  };
+
+  serviceConfig = {
+    ExecStart = "${pkgs.protonmail-bridge}/bin/protonmail-bridge --noninteractive";
+    Restart = "always";
+    RestartSec = 30;
+    User = "protonmail-bridge";
+    Group = "protonmail-bridge";
+    StateDirectory = "protonmail-bridge";
+  };
+
+  path = [ pkgs.pass pkgs.gnupg ];
+};
+#+end_src
+
+*** Step 3: One-time bootstrap (manual, on the homeserver)
+
+This must be done interactively on the homeserver after deploying the service user:
+
+#+begin_src bash
+# Switch to bridge user
+sudo -u protonmail-bridge -i
+export HOME=/var/lib/protonmail-bridge
+export GNUPGHOME=$HOME/.gnupg
+export PASSWORD_STORE_DIR=$HOME/.password-store
+export PROTONMAIL_BRIDGE_KEYCHAIN=pass
+
+# Generate GPG key (non-interactive)
+gpg --batch --gen-key <<EOF
+%no-protection
+Key-Type: EdDSA
+Key-Curve: Ed25519
+Name-Real: Proton Bridge
+Name-Email: bridge@localhost
+Expire-Date: 0
+%commit
+EOF
+
+# Initialize pass
+pass init "bridge@localhost"
+
+# Login to Proton Mail
+protonmail-bridge --cli
+# In the CLI: login, enter credentials + 2FA
+# Note the IMAP port (default 1143) and bridge password shown
+#+end_src
+
+*** Step 4: Configure Paperless mail account (via web UI)
+
+After the bridge is running and authenticated:
+
+1. Go to Paperless web UI → Admin → Mail → Mail Accounts → Add
+2. Settings:
+   - *IMAP server:* =127.0.0.1=
+   - *IMAP port:* =1143=
+   - *IMAP security:* STARTTLS (bridge provides self-signed TLS)
+   - *Username:* Proton Mail email address
+   - *Password:* bridge password (shown during login in step 3)
+3. Create Mail Rules to filter/consume desired emails
+
+The existing =PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *"= applies to all accounts.
+
+** Files to modify
+
+| File                            | Change                                                    |
+|---------------------------------+-----------------------------------------------------------|
+| =hosts/homeserver/default.nix= | Add protonmail-bridge user, group, and systemd service    |
+
+No secrets in sops needed for the initial deployment — the bridge stores its own credentials in =pass= on the homeserver. The Paperless mail account password (bridge password) is entered through the Paperless web UI and stored in its database.
+
+** Verification
+
+1. Deploy: =ssh piotr@homeserver "cd ~/nix-config && git pull && sudo nixos-rebuild switch --flake .#homeserver"=
+2. Bootstrap bridge credentials (step 3 above)
+3. Check service: =systemctl status protonmail-bridge=
+4. Verify IMAP: =curl -v telnet://127.0.0.1:1143= should show IMAP banner
+5. Add mail account in Paperless UI, trigger manual email check
+6. Confirm documents appear in Paperless from Proton Mail inbox
