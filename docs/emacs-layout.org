@@ -1,0 +1,54 @@
+* Emacs Frame Layout
+
+#+begin_example
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ TITLE BAR (window manager, not Emacs — hidden with `undecorated`)         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ MENU BAR (disabled)                                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ TOOL BAR (disabled)                                                        │
+├──────────────────────────────────┬──────────────────────────────────────────┤
+│          TAB BAR                 │          TAB BAR                         │
+│  ┌──────────┐ ┌──────────┐      │                                          │
+│  │  TAB 1   │ │  TAB 2   │      │  (tab-bar spans full frame width)        │
+│  └──────────┘ └──────────┘      │                                          │
+├──────────────────────────────────┼──────────────────────────────────────────┤
+│           HEADER LINE            │           HEADER LINE                    │
+├──┬──┬──┬────┬─┬──────────────────┼──┬──┬──┬────┬─┬────────────────────────┤
+│  │  │  │    │ │                  │  │  │  │    │ │                          │
+│  │L │L │    │L│                  │  │L │L │    │L│                          │
+│  │E │E │ L  │I│                  │  │E │E │ L  │I│                          │
+│  │F │F │ E  │N│                  │  │F │F │ E  │N│                          │
+│  │T │T │ F  │E│                  │  │T │T │ F  │E│                          │
+│  │  │  │ T  │ │                  │  │  │  │ T  │ │                          │
+│  │F │M │    │N│   TEXT AREA      │  │F │M │    │N│   TEXT AREA              │
+│  │R │A │ M  │U│                  │  │R │A │ M  │U│                          │
+│  │I │R │ A  │M│  (buffer         │  │I │R │ A  │M│  (buffer                 │
+│  │N │G │ R  │B│   content)       │  │N │G │ R  │B│   content)               │
+│  │G │I │ G  │E│                  │  │G │I │ G  │E│                          │
+│  │E │N │ I  │R│                  │  │E │N │ I  │R│                          │
+│  │  │  │ N  │S│                  │  │  │  │ N  │S│                          │
+│  │  │  │    │ │                  │  │  │  │    │ │                          │
+│  │  │  │    │ │     RIGHT MARGIN │  │  │  │    │ │     RIGHT MARGIN         │
+│  │  │  │    │ │     RIGHT FRINGE │  │  │  │    │ │     RIGHT FRINGE         │
+├──┴──┴──┴────┴─┴──────────────────┼──┴──┴──┴────┴─┴────────────────────────┤
+│  WINDOW 1 MODE LINE             │  WINDOW 2 MODE LINE                     │
+│  icon  buffer    branch  ln:col │  icon  buffer    branch  ln:col         │
+├──────────────────────────────────┴──────────────────────────────────────────┤
+│ ECHO AREA / MINIBUFFER                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+#+end_example
+
+** Column breakdown (left to right within a window)
+
+#+begin_example
+│ LEFT FRINGE │ LEFT MARGIN │ LINE NUMBERS │ line-prefix │ TEXT │ RIGHT MARGIN │ RIGHT FRINGE │
+│   8px       │   0 cols    │  (prog-mode) │   15px      │      │   0 cols     │   8px        │
+#+end_example
+
+** Other areas not shown
+
+- *Scroll bar* — disabled via ~vertical-scroll-bars~ in early-init
+- *Window divider* — thin line between split windows (configurable via ~window-divider-mode~)
+- *Internal border* — padding around the entire frame edge (~internal-border-width~)
+- *Child frame* — floating frames used by some packages (posframe, corfu)
