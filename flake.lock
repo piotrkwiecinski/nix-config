@@ -27,11 +27,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1773711031,
-        "narHash": "sha256-S7jOY+xHm8Y8N6Amm663/saMZ+VSGBGZfWiQrkVyXQM=",
+        "lastModified": 1773804142,
+        "narHash": "sha256-XiW/Tsauyig4Oog1yjxBAzTfO8HAiwtpT0uLh4QpVJ8=",
         "owner": "ryoppippi",
         "repo": "claude-code-overlay",
-        "rev": "19b4712c89218e578e93b32143e51f70022a7bfb",
+        "rev": "292f18fd1be3376acfa7e7238e4f5b4607700cd9",
         "type": "github"
       },
       "original": {
