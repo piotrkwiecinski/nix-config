@@ -227,6 +227,28 @@
 (use-package hide-mode-line
   :hook (elfeed-show-mode . hide-mode-line-mode))
 
+(use-package org-present
+  :commands org-present
+  :hook ((org-present-mode . (lambda ()
+                               (setq-local face-remapping-alist
+                                           '((default (:height 1.15) default)
+                                             (header-line (:height 2.0) variable-pitch)
+                                             (org-document-title (:height 1.3) org-document-title)
+                                             (org-level-1 (:height 1.0) org-level-1)))
+                               (org-present-big)
+                               (org-present-hide-cursor)
+                               (org-present-read-only)
+                               (olivetti-mode 1)
+                               (hide-mode-line-mode 1)))
+         (org-present-mode-quit . (lambda ()
+                                    (setq-local face-remapping-alist nil)
+                                    (org-present-small)
+                                    (org-present-show-cursor)
+                                    (setq-local cursor-type t)
+                                    (org-present-read-write)
+                                    (olivetti-mode -1)
+                                    (hide-mode-line-mode -1)))))
+
 (setq-default line-spacing 5)
 
 (use-package modus-themes
