@@ -233,7 +233,7 @@
                                (setq-local face-remapping-alist
                                            '((default (:height 1.15) default)
                                              (header-line (:height 2.0) variable-pitch)
-                                             (org-document-title (:height 1.3) org-document-title)
+                                             (org-document-title (:height 1.0) org-document-title)
                                              (org-level-1 (:height 1.0) org-level-1)))
                                (org-present-big)
                                (org-present-hide-cursor)
