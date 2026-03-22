@@ -307,6 +307,9 @@
     (add-to-list 'project-switch-commands '(vterm-project "vterm" "t") t)
     (keymap-set project-prefix-map "t" #'vterm-project)))
 
+(use-package gterm
+  :commands (gterm))
+
 (use-package tab-bar
   :custom
   (tab-bar-close-button-show nil)

@@ -49,6 +49,7 @@
         ]))
         pkgs.claude-code-ide
         pkgs.claude-code-ide-companion
+        pkgs.emacs-libgterm
         pkgs.magento-cache-clean-el
         ob-php
       ];

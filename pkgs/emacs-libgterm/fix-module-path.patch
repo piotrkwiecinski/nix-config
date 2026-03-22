@@ -1,0 +1,17 @@
+diff --git a/gterm.el b/gterm.el
+index 1234567..abcdefg 100644
+--- a/gterm.el
++++ b/gterm.el
+@@ -54,9 +54,9 @@
+   "Directory containing the gterm source files.")
+
+ (defvar gterm-module-path
+-  (expand-file-name
+-   (concat "zig-out/lib/libgterm-module" module-file-suffix)
+-   gterm-source-dir)
++  (let ((site-path (expand-file-name (concat "libgterm-module" module-file-suffix) gterm-source-dir)))
++    (if (file-exists-p site-path) site-path
++      (expand-file-name (concat "zig-out/lib/libgterm-module" module-file-suffix) gterm-source-dir)))
+   "Path to the compiled gterm dynamic module.")
+
+ (defcustom gterm-always-compile-module nil

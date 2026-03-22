@@ -1,0 +1,13 @@
+diff --git a/src/gterm.zig b/src/gterm.zig
+index 1234567..abcdefg 100644
+--- a/src/gterm.zig
++++ b/src/gterm.zig
+@@ -129,7 +129,7 @@ pub const GtermInstance = struct {
+
+     /// Feed raw bytes through the terminal's VT parser.
+     pub fn feed(self: *GtermInstance, bytes: []const u8) void {
+-        self.stream.nextSlice(bytes);
++        self.stream.nextSlice(bytes) catch {};
+     }
+
+     /// Render the visible screen cell-by-cell into a buffer.

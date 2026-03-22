@@ -1,0 +1,10 @@
+diff --git a/gterm.el b/gterm.el
+index 1234567..abcdefg 100644
+--- a/gterm.el
++++ b/gterm.el
+@@ -141,7 +141,7 @@
+-(defcustom gterm-shell "/bin/zsh"
++(defcustom gterm-shell (or (getenv "SHELL") "/bin/sh")
+   "Shell program to run in gterm."
+   :type 'string
+   :group 'gterm)
