@@ -5,7 +5,7 @@
   ...
 }:
 let
-  flakeDir = "/home/piotr/projects/nix-config";
+  flakeDir = "/home/piotr/projects/personal/nix-config";
 
   updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
     set -euo pipefail
@@ -146,7 +146,7 @@ in
     mcp = {
       pantry = {
         type = "local";
-        command = [ "/home/piotr/projects/pantry-app-v2/db/pantry-mcp-run.sh" ];
+        command = [ "/home/piotr/projects/opensource/pantry-app-v2/db/pantry-mcp-run.sh" ];
       };
       translate = {
         type = "local";
@@ -377,7 +377,7 @@ in
     };
     Service = {
       Type = "simple";
-      WorkingDirectory = "/home/piotr/projects/learning-italian";
+      WorkingDirectory = "/home/piotr/projects/personal/learning-italian";
       ExecStart = "${pkgs.bun}/bin/bun run src/server.ts";
       Restart = "on-failure";
       RestartSec = 5;
@@ -391,7 +391,7 @@ in
     };
     Service = {
       Type = "oneshot";
-      ExecStart = "/home/piotr/projects/learning-italian/scripts/notify-due.sh";
+      ExecStart = "/home/piotr/projects/personal/learning-italian/scripts/notify-due.sh";
       Environment = "PATH=${
         lib.makeBinPath [
           pkgs.curl
