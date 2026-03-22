@@ -1,5 +1,8 @@
 { pkgs, pkgs-unstable }:
 rec {
+  emacs-libgterm = pkgs-unstable.callPackage ./emacs-libgterm {
+    emacs = pkgs-unstable.emacs30-pgtk;
+  };
   claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
     pname = "claude-code-ide";
     version = "0-unstable-2026-03-06";
@@ -24,6 +27,11 @@ rec {
         name = "fix-restore-buffer-read-only-after-ediff.patch";
         url = "https://github.com/manzaltu/claude-code-ide.el/pull/167.patch";
         hash = "sha256-s12dx6JUx2scZ/KHnBcf4KeggGsD179SS1oKVxI6MCk=";
+      })
+      (pkgs.fetchpatch {
+        name = "add-gterm-backend.patch";
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/178.patch";
+        hash = "sha256-8tXp1a7zRUMaH7MotdEpm1/Q+zYVZKACZQguc7jhmTo=";
       })
     ];
     packageRequires = with pkgs-unstable.emacsPackages; [
