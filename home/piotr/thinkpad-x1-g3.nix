@@ -42,10 +42,12 @@ in
     inputs.private-nix-config.homeManagerModules.sops-config
     inputs.private-nix-config.inputs.calstart.homeManagerModules.default
     inputs.private-nix-config.homeManagerModules.work
+    inputs.private-nix-config.homeManagerModules.media
     ./global
     ./features/emacs
     ./features/direnv.nix
     ./features/desktop/common/firefox.nix
+    ./features/mpv.nix
   ];
 
   home = {
@@ -250,7 +252,6 @@ in
       jdk11
       nixpkgs-review
       magento-cloud
-      mpv
       ispell
       libreoffice
       google-chrome
