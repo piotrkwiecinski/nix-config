@@ -773,10 +773,10 @@ document.addEventListener('DOMContentLoaded', () => {
   (require 'org-protocol))
 
 (use-package org-roam
-      :if (file-directory-p "~/projects/second-brain/")
+      :if (file-directory-p "~/projects/personal/second-brain/")
       :after org
       :custom
-      (org-roam-directory (file-truename "~/projects/second-brain/"))
+      (org-roam-directory (file-truename "~/projects/personal/second-brain/"))
       :bind (("C-c n l" . org-roam-buffer-toggle)
              ("C-c n f" . org-roam-node-find)
              ("C-c n g" . org-roam-graph)
