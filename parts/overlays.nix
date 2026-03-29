@@ -22,7 +22,7 @@ in
         config.allowUnfree = true;
         overlays = [ inputs.emacs-overlay.overlays.default ];
       };
-      claude-code = (inputs.claude-code-overlay.overlays.default final prev).claude-code;
+      claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
       codex = (inputs.codex-overlay.overlays.default final prev).codex;
       magento-pkgs = inputs.magento-overlay.overlays.default final prev;
       additions = import ../pkgs {
