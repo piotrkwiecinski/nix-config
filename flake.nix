@@ -34,7 +34,7 @@
 
     private-nix-config.url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
 
-    claude-code-overlay.url = "github:ryoppippi/claude-code-overlay";
+    claude-code-overlay.url = "github:sadjow/claude-code-nix";
     magento-overlay.url = "github:codemanufacture/magento-package-overlay";
     opencode-nix.url = "github:dan-online/opencode-nix";
     codex-overlay.url = "github:sadjow/codex-cli-nix";
