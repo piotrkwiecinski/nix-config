@@ -223,6 +223,7 @@ in
     X-GNOME-Autostart-enabled=true
   '';
 
+
   home.packages = builtins.attrValues {
     inherit (pkgs)
       sox
