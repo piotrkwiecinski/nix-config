@@ -304,6 +304,7 @@
       };
     };
   };
+  security.pki.certificateFiles = [ ./mkcert-rootCA.pem ];
   security.rtkit.enable = true;
   services.pipewire = {
     enable = true;
