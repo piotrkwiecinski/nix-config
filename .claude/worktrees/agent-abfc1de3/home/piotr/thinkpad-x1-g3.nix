@@ -5,7 +5,7 @@
   ...
 }:
 let
-  flakeDir = "/home/piotr/projects/personal/nix-config";
+  flakeDir = "/home/piotr/projects/nix-config";
 
   updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
     set -euo pipefail
@@ -42,12 +42,10 @@ in
     inputs.private-nix-config.homeManagerModules.sops-config
     inputs.private-nix-config.inputs.calstart.homeManagerModules.default
     inputs.private-nix-config.homeManagerModules.work
-    inputs.private-nix-config.homeManagerModules.media
     ./global
     ./features/emacs
     ./features/direnv.nix
     ./features/desktop/common/firefox.nix
-    ./features/mpv.nix
   ];
 
   home = {
@@ -64,21 +62,6 @@ in
   programs.gpg.scdaemonSettings = {
     disable-ccid = true;
     card-timeout = 1;
-  };
-
-  xdg.mime.enable = true;
-
-  programs.obs-studio = {
-    enable = true;
-    package = (
-      pkgs.obs-studio.override {
-        cudaSupport = true;
-      }
-    );
-    plugins = with pkgs.unstable.obs-studio-plugins; [
-      wlrobs
-      obs-pipewire-audio-capture
-    ];
   };
 
   fonts.fontconfig.enable = true;
@@ -141,14 +124,14 @@ in
   };
 
   # opencode local model provider via Ollama.
-  # Models: qwen3:4b-32k (fast, tools, 32k ctx), translategemma:4b (translation),
+  # Models: qwen2.5:3b (fast, in VRAM), translategemma:4b (translation),
   # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     mcp = {
       pantry = {
         type = "local";
-        command = [ "/home/piotr/projects/opensource/pantry-app-v2/db/pantry-mcp-run.sh" ];
+        command = [ "/home/piotr/projects/pantry-app-v2/db/pantry-mcp-run.sh" ];
       };
       translate = {
         type = "local";
@@ -170,12 +153,11 @@ in
         apiKey = "{file:~/.config/ollama/api-key}";
       };
       models = {
-        "qwen3:4b-32k" = {
-          name = "Qwen3 4B (GPU, 32k tools)";
+        "qwen3:4b" = {
+          name = "Qwen3 4B (GPU, fast)";
           tools = true;
-          reasoning = true;
           limit = {
-            context = 32768;
+            context = 256000;
             output = 8192;
           };
         };
@@ -237,10 +219,8 @@ in
       dig
       ;
     inherit (pkgs.unstable)
-      audacity
-      bun
       calibre
-      ghostty
+      audacity
       gimp3
       nil
       slack
@@ -252,6 +232,7 @@ in
       jdk11
       nixpkgs-review
       magento-cloud
+      mpv
       ispell
       libreoffice
       google-chrome
@@ -366,47 +347,6 @@ in
         "*-*-* 16:00:00"
         "*-*-* 20:00:00"
       ];
-      Persistent = false;
-    };
-    Install.WantedBy = [ "timers.target" ];
-  };
-
-  # Italian vocabulary learning system
-  systemd.user.services.learning-italian = {
-    Unit = {
-      Description = "Italian vocabulary learning server";
-    };
-    Service = {
-      Type = "simple";
-      WorkingDirectory = "/home/piotr/projects/personal/learning-italian";
-      ExecStart = "${pkgs.bun}/bin/bun run src/server.ts";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
-
-  systemd.user.services.italian-notify = {
-    Unit = {
-      Description = "Check for due Italian vocabulary reviews";
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = "/home/piotr/projects/personal/learning-italian/scripts/notify-due.sh";
-      Environment = "PATH=${
-        lib.makeBinPath [
-          pkgs.curl
-          pkgs.jq
-          pkgs.libnotify
-        ]
-      }:/run/wrappers/bin:/run/current-system/sw/bin";
-    };
-  };
-
-  systemd.user.timers.italian-notify = {
-    Unit.Description = "Timer for Italian vocabulary review notifications";
-    Timer = {
-      OnCalendar = "*:0/15";
       Persistent = false;
     };
     Install.WantedBy = [ "timers.target" ];
