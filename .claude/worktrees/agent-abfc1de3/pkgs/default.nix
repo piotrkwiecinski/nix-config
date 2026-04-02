@@ -1,38 +1,19 @@
 { pkgs, pkgs-unstable }:
 rec {
-  emacs-libgterm = pkgs-unstable.callPackage ./emacs-libgterm {
-    emacs = pkgs-unstable.emacs30-pgtk;
-  };
   claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
     pname = "claude-code-ide";
-    version = "0.2.7-unstable-2026-04-01";
+    version = "0-unstable-2026-03-06";
     src = pkgs.fetchFromGitHub {
       owner = "manzaltu";
       repo = "claude-code-ide.el";
-      rev = "e95fded6210121cb621257a38e74e19c7ec4e440";
-      hash = "sha256-btgNaXewnzo39I0bzcv36UAWuNTIIG6LtRDZMT/TryA=";
+      rev = "5f12e60c6d2d1802c8c1b7944bbdf935d5db1364";
+      hash = "sha256-tivRvgfI/8XBRImE3wuZ1UD0t2dNWYscv3Aa53BmHZE=";
     };
     patches = [
-      # PR #158 - anti-flicker fixes (individual commits, excluding merged version bump)
       (pkgs.fetchpatch {
-        name = "char-width-fixes.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/commit/3a93961.patch";
-        hash = "sha256-HT2o7ayZkqE/DvS5okpD6vmP9cA4/3bnzZo62iG9GjQ=";
-      })
-      (pkgs.fetchpatch {
-        name = "increase-render-delay.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/commit/2b40e58.patch";
-        hash = "sha256-TlTXUit8WtFyFEWbnU0Tq9cUSkRxsYuNLEuUcO3MlGc=";
-      })
-      (pkgs.fetchpatch {
-        name = "eat-anti-flicker.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/commit/aee0954.patch";
-        hash = "sha256-IG+PhFj3WiE7XbqDl2JQx1qD/9SnQbKCH7k4NQxVs6o=";
-      })
-      (pkgs.fetchpatch {
-        name = "customizable-buffer-font.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/commit/494dc2b.patch";
-        hash = "sha256-Jt9MKNNNc++GxoQ/9VPvqthQjJUgW2gktlpqthgTMJo=";
+        name = "anti-flicker-fixes.patch";
+        url = "https://github.com/manzaltu/claude-code-ide.el/pull/158.patch";
+        hash = "sha256-CLWld5QbZSGRX/0Ip8ZszeaNESaBRWtYSNVr30I0Wy0=";
       })
       (pkgs.fetchpatch {
         name = "fix-hl-line-range-function.patch";
