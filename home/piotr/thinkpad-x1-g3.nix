@@ -209,6 +209,24 @@ in
             output = 16384;
           };
         };
+        "gemma4:e2b" = {
+          name = "Gemma 4 E2B (2.3B effective, tools)";
+          tools = true;
+          reasoning = true;
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
+        "gemma4:e4b" = {
+          name = "Gemma 4 E4B (4.5B effective, tools)";
+          tools = true;
+          reasoning = true;
+          limit = {
+            context = 32768;
+            output = 8192;
+          };
+        };
       };
     };
   };

@@ -22,6 +22,10 @@ in
         config.allowUnfree = true;
         overlays = [ inputs.emacs-overlay.overlays.default ];
       };
+      pkgs-master = import inputs.nixpkgs-master {
+        inherit (final.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      };
       claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
       codex = (inputs.codex-overlay.overlays.default final prev).codex;
       magento-pkgs = inputs.magento-overlay.overlays.default final prev;
@@ -31,6 +35,7 @@ in
       };
       unstable = {
         unstable = pkgs-unstable;
+        master = pkgs-master;
       };
       base = additions // magento-pkgs // unstable // { inherit claude-code codex; };
     in
