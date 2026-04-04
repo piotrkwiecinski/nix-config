@@ -460,8 +460,30 @@ in
   };
 
   # Bluetooth (required for Bluetti BLE integration)
+  hardware.raspberry-pi."4".bluetooth.enable = true;
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
+
+  # Free ttyAMA0 from serial console so Bluetooth can use it
+  # (sd-image-aarch64.nix sets console=ttyAMA0 by default)
+  boot.kernelParams = lib.mkForce [
+    "console=ttyS0,115200n8"
+    "console=tty0"
+    "nohibernate"
+    "loglevel=7"
+  ];
+
+  # Initialize RPi 4 UART Bluetooth controller
+  systemd.services.btattach = {
+    before = [ "bluetooth.service" ];
+    after = [ "dev-ttyAMA0.device" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.bluez}/bin/btattach -B /dev/ttyAMA0 -P bcm -S 3000000";
+    };
+  };
 
   # Home Assistant
   services.home-assistant = {
