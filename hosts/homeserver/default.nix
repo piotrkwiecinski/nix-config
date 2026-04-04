@@ -11,6 +11,7 @@ let
     ssl_certificate ${config.sops.secrets."homeserver-lan-cert".path};
     ssl_certificate_key ${config.sops.secrets."homeserver-lan-key".path};
   '';
+  bluetti-bt = import ./bluetti-bt.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -470,6 +471,7 @@ in
       "bluetooth"
       "mobile_app"
     ];
+    customComponents = [ bluetti-bt ];
     config = {
       homeassistant = {
         name = "Home";
