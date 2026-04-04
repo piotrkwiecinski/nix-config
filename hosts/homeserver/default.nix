@@ -474,18 +474,6 @@ in
     "loglevel=7"
   ];
 
-  # Initialize RPi 4 UART Bluetooth controller
-  systemd.services.btattach = {
-    before = [ "bluetooth.service" ];
-    after = [ "dev-ttyAMA1.device" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.bluez}/bin/btattach -B /dev/ttyAMA1 -P bcm -S 3000000";
-    };
-  };
-
   # Home Assistant
   services.home-assistant = {
     enable = true;
