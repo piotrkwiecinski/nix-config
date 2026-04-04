@@ -770,7 +770,12 @@ document.addEventListener('DOMContentLoaded', () => {
       (add-to-list 'org-babel-load-languages lang)))
   (add-to-list 'org-babel-tangle-lang-exts '("js" . "js"))
   (org-babel-do-load-languages 'org-babel-load-languages org-babel-load-languages)
-  (require 'org-protocol))
+  (require 'org-protocol)
+  (setq org-capture-templates
+        '(("w" "Watchlist" plain
+           (file "~/projects/personal/second-brain/20260124203947-watchlist.org")
+           "%:description: %:link"
+           :immediate-finish t))))
 
 (use-package org-roam
       :if (file-directory-p "~/projects/personal/second-brain/")
