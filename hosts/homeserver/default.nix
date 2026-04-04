@@ -12,6 +12,7 @@ let
     ssl_certificate_key ${config.sops.secrets."homeserver-lan-key".path};
   '';
   bluetti-bt = import ./bluetti-bt.nix { inherit pkgs; };
+  solarman = import ./solarman.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -497,7 +498,10 @@ in
       "bluetooth"
       "mobile_app"
     ];
-    customComponents = [ bluetti-bt ];
+    customComponents = [
+      bluetti-bt
+      solarman
+    ];
     config = {
       default_config = { };
       homeassistant = {
