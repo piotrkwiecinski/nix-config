@@ -477,6 +477,7 @@ in
     ];
     customComponents = [ bluetti-bt ];
     config = {
+      default_config = { };
       homeassistant = {
         name = "Home";
         unit_system = "metric";
