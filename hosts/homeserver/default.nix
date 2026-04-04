@@ -459,6 +459,10 @@ in
 
   };
 
+  # Bluetooth (required for Bluetti BLE integration)
+  hardware.bluetooth.enable = true;
+  hardware.bluetooth.powerOnBoot = true;
+
   # Home Assistant
   services.home-assistant = {
     enable = true;
