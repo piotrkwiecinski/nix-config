@@ -18,7 +18,6 @@ Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-part
 - [[https://github.com/0xERR0R/blocky][Blocky]] - DNS ad blocker (Pi-hole alternative)
 - [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management with automated backups to thinkpad
 - [[https://calibre-ebook.com/][Calibre]] - E-book library server
-- [[https://jellyfin.org/][Jellyfin]] - Media server
 - [[https://forgejo.org/][Forgejo]] - Git forge
 - [[https://tailscale.com/][Tailscale]] - VPN with auto-provisioned Let's Encrypt HTTPS via nginx reverse proxy
 - [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache for LAN clients
