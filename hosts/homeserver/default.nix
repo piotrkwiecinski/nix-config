@@ -123,7 +123,6 @@ in
       8443 # Home Assistant (Tailscale HTTPS)
       8444 # Paperless (Tailscale HTTPS)
       8445 # Calibre (Tailscale HTTPS)
-      8446 # Jellyfin (Tailscale HTTPS)
       8447 # Forgejo (Tailscale HTTPS)
       8600 # MPD HTTP stream
       5000 # Harmonia binary cache (LAN)
@@ -299,25 +298,6 @@ in
       };
     };
 
-    # Jellyfin LAN HTTPS
-    virtualHosts."jellyfin.homeserver.local" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      extraConfig = lanSslConfig;
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8096";
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_buffering off;
-        '';
-      };
-    };
-
     # Forgejo LAN HTTPS
     virtualHosts."forgejo.homeserver.local" = {
       listen = [
@@ -392,28 +372,6 @@ in
           proxy_connect_timeout 300;
           proxy_send_timeout 300;
           client_max_body_size 100M;
-        '';
-      };
-    };
-
-    # Jellyfin via Tailscale HTTPS (port 8446)
-    virtualHosts."jellyfin-tailscale" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 8446;
-          ssl = true;
-        }
-      ];
-      extraConfig = ''
-        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
-        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
-      '';
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8096";
-        proxyWebsockets = true;
-        extraConfig = ''
-          proxy_buffering off;
         '';
       };
     };
@@ -602,13 +560,6 @@ in
   systemd.tmpfiles.rules = [
     "d /var/lib/music 2775 root media - -"
   ];
-
-  # Jellyfin media server
-  services.jellyfin = {
-    enable = true;
-    openFirewall = false;
-  };
-  users.users.jellyfin.extraGroups = [ "media" ];
 
   # MPD music daemon
   services.mpd = {
