@@ -559,6 +559,7 @@ in
   users.groups.media = { };
   systemd.tmpfiles.rules = [
     "d /var/lib/music 2775 root media - -"
+    "d /var/lib/shared 2775 root media - -"
   ];
 
   # MPD music daemon
@@ -583,6 +584,43 @@ in
     '';
   };
   users.users.mpd.extraGroups = [ "media" ];
+
+  # Samba file sharing
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      global = {
+        workgroup = "WORKGROUP";
+        "server string" = "homeserver";
+        security = "user";
+        "map to guest" = "never";
+      };
+      music = {
+        path = "/var/lib/music";
+        browseable = "yes";
+        "read only" = "no";
+        "valid users" = "piotr gosia";
+        "create mask" = "0664";
+        "directory mask" = "2775";
+        "force group" = "media";
+      };
+      shared = {
+        path = "/var/lib/shared";
+        browseable = "yes";
+        "read only" = "no";
+        "valid users" = "piotr gosia";
+        "create mask" = "0664";
+        "directory mask" = "2775";
+        "force group" = "media";
+      };
+    };
+  };
+
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
+  };
 
   # Passwordless sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
@@ -729,9 +767,16 @@ in
 
   users.users."piotr" = {
     hashedPasswordFile = config.sops.secrets."piotr-password-hash".path;
+    extraGroups = [ "media" ];
     openssh.authorizedKeys.keys = [
       "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC1AkWOqdmzCuLtD1hbJHNbli12oqco1Zh8BHf1tif7zFAz6sNgkFGSp4+gySMIBv+Qk2SbNpGCI1XL2kpgTFUu2LbF3tfOjdP5uXGZfb1Af+rv/ESprBJjjiM8YuvD1TZ4Q25ie1eIyjcey30JJReA4K9nvHPr/nthpch7xfgnoO7Pkyf1OlEeZbp1Luo1s8mqb+oFYW9mcIfDzn5R7YvPshfflMQMXfbgXQ4usKpLNNrr5NjKpBETu9/wf/T9OUD/+2BFyiMrRZkJWtM3QCoXEYDWqcW0qvc4uSXMUyCYbHNtrxuhU1VIbDXDx2Gmkcs58NPnpxw9ONdkA5XS2pfEihElYNc8jF7uh24mjs1MICFZqFgsWWz6S9bYkqW1y/MDuhKy8IA2vdHiSFxVZbSFv6jf8LMQXDbxIHNhGoF8wTJCK/zNRtmOmSQnzi1DQcncYxy0WqoHTlR/beiPqtyaUNSEEyapr9vwagePvuY/4BKMTpamfEe/nGADJpBfcvs= piotr@piotr-laptop"
     ];
+  };
+
+  users.users.gosia = {
+    isNormalUser = true;
+    shell = "${pkgs.shadow}/bin/nologin";
+    extraGroups = [ "media" ];
   };
 
   system.stateVersion = "25.11";
