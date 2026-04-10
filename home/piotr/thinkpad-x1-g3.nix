@@ -35,6 +35,35 @@ let
       exit 1
     fi
   '';
+
+  updateFlakeInputsScript = pkgs.writeShellScript "update-flake-inputs" ''
+    set -euo pipefail
+
+    cd ${lib.escapeShellArg flakeDir}
+
+    cp flake.lock flake.lock.bak
+    trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
+
+    nix flake update nixpkgs nixpkgs-unstable nixpkgs-master flake-parts systems hardware home-manager emacs-overlay disko treefmt-nix private-nix-config
+
+    if git diff --quiet flake.lock; then
+      rm flake.lock.bak
+      echo "No flake.lock changes, nothing to do."
+      exit 0
+    fi
+
+    if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
+      sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
+      git add flake.lock
+      git commit -m "chore: auto-update"
+      git push
+      rm flake.lock.bak
+    else
+      echo "Build failed, rolling back flake.lock"
+      mv flake.lock.bak flake.lock
+      exit 1
+    fi
+  '';
 in
 {
   imports = [
@@ -373,6 +402,36 @@ in
         "*-*-* 12:00:00"
         "*-*-* 16:00:00"
         "*-*-* 20:00:00"
+      ];
+      Persistent = false;
+    };
+    Install.WantedBy = [ "timers.target" ];
+  };
+
+  systemd.user.services.update-flake-inputs = {
+    Unit = {
+      Description = "Auto-update flake inputs (excluding CUDA and overlays)";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${updateFlakeInputsScript}";
+      Environment = "PATH=${
+        lib.makeBinPath [
+          pkgs.nix
+          pkgs.git
+        ]
+      }:/run/wrappers/bin:/run/current-system/sw/bin";
+    };
+  };
+
+  systemd.user.timers.update-flake-inputs = {
+    Unit.Description = "Timer for flake inputs update (excluding CUDA and overlays)";
+    Timer = {
+      OnCalendar = [
+        "Fri,Sat,Sun *-*-* 09:00:00"
+        "Fri,Sat,Sun *-*-* 21:00:00"
       ];
       Persistent = false;
     };
