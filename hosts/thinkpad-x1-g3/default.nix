@@ -401,7 +401,7 @@
   # secret never appears as plaintext in the Nix store.
   services.ollama = {
     enable = true;
-    package = pkgs.master.ollama-cuda;
+    package = pkgs.unstable.ollama-cuda;
     loadModels = [
       "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; base model for qwen3:4b-32k custom variant
       "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
