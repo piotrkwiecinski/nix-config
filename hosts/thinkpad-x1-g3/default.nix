@@ -154,12 +154,14 @@
         "https://nix-community.cachix.org?priority=41"
         "https://emacs-ci.cachix.org?priority=42"
         "https://devenv.cachix.org?priority=43"
+        "https://cache.nixos-cuda.org?priority=44"
       ];
       extra-trusted-public-keys = [
         "homeserver-cache:GnyJnLGzLHN2pdm9D6kzkSd3s3IHMb6SNDh0y9Akoz4="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
+        "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
       ];
       flake-registry = "";
       keep-outputs = true;
@@ -401,7 +403,7 @@
   # secret never appears as plaintext in the Nix store.
   services.ollama = {
     enable = true;
-    package = pkgs.unstable.ollama-cuda;
+    package = pkgs.unstable-cuda.ollama-cuda;
     loadModels = [
       "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; base model for qwen3:4b-32k custom variant
       "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
