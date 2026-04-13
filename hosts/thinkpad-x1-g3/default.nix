@@ -577,6 +577,7 @@
     in
     [
       "d /data/backups/paperless 0755 builder users -"
+      "d /data/backups/home-assistant 0755 builder users -"
       "d /home/piotr/.config/traefik 0755 piotr users -"
       "d /home/piotr/.config/traefik/dynamic 0755 piotr users -"
       "L+ /home/piotr/.config/traefik/dynamic/tls.toml - - - - ${traefikTlsConfig}"

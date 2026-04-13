@@ -706,6 +706,69 @@ in
     serviceConfig.Type = "oneshot";
   };
 
+  # Home Assistant backup: stop HA briefly, compress /var/lib/hass, send to thinkpad
+  systemd.timers.hass-backup-sync = {
+    description = "Daily Home Assistant backup to thinkpad";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 12:00:00";
+      Persistent = true;
+    };
+  };
+
+  systemd.services.hass-backup-sync = {
+    description = "Snapshot Home Assistant state and send to thinkpad";
+    path = with pkgs; [
+      gnutar
+      zstd
+      openssh
+      coreutils
+      systemd
+    ];
+    script = ''
+      set -euo pipefail
+      HASS_DIR="/var/lib/hass"
+      BACKUP_DIR="/var/lib/hass-backup"
+      TIMESTAMP=$(date +%Y%m%d)
+      ARCHIVE="hass-''${TIMESTAMP}.tar.zst"
+      SSH_KEY="${config.sops.secrets."builder-key".path}"
+      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+      REMOTE="builder@thinkpad-x1-g3.local"
+      REMOTE_DIR="/data/backups/home-assistant"
+
+      mkdir -p "$BACKUP_DIR"
+
+      # Stop HA for a consistent SQLite snapshot, always restart on exit
+      trap 'systemctl start home-assistant.service' EXIT
+      systemctl stop home-assistant.service
+
+      tar -C "$HASS_DIR" \
+        --exclude='./home-assistant.log*' \
+        --exclude='./OZW_Log.txt*' \
+        --exclude='./tmp' \
+        --exclude='./deps' \
+        --exclude='./.cache' \
+        -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
+
+      systemctl start home-assistant.service
+      trap - EXIT
+
+      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
+        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
+        exit 1
+      fi
+
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
+      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
+
+      # Retention: keep 3 locally, 3 remotely
+      ls -t "$BACKUP_DIR"/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
+        "ls -t $REMOTE_DIR/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+    '';
+    serviceConfig.Type = "oneshot";
+  };
+
   # Tailscale HTTPS certificate provisioning
   systemd.services.tailscale-cert = {
     description = "Provision Tailscale HTTPS certificates";
