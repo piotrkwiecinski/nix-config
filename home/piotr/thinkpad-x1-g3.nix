@@ -72,10 +72,12 @@ in
     inputs.private-nix-config.inputs.calstart.homeManagerModules.default
     inputs.private-nix-config.homeManagerModules.work
     inputs.private-nix-config.homeManagerModules.media
+    inputs.private-nix-config.homeManagerModules.activitywatch-private
     ./global
     ./features/emacs
     ./features/direnv.nix
     ./features/desktop/common/firefox.nix
+    ./features/desktop/activitywatch.nix
     ./features/mpv.nix
   ];
 

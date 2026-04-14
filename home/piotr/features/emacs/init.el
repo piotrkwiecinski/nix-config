@@ -804,6 +804,103 @@ document.addEventListener('DOMContentLoaded', () => {
   :hook (org-mode . org-modern-mode)
   :hook (org-agenda-finalize . org-modern-agenda))
 
+(use-package activity-watch-mode
+  :hook (after-init . global-activity-watch-mode))
+
+(defcustom piotr/aw-server-url "http://homeserver:5600"
+  "Base URL of the ActivityWatch aggregator."
+  :type 'string :group 'piotr)
+
+(defcustom piotr/aw-review-file
+  "~/projects/personal/second-brain/activitywatch-reviews.org"
+  "Org file where weekly ActivityWatch reviews are appended."
+  :type 'file :group 'piotr)
+
+(defun piotr/--aw-get-json (path)
+  "GET PATH from the AW server and return parsed JSON."
+  (let ((url-request-method "GET"))
+    (with-current-buffer
+        (url-retrieve-synchronously (concat piotr/aw-server-url path) t t 10)
+      (goto-char (point-min))
+      (re-search-forward "\n\n")
+      (prog1 (json-parse-buffer :object-type 'alist :array-type 'list)
+        (kill-buffer)))))
+
+(defun piotr/--aw-bucket-events (bucket start end)
+  "Fetch events from BUCKET between START and END ISO strings."
+  (piotr/--aw-get-json
+   (format "/api/0/buckets/%s/events?start=%s&end=%s&limit=-1"
+           (url-hexify-string bucket)
+           (url-hexify-string start)
+           (url-hexify-string end))))
+
+(defun piotr/--aw-aggregate (events key)
+  "Aggregate EVENTS into ((KEY-value . total-seconds) ...) sorted desc."
+  (let ((acc (make-hash-table :test 'equal)))
+    (dolist (ev events)
+      (let* ((data (alist-get 'data ev))
+             (dur (or (alist-get 'duration ev) 0))
+             (k (or (alist-get key data) "<unknown>")))
+        (puthash k (+ dur (gethash k acc 0)) acc)))
+    (sort (let (xs) (maphash (lambda (k v) (push (cons k v) xs)) acc) xs)
+          (lambda (a b) (> (cdr a) (cdr b))))))
+
+(defun piotr/--aw-format-table (title rows)
+  "Render TITLE + ROWS (alist of label . seconds) as an org table string."
+  (concat
+   (format "** %s\n" title)
+   "| Rank | Item | Hours |\n|------+------+-------|\n"
+   (mapconcat
+    (lambda (idx-row)
+      (format "| %d | %s | %.2f |"
+              (car idx-row)
+              (replace-regexp-in-string "|" "\\\\vert" (car (cdr idx-row)))
+              (/ (cdr (cdr idx-row)) 3600.0)))
+    (let ((i 0))
+      (mapcar (lambda (r) (setq i (1+ i)) (list i (car r) (cdr r)))
+              (seq-take rows 20)))
+    "\n")
+   "\n"))
+
+(defun piotr/aw-weekly-review ()
+  "Fetch last 7 days of ActivityWatch data and append an org datetree entry."
+  (interactive)
+  (require 'org-datetree)
+  (let* ((now (current-time))
+         (end (format-time-string "%Y-%m-%dT%H:%M:%S+00:00" now t))
+         (start (format-time-string "%Y-%m-%dT%H:%M:%S+00:00"
+                                    (time-subtract now (days-to-time 7)) t))
+         (buckets (mapcar #'symbol-name
+                          (mapcar #'car (piotr/--aw-get-json "/api/0/buckets/"))))
+         (win-buckets (seq-filter
+                       (lambda (b) (string-prefix-p "aw-watcher-window_" b)) buckets))
+         (web-buckets (seq-filter
+                       (lambda (b) (string-prefix-p "aw-watcher-web_" b)) buckets))
+         (win-events (apply #'append
+                            (mapcar (lambda (b) (piotr/--aw-bucket-events b start end))
+                                    win-buckets)))
+         (web-events (apply #'append
+                            (mapcar (lambda (b) (piotr/--aw-bucket-events b start end))
+                                    web-buckets))))
+    (find-file (expand-file-name piotr/aw-review-file))
+    (org-datetree-find-date-create (calendar-current-date))
+    (org-narrow-to-subtree)
+    (goto-char (point-max))
+    (insert "\n"
+            (format "Window: %d events across %d buckets; Web: %d events across %d buckets.\n\n"
+                    (length win-events) (length win-buckets)
+                    (length web-events) (length web-buckets))
+            (piotr/--aw-format-table "Top apps (last 7 days)"
+                                     (piotr/--aw-aggregate win-events 'app))
+            "\n"
+            (piotr/--aw-format-table "Top domains (last 7 days)"
+                                     (piotr/--aw-aggregate web-events 'domain)))
+    (widen)
+    (save-buffer)
+    (message "AW weekly review updated: %s" piotr/aw-review-file)))
+
+(keymap-global-set "C-c n r" #'piotr/aw-weekly-review)
+
 (use-package websocket)
 
 (use-package org-roam-ui

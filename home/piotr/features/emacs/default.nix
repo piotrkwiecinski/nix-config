@@ -52,6 +52,7 @@
         pkgs.emacs-libgterm
         pkgs.magento-cache-clean-el
         ob-php
+        activity-watch-mode
       ];
   };
 
