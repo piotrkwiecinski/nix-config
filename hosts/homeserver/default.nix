@@ -769,6 +769,77 @@ in
     serviceConfig.Type = "oneshot";
   };
 
+  # ActivityWatch aggregator - receives bucket pushes from thinkpad and
+  # Android via Tailscale. Port 5600 is only reachable via tailscale0
+  # (trusted interface above); not exposed on LAN or WAN.
+  users.users.aw-server = {
+    isSystemUser = true;
+    group = "aw-server";
+    home = "/var/lib/aw-server";
+  };
+  users.groups.aw-server = { };
+
+  systemd.services.aw-server = {
+    description = "ActivityWatch aggregator (aw-server-rust)";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.aw-server-rust}/bin/aw-server --host 0.0.0.0 --port 5600";
+      User = "aw-server";
+      Group = "aw-server";
+      StateDirectory = "aw-server";
+      Environment = "XDG_DATA_HOME=/var/lib/aw-server";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+  };
+
+  systemd.timers.aw-backup-sync = {
+    description = "Daily ActivityWatch backup to thinkpad";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "*-*-* 13:00:00";
+      Persistent = true;
+    };
+  };
+
+  systemd.services.aw-backup-sync = {
+    description = "Snapshot ActivityWatch state and send to thinkpad";
+    path = with pkgs; [
+      gnutar
+      zstd
+      openssh
+      coreutils
+    ];
+    script = ''
+      set -euo pipefail
+      AW_DIR="/var/lib/aw-server"
+      BACKUP_DIR="/var/lib/aw-server-backup"
+      TIMESTAMP=$(date +%Y%m%d)
+      ARCHIVE="aw-server-''${TIMESTAMP}.tar.zst"
+      SSH_KEY="${config.sops.secrets."builder-key".path}"
+      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
+      REMOTE="builder@thinkpad-x1-g3.local"
+      REMOTE_DIR="/data/backups/aw-server"
+
+      mkdir -p "$BACKUP_DIR"
+      tar -C "$AW_DIR" -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
+
+      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
+        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
+        exit 1
+      fi
+
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
+      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
+
+      ls -t "$BACKUP_DIR"/aw-server-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
+      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
+        "ls -t $REMOTE_DIR/aw-server-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+    '';
+    serviceConfig.Type = "oneshot";
+  };
+
   # Tailscale HTTPS certificate provisioning
   systemd.services.tailscale-cert = {
     description = "Provision Tailscale HTTPS certificates";

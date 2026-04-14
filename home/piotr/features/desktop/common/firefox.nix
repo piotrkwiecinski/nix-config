@@ -25,6 +25,18 @@
       };
       Certificates.ImportEnterpriseRoots = true;
       DontCheckDefaultBrowser = true;
+      ExtensionSettings = {
+        # aw-watcher-web — ActivityWatch browser time tracking
+        "aw-watcher-web@activitywatch.net" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/aw-watcher-web/latest.xpi";
+        };
+        # LeechBlock NG — distraction enforcement
+        "leechblockng@proginosko.com" = {
+          installation_mode = "force_installed";
+          install_url = "https://addons.mozilla.org/firefox/downloads/latest/leechblockng/latest.xpi";
+        };
+      };
     };
     profiles.piotr = {
       isDefault = true;
