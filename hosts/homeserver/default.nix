@@ -126,6 +126,7 @@ in
       8447 # Forgejo (Tailscale HTTPS)
       8600 # MPD HTTP stream
       5000 # Harmonia binary cache (LAN)
+      5600 # ActivityWatch aggregator (LAN + Tailscale)
     ];
     allowedUDPPorts = [
       53 # DNS (Blocky)
