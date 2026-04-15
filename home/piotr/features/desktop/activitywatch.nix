@@ -24,7 +24,10 @@ let
       buckets=$(curl -fsS "$LOCAL/api/0/buckets/" | jq -r 'keys[]')
       for bucket in $buckets; do
         export_json=$(curl -fsS "$LOCAL/api/0/buckets/$bucket/export")
-        # aw-server /import accepts the same shape /export returns
+        # aw-server's /import refuses to overwrite an existing bucket, so
+        # delete the remote copy first. DELETE returns 404 on first run;
+        # the '|| true' swallows that.
+        curl -fsS -X DELETE "$REMOTE/api/0/buckets/$bucket" >/dev/null 2>&1 || true
         if echo "$export_json" | curl -fsS -X POST \
             -H "Content-Type: application/json" \
             --data-binary @- \

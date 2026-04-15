@@ -771,8 +771,7 @@ in
   };
 
   # ActivityWatch aggregator - receives bucket pushes from thinkpad and
-  # Android via Tailscale. Port 5600 is only reachable via tailscale0
-  # (trusted interface above); not exposed on LAN or WAN.
+  # Android. Port 5600 is reachable from LAN and tailscale0.
   users.users.aw-server = {
     isSystemUser = true;
     group = "aw-server";
@@ -780,20 +779,42 @@ in
   };
   users.groups.aw-server = { };
 
-  systemd.services.aw-server = {
-    description = "ActivityWatch aggregator (aw-server-rust)";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network.target" ];
-    serviceConfig = {
-      ExecStart = "${pkgs.aw-server-rust}/bin/aw-server --host 0.0.0.0 --port 5600";
-      User = "aw-server";
-      Group = "aw-server";
-      StateDirectory = "aw-server";
-      Environment = "XDG_DATA_HOME=/var/lib/aw-server";
-      Restart = "on-failure";
-      RestartSec = 5;
+  systemd.services.aw-server =
+    let
+      awConfigHome = pkgs.runCommand "aw-server-config" { } ''
+        mkdir -p $out/activitywatch/aw-server-rust
+        cat > $out/activitywatch/aw-server-rust/config.toml <<'EOF'
+        address = "0.0.0.0"
+        port = 5600
+        # Allow the web UI served from this same host to call the API.
+        # aw-server-rust's default CORS whitelist only covers localhost.
+        cors = [
+          "http://homeserver:5600",
+          "http://homeserver.local:5600",
+        ]
+        cors_regex = []
+
+        [custom_static]
+        EOF
+      '';
+    in
+    {
+      description = "ActivityWatch aggregator (aw-server-rust)";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.aw-server-rust}/bin/aw-server --host 0.0.0.0 --port 5600";
+        User = "aw-server";
+        Group = "aw-server";
+        StateDirectory = "aw-server";
+        Environment = [
+          "XDG_DATA_HOME=/var/lib/aw-server"
+          "XDG_CONFIG_HOME=${awConfigHome}"
+        ];
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
     };
-  };
 
   systemd.timers.aw-backup-sync = {
     description = "Daily ActivityWatch backup to thinkpad";
