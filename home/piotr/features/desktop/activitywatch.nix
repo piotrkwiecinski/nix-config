@@ -57,11 +57,11 @@ let
   };
 in
 {
+  # Installs the extension into ~/.nix-profile/share/gnome-shell/extensions.
+  # Enable it manually once via GNOME Extensions (do not set enabled-extensions
+  # here - home-manager's dconf lists are replace-only, which would clobber
+  # any other extensions enabled via the GUI).
   home.packages = [ pkgs.gnomeExtensions.focused-window-d-bus ];
-
-  dconf.settings."org/gnome/shell".enabled-extensions = [
-    "focused-window-dbus@flexagoon.com"
-  ];
 
   systemd.user.services.aw-server = {
     Unit = {
