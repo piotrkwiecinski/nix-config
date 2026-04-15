@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   lib,
@@ -252,15 +253,25 @@ in
     };
   };
 
-  xdg.configFile."autostart/emacsclient.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    Name=Emacsclient
-    Exec=emacsclient -c
-    Icon=emacs
-    Comment=Connect to Emacs daemon
-    X-GNOME-Autostart-enabled=true
-  '';
+  # Open an Emacs frame on login, ordered after emacs.socket to avoid a race
+  # where emacsclient fires before socket activation is ready and no frame
+  # ever appears. See docs/emacs-autostart-race.md.
+  systemd.user.services.emacsclient-frame = {
+    Unit = {
+      Description = "Open an Emacs frame on login";
+      After = [
+        "emacs.socket"
+        "graphical-session.target"
+      ];
+      Requires = [ "emacs.socket" ];
+      PartOf = [ "graphical-session.target" ];
+    };
+    Service = {
+      Type = "forking";
+      ExecStart = "${config.programs.emacs.finalPackage}/bin/emacsclient -c -n";
+    };
+    Install.WantedBy = [ "graphical-session.target" ];
+  };
 
   home.packages = builtins.attrValues {
     inherit (pkgs)
