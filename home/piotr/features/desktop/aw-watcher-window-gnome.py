@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import socket
@@ -49,18 +50,20 @@ def query_focused_window():
     if out.returncode != 0:
         return None
     raw = out.stdout.strip()
-    # gdbus wraps the return in ('<json>',)
-    if raw.startswith("('") and raw.endswith("',)"):
-        payload = raw[2:-3]
-    else:
+    # gdbus wraps the return in a Python-style tuple literal: ('<json>',).
+    # ast.literal_eval correctly unescapes gdbus's backslash escapes while
+    # preserving UTF-8 characters that subprocess already decoded for us.
+    # An earlier version used .encode/.decode("unicode_escape") which
+    # mangled multi-byte UTF-8 (e.g. "–" -> "â\x80\x93").
+    try:
+        parsed = ast.literal_eval(raw)
+    except (ValueError, SyntaxError):
+        return None
+    if not (isinstance(parsed, tuple) and parsed and isinstance(parsed[0], str)):
         return None
     try:
-        payload = payload.encode("utf-8").decode("unicode_escape")
-    except Exception:
-        pass
-    try:
-        return json.loads(payload)
-    except Exception:
+        return json.loads(parsed[0])
+    except json.JSONDecodeError:
         return None
 
 
