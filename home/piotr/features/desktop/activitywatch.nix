@@ -36,8 +36,33 @@ let
       done
     '';
   };
+
+  # GNOME Wayland window watcher. Polls the focused-window-dbus extension
+  # (org.gnome.shell.extensions.FocusedWindow) via gdbus and POSTs heartbeats
+  # to aw-server. Replaces the upstream xlib-only aw-watcher-window 0.13.2
+  # on GNOME Wayland, where it crashes with AttributeError on xlib.get_window_name.
+  # Requires the GNOME Shell extension focused-window-dbus@flexagoon.com to be
+  # enabled (installed+enabled via this module's home.packages + dconf).
+  gnomeWindowWatcherPython = pkgs.python3.withPackages (p: [ p.requests ]);
+  gnomeWindowWatcher = pkgs.writeShellApplication {
+    name = "aw-watcher-window-gnome";
+    runtimeInputs = [
+      gnomeWindowWatcherPython
+      pkgs.glib
+    ];
+    text = ''
+      export AW_SERVER_URL="http://${awServerHost}:${toString awServerPort}"
+      exec python3 ${./aw-watcher-window-gnome.py}
+    '';
+  };
 in
 {
+  home.packages = [ pkgs.gnomeExtensions.focused-window-d-bus ];
+
+  dconf.settings."org/gnome/shell".enabled-extensions = [
+    "focused-window-dbus@flexagoon.com"
+  ];
+
   systemd.user.services.aw-server = {
     Unit = {
       Description = "ActivityWatch server (aw-server-rust)";
@@ -53,12 +78,16 @@ in
 
   systemd.user.services.aw-watcher-window = {
     Unit = {
-      Description = "ActivityWatch window watcher";
-      After = [ "aw-server.service" ];
+      Description = "ActivityWatch window watcher (GNOME Wayland via focused-window-dbus)";
+      After = [
+        "aw-server.service"
+        "graphical-session.target"
+      ];
       Requires = [ "aw-server.service" ];
+      PartOf = [ "graphical-session.target" ];
     };
     Service = {
-      ExecStart = "${pkgs.aw-watcher-window}/bin/aw-watcher-window --host ${awServerHost} --port ${toString awServerPort}";
+      ExecStart = "${gnomeWindowWatcher}/bin/aw-watcher-window-gnome";
       Restart = "on-failure";
       RestartSec = 5;
     };
