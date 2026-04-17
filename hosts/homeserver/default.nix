@@ -469,6 +469,9 @@ in
     };
   };
 
+  # ConBee 2 Zigbee stick — grant HA service access to /dev/ttyACM*
+  users.users.hass.extraGroups = [ "dialout" ];
+
   # Blocky DNS ad-blocker (Pi-hole alternative)
   services.blocky = {
     enable = true;
