@@ -444,7 +444,7 @@ in
     Timer = {
       OnCalendar = [
         "Fri,Sat,Sun *-*-* 09:00:00"
-        "Fri,Sat,Sun *-*-* 21:00:00"
+        "Fri,Sat,Sun *-*-* 17:00:00"
       ];
       Persistent = false;
     };
