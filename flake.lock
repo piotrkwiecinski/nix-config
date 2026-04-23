@@ -499,11 +499,11 @@
         "nixpkgs": "nixpkgs_5"
       },
       "locked": {
-        "lastModified": 1776798733,
-        "narHash": "sha256-QW2C8t309GNBklhR4/JIYgkZjVACCxnlJAezYjIHmn4=",
+        "lastModified": 1776930784,
+        "narHash": "sha256-O+F2/NUydOtzux39TpJjKco3OTxZggRzXGeq2sM5yWQ=",
         "owner": "dan-online",
         "repo": "opencode-nix",
-        "rev": "2029f8d6434286c02490c76c844a5f04f02638e7",
+        "rev": "84e878da6ec68e3a69c08d95269c5171a08cd9b0",
         "type": "github"
       },
       "original": {
