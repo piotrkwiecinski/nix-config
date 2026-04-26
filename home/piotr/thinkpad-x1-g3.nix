@@ -311,6 +311,7 @@ in
       davinci-resolve
       pipeline
       ripgrep
+      forgejo-cli
       ;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea;
