@@ -306,6 +306,7 @@ in
       libreoffice
       google-chrome
       open-in-mpv
+      pi-coding-agent
       qpwgraph
       inkscape
       davinci-resolve
