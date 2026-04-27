@@ -281,6 +281,7 @@ in
       fira-code-symbols
       htop
       jq
+      yq-go
       openvpn
       montserrat
       bc
