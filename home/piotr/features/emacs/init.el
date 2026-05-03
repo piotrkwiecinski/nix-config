@@ -665,11 +665,11 @@ document.addEventListener('DOMContentLoaded', () => {
 ;;;; PDF
 
 (use-package pdf-tools
+  :init
+  (pdf-loader-install)
   :custom
-  (pdf-view-display-size fit-width)
-  :hook (pdf-view-mode . pdf-view-midnight-minor-mode)
-  :config
-  (pdf-tools-install))
+  (pdf-view-display-size 'fit-width)
+  :hook (pdf-view-mode . pdf-view-midnight-minor-mode))
 
 ;;;; RSS
 
