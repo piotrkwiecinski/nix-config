@@ -13,6 +13,9 @@ pkgs.buildHomeAssistantComponent rec {
     aiofiles
   ];
   # Skip manifest requirements check — bundled pysolarman is vendored in-tree,
-  # and propcache/aiohttp are already available via Home Assistant core.
+  # and propcache/aiohttp/pyyaml are already provided by Home Assistant core.
+  # NixOS 26.05's buildHomeAssistantComponent runs manifestCheckPhase regardless
+  # of doCheck; dontCheckManifest is the knob that actually disables it.
+  dontCheckManifest = true;
   doCheck = false;
 }
