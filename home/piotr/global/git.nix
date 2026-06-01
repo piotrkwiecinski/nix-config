@@ -100,18 +100,18 @@
   };
 
   programs.ssh = {
-    matchBlocks = {
+    settings = {
       "pkgithub" = {
-        user = "git";
-        hostname = "github.com";
-        identityFile = "~/.ssh/gh_rsa";
-        identitiesOnly = true;
+        User = "git";
+        HostName = "github.com";
+        IdentityFile = "~/.ssh/gh_rsa";
+        IdentitiesOnly = true;
       };
       "forgejo.homeserver.local" = {
-        user = "forgejo";
-        hostname = "forgejo.homeserver.local";
-        identityFile = "~/.ssh/forgejo_homeserver";
-        identitiesOnly = true;
+        User = "forgejo";
+        HostName = "forgejo.homeserver.local";
+        IdentityFile = "~/.ssh/forgejo_homeserver";
+        IdentitiesOnly = true;
       };
     };
   };
