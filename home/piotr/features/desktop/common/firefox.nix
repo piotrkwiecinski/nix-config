@@ -41,6 +41,11 @@
     profiles.piotr = {
       isDefault = true;
       settings = {
+        # Firefox 141+ ships a new selectable-profiles backend that, on the
+        # first launch after an update, can create a fresh empty profile and
+        # repoint profiles.ini away from this one (losing access to history).
+        # Disable it so this declarative profile stays the default.
+        "browser.profiles.enabled" = false;
         "distribution.searchplugins.defaultLocale" = "en-GB";
         "general.useragent.locale" = "en-GB";
         "browser.disableResetPrompt" = true;
