@@ -35,4 +35,7 @@ pkgs.buildHomeAssistantComponent rec {
     hash = "sha256-1qWn+KuQY8SRNemOSVqur2JNg6K/pqcVSQsgFrl/6IE=";
   };
   propagatedBuildInputs = [ bluetti-bt-lib ];
+  # NixOS 26.05's buildHomeAssistantComponent runs manifestCheckPhase regardless
+  # of doCheck; skip it (requirements are satisfied via bluetti-bt-lib / HA core).
+  dontCheckManifest = true;
 }
