@@ -140,7 +140,7 @@ in
     group = "harmonia";
   };
   users.groups.harmonia = { };
-  services.harmonia = {
+  services.harmonia.cache = {
     enable = true;
     signKeyPaths = [ config.sops.secrets."harmonia-signing-key".path ];
     settings.bind = "[::]:5000";
@@ -569,23 +569,26 @@ in
   # MPD music daemon
   services.mpd = {
     enable = true;
-    musicDirectory = "/var/lib/music";
-    network = {
-      listenAddress = "any";
+    # 6600/8600 are opened explicitly in networking.firewall.allowedTCPPorts;
+    # set false so the module doesn't warn about bind_to_address = "any".
+    openFirewall = false;
+    settings = {
+      music_directory = "/var/lib/music";
+      bind_to_address = "any";
       port = 6600;
+      audio_output = [
+        {
+          type = "httpd";
+          name = "HTTP Stream";
+          encoder = "lame";
+          port = "8600";
+          bitrate = "192";
+          format = "44100:16:2";
+          always_on = "yes";
+          tags = "yes";
+        }
+      ];
     };
-    extraConfig = ''
-      audio_output {
-        type "httpd"
-        name "HTTP Stream"
-        encoder "lame"
-        port "8600"
-        bitrate "192"
-        format "44100:16:2"
-        always_on "yes"
-        tags "yes"
-      }
-    '';
   };
   users.users.mpd.extraGroups = [ "media" ];
 
