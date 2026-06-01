@@ -4,11 +4,11 @@
 }:
 {
   home.packages = with pkgs; [
-    nodejs_20
-    nodePackages.bash-language-server
-    nodePackages.typescript
-    nodePackages.typescript-language-server
-    nodePackages.yaml-language-server
+    nodejs
+    bash-language-server
+    typescript
+    typescript-language-server
+    yaml-language-server
     lldb
     unstable.phpactor
     lua-language-server

@@ -2,7 +2,7 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-unstable-cuda.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
@@ -15,7 +15,7 @@
     hardware.url = "github:nixos/nixos-hardware";
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -34,7 +34,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    private-nix-config.url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    private-nix-config = {
+      url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
+      inputs.sops-nix.follows = "sops-nix";
+    };
 
     claude-code-overlay.url = "github:sadjow/claude-code-nix";
     magento-overlay.url = "github:codemanufacture/magento-package-overlay";

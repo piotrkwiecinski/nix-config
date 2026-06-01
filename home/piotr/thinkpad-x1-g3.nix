@@ -65,6 +65,21 @@ let
       exit 1
     fi
   '';
+
+  emacsclientFrameIfMissing = pkgs.writeShellScript "emacsclient-frame-if-missing" ''
+    set -eu
+    EMACSCLIENT="${config.programs.emacs.finalPackage}/bin/emacsclient"
+
+    has_frame=$("$EMACSCLIENT" -e \
+      '(if (seq-some (lambda (f) (and (frame-visible-p f) (display-graphic-p f))) (frame-list)) "yes" "no")' \
+      2>/dev/null || echo '"no"')
+
+    if [ "$has_frame" = '"yes"' ]; then
+      exit 0
+    fi
+
+    exec "$EMACSCLIENT" -c -n
+  '';
 in
 {
   imports = [
@@ -83,7 +98,7 @@ in
   ];
 
   home = {
-    stateVersion = "25.11";
+    stateVersion = "26.05";
   };
 
   home.sessionVariables = {
@@ -255,10 +270,13 @@ in
 
   # Open an Emacs frame on login, ordered after emacs.socket to avoid a race
   # where emacsclient fires before socket activation is ready and no frame
-  # ever appears. See docs/emacs-autostart-race.md.
+  # ever appears. The ExecStart guards against re-spawning a frame on rebuild:
+  # home-manager restarts this unit whenever its content hash changes (which
+  # happens whenever the emacs package store path moves), so a bare
+  # `emacsclient -c -n` would create a duplicate frame on every rebuild.
   systemd.user.services.emacsclient-frame = {
     Unit = {
-      Description = "Open an Emacs frame on login";
+      Description = "Open an Emacs frame on login (idempotent)";
       After = [
         "emacs.socket"
         "graphical-session.target"
@@ -268,7 +286,7 @@ in
     };
     Service = {
       Type = "forking";
-      ExecStart = "${config.programs.emacs.finalPackage}/bin/emacsclient -c -n";
+      ExecStart = "${emacsclientFrameIfMissing}";
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };
@@ -307,7 +325,6 @@ in
       libreoffice
       google-chrome
       open-in-mpv
-      pi-coding-agent
       qpwgraph
       inkscape
       davinci-resolve
@@ -315,9 +332,10 @@ in
       ripgrep
       forgejo-cli
       ;
+    inherit (pkgs.master) pi-coding-agent;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea;
-    inherit (pkgs.nodePackages) typescript-language-server;
+    inherit (pkgs) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
     inherit (pkgs) claude-code codex;
     inherit (pkgs.unstable) mochi;
