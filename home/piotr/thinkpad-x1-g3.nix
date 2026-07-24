@@ -8,10 +8,45 @@
 let
   flakeDir = "/home/piotr/projects/personal/nix-config";
 
+  # Preflight shared by both auto-update services. Bails out (exit 0, so the
+  # unit is not marked failed) when it is unsafe to run:
+  #
+  #   * another auto-update run is already in flight -- the two timers can
+  #     otherwise overlap and deadlock each other on the nix store lock;
+  #   * a nixos-rebuild is already running, whether ours or a manual one;
+  #   * the working tree has uncommitted changes to tracked files. These would
+  #     be activated by `nixos-rebuild switch` (flakes build from the working
+  #     tree) and swept into the automation's own commit.
+  autoUpdatePreflight = ''
+    exec 9>"''${XDG_RUNTIME_DIR:-/tmp}/nix-config-auto-update.lock"
+    if ! ${pkgs.util-linux}/bin/flock -n 9; then
+      echo "Another auto-update run is in progress; skipping."
+      exit 0
+    fi
+
+    # Matches both `nixos-rebuild switch ...` and the nixos-rebuild-ng
+    # `.nixos-rebuild-wrapped switch ...` form. Requiring a subcommand keeps
+    # unrelated command lines that merely mention the string from blocking us.
+    if ${pkgs.procps}/bin/pgrep -f \
+      'nixos-rebuild[^ ]* +(switch|build|boot|test|dry-activate|dry-build)' \
+      >/dev/null 2>&1; then
+      echo "A nixos-rebuild is already running; skipping."
+      exit 0
+    fi
+
+    if ! git diff --quiet HEAD --; then
+      echo "Working tree has uncommitted changes; skipping to avoid"
+      echo "activating or committing manual edits."
+      exit 0
+    fi
+  '';
+
   updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
     set -euo pipefail
 
     cd ${lib.escapeShellArg flakeDir}
+
+    ${autoUpdatePreflight}
 
     cp flake.lock flake.lock.bak
     trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
@@ -26,8 +61,7 @@ let
 
     if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
       sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
-      git add flake.lock
-      git commit -m "flake: auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay"
+      git commit -m "flake: auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay" -- flake.lock
       git push
       rm flake.lock.bak
     else
@@ -42,6 +76,8 @@ let
 
     cd ${lib.escapeShellArg flakeDir}
 
+    ${autoUpdatePreflight}
+
     cp flake.lock flake.lock.bak
     trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
 
@@ -55,8 +91,7 @@ let
 
     if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
       sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
-      git add flake.lock
-      git commit -m "chore: auto-update"
+      git commit -m "chore: auto-update" -- flake.lock
       git push
       rm flake.lock.bak
     else
@@ -419,6 +454,9 @@ in
     Service = {
       Type = "oneshot";
       ExecStart = "${updateClaudeCodeScript}";
+      # Without this a hung rebuild lingers indefinitely, and the pgrep guard
+      # would then make every later run skip.
+      TimeoutStartSec = "1h";
       Environment = "PATH=${
         lib.makeBinPath [
           pkgs.nix
@@ -451,6 +489,9 @@ in
     Service = {
       Type = "oneshot";
       ExecStart = "${updateFlakeInputsScript}";
+      # Without this a hung rebuild lingers indefinitely, and the pgrep guard
+      # would then make every later run skip.
+      TimeoutStartSec = "1h";
       Environment = "PATH=${
         lib.makeBinPath [
           pkgs.nix
