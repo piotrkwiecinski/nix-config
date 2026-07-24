@@ -49,7 +49,7 @@
         ]))
         pkgs.claude-code-ide
         pkgs.claude-code-ide-companion
-        pkgs.emacs-libgterm
+        ghostel
         pkgs.magento-cache-clean-el
         ob-php
         activity-watch-mode

@@ -307,8 +307,8 @@
     (add-to-list 'project-switch-commands '(vterm-project "vterm" "t") t)
     (keymap-set project-prefix-map "t" #'vterm-project)))
 
-(use-package gterm
-  :commands (gterm))
+(use-package ghostel
+  :commands (ghostel ghostel-project))
 
 (use-package tab-bar
   :custom
@@ -938,6 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
   :bind ("C-c C-'" . claude-code-ide-menu)
   :config
   (claude-code-ide-emacs-tools-setup)
+  (setq claude-code-ide-terminal-backend 'ghostel)
 
   (defun my/claude-code-propagate-envrc (orig-fun &rest args)
     "Propagate envrc environment variables to Claude Code terminal sessions."
