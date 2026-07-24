@@ -1,29 +1,14 @@
 { pkgs, pkgs-unstable }:
 rec {
-  emacs-libgterm = pkgs-unstable.callPackage ./emacs-libgterm {
-    emacs = pkgs-unstable.emacs30-pgtk;
-  };
   claude-code-ide = pkgs-unstable.emacsPackages.trivialBuild {
     pname = "claude-code-ide";
-    version = "0.2.7-unstable-2026-04-02";
+    version = "0.2.7-unstable-2026-07-02";
     src = pkgs.fetchFromGitHub {
       owner = "manzaltu";
       repo = "claude-code-ide.el";
-      rev = "56db02ee386d009ddb8b1482310f1f9beeefb810";
-      hash = "sha256-qH1QnG5G+0UiH/v0KaS7oSpQZY+BkUMZvrjbx6kyFhg=";
+      rev = "cc508396a09e98931bb588da8542b73fa07733e2";
+      hash = "sha256-pL5PNnemuXHHhQ0wEqhoagyKNdx+ywb2EEru8XWJ0Lc=";
     };
-    patches = [
-      (pkgs.fetchpatch {
-        name = "fix-hl-line-range-function.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/pull/164.patch";
-        hash = "sha256-PSBrgsECPhvMDYYzdS7nRn9qaSe7OkuJm+3IIwXaE6Q=";
-      })
-      (pkgs.fetchpatch {
-        name = "fix-restore-buffer-read-only-after-ediff.patch";
-        url = "https://github.com/manzaltu/claude-code-ide.el/pull/167.patch";
-        hash = "sha256-s12dx6JUx2scZ/KHnBcf4KeggGsD179SS1oKVxI6MCk=";
-      })
-    ];
     packageRequires = with pkgs-unstable.emacsPackages; [
       vterm
       websocket
