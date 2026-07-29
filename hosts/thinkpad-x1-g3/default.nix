@@ -502,24 +502,6 @@
     enableExtraSocket = true;
   };
 
-  systemd.timers."poweroff" = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* 23:50:00";
-      Persistent = true;
-    };
-  };
-
-  systemd.services."poweroff" = {
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "/run/current-system/sw/bin/systemctl poweroff";
-    };
-    unitConfig = {
-      Description = "Scheduled Poweroff";
-    };
-  };
-
   users.users."piotr" = {
     hashedPasswordFile = config.sops.secrets."piotr-password-hash".path;
     openssh.authorizedKeys.keys = [
