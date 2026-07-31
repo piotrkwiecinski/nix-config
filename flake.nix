@@ -4,11 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # Pinned: nixos-unstable @ 624af66 (2026-07-26) breaks ollama-cuda 0.32.3 —
-    # the CUDA setup hook omits cuda_nvcc from CUDAToolkit_ROOT, so ggml's
-    # ggml-cuda/CMakeLists.txt fails with "CUDA Toolkit not found".
-    # Unpin once ollama-cuda builds again on nixos-unstable.
-    nixpkgs-unstable-cuda.url = "github:NixOS/nixpkgs/64c08a7ca051951c8eae34e3e3cb1e202fe36786";
+    nixpkgs-unstable-cuda.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
