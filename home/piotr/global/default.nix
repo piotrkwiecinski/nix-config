@@ -19,12 +19,15 @@
         "flakes"
       ];
 
-      substituters = [
+      # Must be extra-*: a plain `substituters` here overrides the system list
+      # in /etc/nix/nix.conf for trusted users, silently dropping the per-host
+      # caches (cache.nixos-cuda.org, homeserver:5000, emacs-ci, devenv).
+      extra-substituters = [
         "https://cache.nixos.org"
         "https://nix-community.cachix.org"
       ];
 
-      trusted-public-keys = [
+      extra-trusted-public-keys = [
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       ];
