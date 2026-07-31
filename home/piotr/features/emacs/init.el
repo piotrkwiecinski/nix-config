@@ -931,9 +931,6 @@ document.addEventListener('DOMContentLoaded', () => {
   (setq emms-info-functions '(emms-info-mpd)))
 
 ;;;; llm
-(use-package ai-code
-  :bind ("C-c a" . ai-code-menu))
-
 (use-package claude-code-ide
   :bind ("C-c C-'" . claude-code-ide-menu)
   :config
