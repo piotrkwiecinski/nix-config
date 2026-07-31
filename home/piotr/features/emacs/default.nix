@@ -24,7 +24,7 @@
   programs.emacs.enable = true;
   programs.emacs.package = pkgs.unstable.emacsWithPackagesFromUsePackage {
     config = ./init.el;
-    package = pkgs.unstable.emacs30-pgtk;
+    package = pkgs.unstable.emacs31-pgtk;
     alwaysEnsure = true;
     extraEmacsPackages =
       epkgs: with epkgs; [
