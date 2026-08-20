@@ -259,11 +259,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1786430495,
-        "narHash": "sha256-hanhWXSBfDR8D6t7tq6EI3oNOIsby+iwbQx10JkJQaQ=",
+        "lastModified": 1787206918,
+        "narHash": "sha256-QVHXhUCzs7xG5BtU72rPp/wmBaYs6BdzAfl2HYqzsfo=",
         "owner": "codemanufacture",
         "repo": "magento-package-overlay",
-        "rev": "07fc4d9f27e0dce1e97774b88be6850a8300295d",
+        "rev": "f113ad9e50e8eaa559f8de5956b67cf7f1b25f31",
         "type": "github"
       },
       "original": {
