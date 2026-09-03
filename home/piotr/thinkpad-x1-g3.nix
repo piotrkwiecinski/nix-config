@@ -34,72 +34,115 @@ let
       exit 0
     fi
 
+    # `<4>` is the syslog warning prefix systemd strips and honours, so these
+    # skips surface under `journalctl -p warning` rather than looking like
+    # ordinary successful runs. This bail-out is the one failure mode with no
+    # outward symptom: the unit exits 0 either way, so a tree left dirty by an
+    # interrupted run silently parks the automation indefinitely.
     if ! git diff --quiet HEAD --; then
-      echo "Working tree has uncommitted changes; skipping to avoid"
-      echo "activating or committing manual edits."
+      echo "<4>Working tree has uncommitted changes; skipping to avoid"
+      echo "<4>activating or committing manual edits."
+      echo "<4>Nothing will auto-update until ${flakeDir} is clean."
       exit 0
     fi
   '';
 
-  updateClaudeCodeScript = pkgs.writeShellScript "update-claude-code-flake" ''
-    set -euo pipefail
+  # Shared body for both auto-update services.
+  #
+  # `nixos-rebuild switch` activates home-manager, which restarts every user
+  # unit whose definition changed -- and since flake.lock has just moved, that
+  # includes the very unit running this script. systemd tears the old cgroup
+  # down with SIGTERM, so nothing sequenced after the switch ever runs.
+  #
+  # That is exactly how the automation wedged itself on 2026-08-21: the switch
+  # killed the run before `git commit`, flake.lock was left modified, and the
+  # dirty-tree preflight then skipped every firing after it -- about fifty
+  # consecutive no-ops, each exiting 0. Two properties keep it from recurring:
+  #
+  #   * commit and push as soon as `nixos-rebuild build` proves the new lock
+  #     good, before switching. The build is the real gate; committing ahead of
+  #     activation means being killed during it costs nothing, because the tree
+  #     is already clean for the next run.
+  #   * trap INT and TERM alongside ERR. The old trap fired only on ERR, which
+  #     a SIGTERM is not, so a killed run orphaned flake.lock.bak and left the
+  #     lock dirty rather than restoring it.
+  mkAutoUpdateScript =
+    {
+      name,
+      inputsToUpdate,
+      commitMessage,
+    }:
+    pkgs.writeShellScript name ''
+      set -euo pipefail
 
-    cd ${lib.escapeShellArg flakeDir}
+      cd ${lib.escapeShellArg flakeDir}
 
-    ${autoUpdatePreflight}
+      ${autoUpdatePreflight}
 
-    cp flake.lock flake.lock.bak
-    trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
+      restoreLock() {
+        if [ -f flake.lock.bak ]; then
+          mv -f flake.lock.bak flake.lock
+        fi
+      }
+      trap restoreLock ERR INT TERM
 
-    nix flake update claude-code-overlay magento-overlay opencode-nix codex-overlay
+      cp flake.lock flake.lock.bak
 
-    if git diff --quiet flake.lock; then
-      rm flake.lock.bak
-      echo "No flake.lock changes, nothing to do."
-      exit 0
-    fi
+      nix flake update ${lib.concatStringsSep " " inputsToUpdate}
 
-    if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
-      sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
-      git commit -m "flake: auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay" -- flake.lock
+      if git diff --quiet flake.lock; then
+        rm -f flake.lock.bak
+        echo "No flake.lock changes, nothing to do."
+        exit 0
+      fi
+
+      if ! sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
+        echo "Build failed, rolling back flake.lock"
+        restoreLock
+        exit 1
+      fi
+
+      git commit -m ${lib.escapeShellArg commitMessage} -- flake.lock
       git push
-      rm flake.lock.bak
-    else
-      echo "Build failed, rolling back flake.lock"
-      mv flake.lock.bak flake.lock
-      exit 1
-    fi
-  '';
+      rm -f flake.lock.bak
+      # Past this point there is no backup to restore and the lock is safely
+      # committed, so a SIGTERM from our own activation is harmless.
+      trap - ERR INT TERM
 
-  updateFlakeInputsScript = pkgs.writeShellScript "update-flake-inputs" ''
-    set -euo pipefail
-
-    cd ${lib.escapeShellArg flakeDir}
-
-    ${autoUpdatePreflight}
-
-    cp flake.lock flake.lock.bak
-    trap '[ -f flake.lock.bak ] && mv flake.lock.bak flake.lock' ERR
-
-    nix flake update nixpkgs nixpkgs-unstable nixpkgs-master flake-parts systems hardware home-manager emacs-overlay disko treefmt-nix private-nix-config
-
-    if git diff --quiet flake.lock; then
-      rm flake.lock.bak
-      echo "No flake.lock changes, nothing to do."
-      exit 0
-    fi
-
-    if sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
       sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
-      git commit -m "chore: auto-update" -- flake.lock
-      git push
-      rm flake.lock.bak
-    else
-      echo "Build failed, rolling back flake.lock"
-      mv flake.lock.bak flake.lock
-      exit 1
-    fi
-  '';
+    '';
+
+  updateClaudeCodeScript = mkAutoUpdateScript {
+    name = "update-claude-code-flake";
+    inputsToUpdate = [
+      "claude-code-overlay"
+      "magento-overlay"
+      "opencode-nix"
+      "codex-overlay"
+    ];
+    commitMessage = "flake: auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay";
+  };
+
+  updateFlakeInputsScript = mkAutoUpdateScript {
+    name = "update-flake-inputs";
+    # nixpkgs-unstable-cuda is deliberately absent: services.ollama pulls
+    # ollama-cuda from it, and bumping it can break the whole system build
+    # with "CUDA Toolkit not found" in ggml-cuda.
+    inputsToUpdate = [
+      "nixpkgs"
+      "nixpkgs-unstable"
+      "nixpkgs-master"
+      "flake-parts"
+      "systems"
+      "hardware"
+      "home-manager"
+      "emacs-overlay"
+      "disko"
+      "treefmt-nix"
+      "private-nix-config"
+    ];
+    commitMessage = "chore: auto-update";
+  };
 
   emacsclientFrameIfMissing = pkgs.writeShellScript "emacsclient-frame-if-missing" ''
     set -eu
