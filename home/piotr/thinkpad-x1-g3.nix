@@ -465,30 +465,32 @@ in
     enable = true;
     enableDefaultConfig = false;
 
-    matchBlocks = {
+    # `settings` replaces the deprecated `matchBlocks` and takes upstream
+    # ssh_config(5) directive names rather than camelCase aliases. The "*"
+    # entry keeps its special meaning: home-manager always emits it last, so
+    # first-match-wins still resolves per-host blocks before these defaults.
+    settings = {
       "*" = {
-        serverAliveInterval = 300;
-        forwardAgent = true;
-        addKeysToAgent = "no";
-        compression = false;
-        serverAliveCountMax = 3;
-        hashKnownHosts = false;
-        userKnownHostsFile = "~/.ssh/known_hosts";
-        controlMaster = "no";
-        controlPath = "~/.ssh/master-%r@%n:%p";
-        controlPersist = "no";
+        ServerAliveInterval = 300;
+        ForwardAgent = true;
+        AddKeysToAgent = "no";
+        Compression = false;
+        ServerAliveCountMax = 3;
+        HashKnownHosts = false;
+        UserKnownHostsFile = "~/.ssh/known_hosts";
+        ControlMaster = "no";
+        ControlPath = "~/.ssh/master-%r@%n:%p";
+        ControlPersist = "no";
       };
 
       "*.magento.cloud *.magentosite.cloud" = {
-        extraOptions = {
-          Include = "~/.magento-cloud/ssh/*.config";
-        };
+        Include = "~/.magento-cloud/ssh/*.config";
       };
 
       "homelab" = {
-        hostname = "192.168.68.100";
-        user = "piotr";
-        identityFile = "~/.ssh/homelab";
+        HostName = "192.168.68.100";
+        User = "piotr";
+        IdentityFile = "~/.ssh/homelab";
       };
     };
   };
