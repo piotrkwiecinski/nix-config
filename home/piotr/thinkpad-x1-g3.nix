@@ -115,6 +115,36 @@ let
 
     exec "$EMACSCLIENT" -c -n
   '';
+
+  # keyboxd -- spawned ad-hoc by gpg because ~/.gnupg/common.conf sets
+  # `use-keyboxd`, and unlike gpg-agent it has no systemd unit of its own --
+  # holds ~/.gnupg/public-keys.d/pubring.db.lock for its entire lifetime. When
+  # the session is torn down at logout or suspend it gets killed without
+  # releasing that lock, leaking one lock file per boot.
+  #
+  # A leaked lock is normally harmless: gpg reads the owning PID out of it and
+  # breaks the lock once that process is gone. It turns fatal only when the PID
+  # has since been reused by an unrelated long-lived process. gpg then sees a
+  # live owner, waits, and every operation dies with
+  # "keydb_search failed: Connection timed out". The Emacs daemon starts early
+  # each boot and lands in the same low PID range keyboxd does, so the
+  # collision is a question of when rather than if.
+  #
+  # Clear the locks at session start, but only when no keyboxd is actually
+  # running, so a live lock is never yanked out from under one.
+  gnupgStaleLockCleanup = pkgs.writeShellScript "gnupg-stale-lock-cleanup" ''
+    set -eu
+    GNUPGHOME="''${GNUPGHOME:-$HOME/.gnupg}"
+
+    if ${pkgs.procps}/bin/pgrep -u "$(id -u)" -x keyboxd >/dev/null 2>&1; then
+      echo "keyboxd is running; leaving its lock in place"
+      exit 0
+    fi
+
+    rm -f "$GNUPGHOME/public-keys.d/pubring.db.lock"
+    rm -f "$GNUPGHOME/public-keys.d/".#lk0x*
+    rm -f "$GNUPGHOME/".#lk0x*
+  '';
 in
 {
   imports = [
@@ -301,6 +331,24 @@ in
         };
       };
     };
+  };
+
+  # Ordered ahead of gpg-agent so the first gpg operation of the session never
+  # meets a leaked lock. See gnupgStaleLockCleanup above for the full story.
+  systemd.user.services.gnupg-stale-lock-cleanup = {
+    Unit = {
+      Description = "Remove stale GnuPG keyboxd lock files";
+      Before = [
+        "gpg-agent.socket"
+        "gpg-agent.service"
+      ];
+    };
+    Service = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${gnupgStaleLockCleanup}";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # Open an Emacs frame on login, ordered after emacs.socket to avoid a race
