@@ -197,6 +197,7 @@ in
     inputs.private-nix-config.homeManagerModules.work
     inputs.private-nix-config.homeManagerModules.media
     inputs.private-nix-config.homeManagerModules.activitywatch-private
+    inputs.private-nix-config.homeManagerModules.thinkpad-x1-g3
     ./global
     ./features/emacs
     ./features/direnv.nix
