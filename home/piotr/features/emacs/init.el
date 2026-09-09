@@ -746,7 +746,8 @@ document.addEventListener('DOMContentLoaded', () => {
   (org-agenda-include-diary t)
   (org-log-done t)
   (org-support-shift-select t)
-  :bind (("C-c o a" . org-agenda))
+  :bind (("C-c o a" . org-agenda)
+         ("C-c o c" . org-capture))
   :config
   (require 'ob-js)
   (require 'ob-php)
