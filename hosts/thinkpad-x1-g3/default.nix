@@ -150,7 +150,8 @@
       download-attempts = 3;
       narinfo-cache-negative-ttl = 300;
       extra-substituters = [
-        "http://homeserver:5000?priority=40"
+        # Disabled for now: homeserver:5000 is unreachable and stalls builds.
+        # "http://homeserver:5000?priority=40"
         "https://nix-community.cachix.org?priority=41"
         "https://emacs-ci.cachix.org?priority=42"
         "https://devenv.cachix.org?priority=43"

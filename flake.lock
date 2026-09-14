@@ -334,6 +334,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-resolve": {
+      "locked": {
+        "lastModified": 1788404924,
+        "narHash": "sha256-lhEhY8X5EgkQ/eg6IFz4cc8jRuSYSvnxx1al7d1dvZ0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1789114715,
@@ -545,6 +561,7 @@
         "magento-overlay": "magento-overlay",
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-resolve": "nixpkgs-resolve",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-unstable-cuda": "nixpkgs-unstable-cuda",
         "opencode-nix": "opencode-nix",

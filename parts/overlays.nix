@@ -31,6 +31,10 @@ in
         inherit (final.stdenv.hostPlatform) system;
         config.allowUnfree = true;
       };
+      pkgs-resolve = import inputs.nixpkgs-resolve {
+        inherit (final.stdenv.hostPlatform) system;
+        config.allowUnfree = true;
+      };
       claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
       codex = (inputs.codex-overlay.overlays.default final prev).codex;
       magento-pkgs = inputs.magento-overlay.overlays.default final prev;
@@ -42,6 +46,7 @@ in
         unstable = pkgs-unstable;
         unstable-cuda = pkgs-unstable-cuda;
         master = pkgs-master;
+        resolve = pkgs-resolve;
       };
       base = additions // magento-pkgs // unstable // { inherit claude-code codex; };
     in

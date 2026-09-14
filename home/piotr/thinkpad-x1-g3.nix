@@ -454,12 +454,12 @@ in
       open-in-mpv
       qpwgraph
       inkscape
-      davinci-resolve
       pipeline
       ripgrep
       forgejo-cli
       ;
     inherit (pkgs.master) pi-coding-agent;
+    inherit (pkgs.resolve) davinci-resolve;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs) typescript-language-server;
