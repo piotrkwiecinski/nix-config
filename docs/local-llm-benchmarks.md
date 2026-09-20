@@ -243,6 +243,10 @@ reported only 2600 MiB in use with 1116 MiB free. The practical ceiling for **10
 residency on this GPU is therefore ~2.5 GB resident / ~2.2 GB of weights — which among the
 tested models only `granite4.2:3b` clears.
 
+> **Superseded 2026-09-20.** That ceiling was an artifact of llama.cpp's ~1 GiB fit margin, not
+> a property of the card. With `LLAMA_ARG_FIT_TARGET=256` the real ceiling is ~3.4 GB resident,
+> and `qwen3.5-4b-textonly` @4K becomes 100% GPU. See "THE 1 GiB FIT MARGIN" below.
+
 ### pi agent (pi 0.84.4, `--thinking off`, pi's default 32K context)
 
 Sandbox of 3 files. task1 = "run ls, how many files"; task2 = "read alpha.rs, what string does it print".
@@ -364,8 +368,95 @@ correctly from GGUF metadata — nothing else to configure.
    rising to 42% at pi's 32K default where it needs 4.3 GB — more than the whole card.
 5. **Set `num_ctx` explicitly.** pi's 32K default drove the worst spills; it costs the
    text-only 2B only 0.4 GB, but it pushed granite and the 4B over the edge.
-6. **Ollama reserves ~1.1 GB it will not use.** At 3.2 GB resident only 2600 of 3681 MiB were in
-   use. Budget for a real ceiling of ~2.2 GB of weights if you need guaranteed full residency.
+6. ~~**Ollama reserves ~1.1 GB it will not use.**~~ **Superseded 2026-09-20 — this was wrong.**
+   It is llama.cpp's fit margin (~1 GiB default), not an Ollama reserve, and setting
+   `LLAMA_ARG_FIT_TARGET=256` recovers it: granite4.2:3b @8k goes 90% -> **100% GPU** and
+   **1.44x faster** decode. There is no ~2.2 GB weight ceiling. See "THE 1 GiB FIT MARGIN" below.
+
+## THE 1 GiB FIT MARGIN — 2026-09-20
+
+**Resolves conclusion #6 above.** The "~1.1 GB Ollama refuses to use" is not an Ollama reserve,
+a CUDA context cost, or a hardware limit. It is **llama.cpp's layer-fit margin**, it defaults to
+roughly 1 GiB, and it is a single environment variable.
+
+**Setup:** Ollama 0.33.3 (was 0.32.13 for the measurements above), same GTX 1650 Ti Max-Q,
+3713 MiB free at idle. Each model loaded with a 1-token request, `ollama ps` + `nvidia-smi`
+recorded, then unloaded (`keep_alive:0`) before the next.
+
+### The mechanism
+
+Ollama 0.33.x places layers via llama.cpp's `common_fit_params`. Its log shows the decision
+verbatim:
+
+```
+common_params_fit_impl: id=0, n_layer=41, ... mem=  2709 MiB   <- tried all layers
+common_params_fit_impl: id=0, n_layer=39, ... mem=  2582 MiB   <- settled here
+common_params_fit_impl: set ngl_per_device_high[0].n_layer=40  (2646 MiB)
+  - CUDA0 (GTX 1650 Ti Max-Q): 39 layers, 2582 MiB used, 1070 MiB free
+```
+
+Free VRAM was 3652 MiB. It picked the largest layer count leaving **>= ~1024 MiB free**: 39
+layers leaves 1070, 40 would leave 1006. That is the whole story. The margin is sized for a GPU
+that also drives a display — this panel runs on the iGPU (36 MiB used), so it was dead space.
+
+`ollama serve --help` on 0.33.x exposes it:
+
+```
+LLAMA_ARG_FIT          Enable llama.cpp automatic fit of unset memory options (default "on")
+LLAMA_ARG_FIT_TARGET   Target free VRAM margin per device for llama.cpp fit (MiB)
+```
+
+(`OLLAMA_GPU_OVERHEAD` only *adds* reserve — it cannot subtract.)
+
+### Residency: before / after `LLAMA_ARG_FIT_TARGET=256`
+
+| Model                   | ctx | Before            | After              | nvidia-smi free after |
+|-------------------------|-----|-------------------|--------------------|-----------------------|
+| granite4.2:3b           | 4K  | 2.5 GB, 100%      | 2.5 GB, 100%       | 1250 MiB (unchanged)  |
+| **granite4.2:3b**       | 8K  | 3.0 GB, **90%**   | 2.8 GB, **100%**   | 926 MiB               |
+| granite4.2:3b           | 32K | 5.1 GB, 54%       | 5.1 GB, 69%        | 272 MiB               |
+| **qwen3.5-4b-textonly** | 4K  | 3.2 GB, **83%**   | 3.2 GB, **100%**   | 620 MiB               |
+| qwen3.5-4b-textonly     | 32K | 4.3 GB, 62%       | 4.3 GB, 77%        | 446 MiB               |
+| qwen3.5-2b-textonly     | 32K | 1.8 GB, 100%      | 1.8 GB, 100%       | 1876 MiB (control)    |
+
+Every spilling case before the change sat at **1030-1082 MiB free** — the fingerprint of the
+1 GiB margin. After, the card runs down to 272 MiB.
+
+### Throughput: it is not just cosmetic
+
+The pi results above warn that residency does not predict speed, so this was measured directly.
+`num_gpu=39` reproduces the old fit exactly (same 3.0 GB / 10%/90% signature); `num_gpu=41` is
+what the new margin allows. granite4.2:3b @ 8K, 120 tokens, `temperature:0`:
+
+| GPU layers                    | Residency        | Decode        |
+|-------------------------------|------------------|---------------|
+| 39 (old fit, ~1 GiB margin)   | 3.0 GB, 90% GPU  | 31.22 tok/s   |
+| **41 (new, 256 MiB margin)**  | 2.8 GB, 100% GPU | **44.99 tok/s** |
+
+**1.44x faster decode for two layers.** qwen3.5-4b-textonly @ 4K reaches 31.44 tok/s at 100% GPU,
+where it previously spilled 17%.
+
+### What this changes
+
+1. **Conclusion #6 is wrong as written.** There is no ~2.2 GB ceiling on weights for 100% GPU
+   residency. The real ceiling is ~3.4 GB resident once the margin is set to 256 MiB.
+2. **`granite4.2:3b` is now fully GPU-resident at 8K**, not just 4K. Practical conclusion #3
+   above ("cap at <= 8K") still holds, but 8K is now a *good* configuration rather than a
+   90%-spilled one.
+3. **`qwen3.5-4b-textonly` at 4K is no longer a spilling model.** Whether that makes it worth
+   using over the 2B is a separate question — the earlier finding that it produces byte-identical
+   tool calls to the 2B is unaffected.
+4. **32K is still out of reach** for granite (5.1 GB > card) and the 4B (4.3 GB). The margin was
+   never the binding constraint there; KV cache size is.
+5. **`qwen3.5-2b-textonly` is unaffected** — it never came near the margin. It remains the winner.
+
+Configured in `hosts/thinkpad-x1-g3/default.nix` under `services.ollama.environmentVariables`.
+Do not push the margin much below 256 MiB: the fit is a static estimate, and compute buffers
+that grow at runtime will OOM with nothing left to absorb them.
+
+**Not yet tried:** `OLLAMA_FLASH_ATTENTION=1` + `OLLAMA_KV_CACHE_TYPE=q8_0`. For granite, whose
+dense GQA KV cache costs ~90 MB per 1K tokens, that is a larger lever than the fit margin and is
+the only plausible route to 32K on this card. Deliberately left out here to keep one variable.
 
 ## Reproducing / next steps
 
@@ -398,8 +489,8 @@ Still untested:
 - ~~pi on `qwen3.5-4b-textonly`~~ — **DONE.** 69.32s / 35.26s, both correct, 4.3 GB @ 58% GPU.
 - **`granite4.2:8b`** (5100 MiB) — the agentic-RL-trained Granite. Will spill, but Qwen's results
   show partial spill is no longer disqualifying.
-- **Tuning Ollama's VRAM reserve.** It left 1116 MiB of 3681 unused at 3.2 GB resident; recovering
-  that headroom may be what gets a 2.9 GB model fully onto the GPU.
+- ~~**Tuning Ollama's VRAM reserve.**~~ — **DONE, it worked.** The reserve was llama.cpp's fit
+  margin, not an Ollama limit. See "THE 1 GiB FIT MARGIN" below.
 
 ## Sources
 
