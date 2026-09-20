@@ -415,6 +415,12 @@
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       CUDA_VISIBLE_DEVICES = "0";
       OLLAMA_CONTEXT_LENGTH = "32768";
+      # llama.cpp's layer fitter keeps a free-VRAM margin per device, defaulting
+      # to ~1 GiB — sized for a GPU that also drives a display. This panel runs
+      # on the iGPU (~36 MiB of the 4 GB card in use), so that margin was dead
+      # space: it cost granite4.2:3b @8k two layers and a 10% CPU spill.
+      # See docs/local-llm-benchmarks.md.
+      LLAMA_ARG_FIT_TARGET = "256";
     };
   };
 
