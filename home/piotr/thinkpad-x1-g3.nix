@@ -302,10 +302,6 @@ in
   xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
     "$schema" = "https://opencode.ai/config.json";
     mcp = {
-      pantry = {
-        type = "local";
-        command = [ "/home/piotr/projects/opensource/pantry-app-v2/db/pantry-mcp-run.sh" ];
-      };
       translate = {
         type = "local";
         command = [
