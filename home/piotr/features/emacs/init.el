@@ -959,6 +959,12 @@ document.addEventListener('DOMContentLoaded', () => {
   :config
   (claude-code-ide-companion-project-switch-mode 1))
 
+(use-package pilish
+  :commands (pilish pilish-toggle pilish-session-browser)
+  :bind ("C-c C-;" . pilish)
+  :config
+  (defalias 'pi 'pilish))
+
 (use-package abbrev
   :hook ((prog-mode text-mode) . abbrev-mode))
 
