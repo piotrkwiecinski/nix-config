@@ -34,6 +34,8 @@
           ts.tree-sitter-graphql
           ts.tree-sitter-javascript
           ts.tree-sitter-json
+          ts.tree-sitter-markdown
+          ts.tree-sitter-markdown-inline
           ts.tree-sitter-nix
           ts.tree-sitter-php
           ts.tree-sitter-jsdoc
