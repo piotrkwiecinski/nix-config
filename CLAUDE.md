@@ -15,3 +15,13 @@ Sensitive configuration lives in `nix-config-private` (SSH flake input). It prov
 Secrets are encrypted with age. Key types by host:
 - homeserver: SSH host key (`/etc/ssh/ssh_host_ed25519_key`)
 - thinkpad-x1-g3: Standalone age key (`/var/lib/sops-nix/key.txt`)
+
+## Commits touching the private flake input
+
+This repo is public. When a commit bumps `private-nix-config` in `flake.lock`, the message must be exactly:
+
+```
+chore(flake): bump private-nix-config
+```
+
+No suffix, no body — never describe what changed in the private repo (module names, secrets, features). For commits that also change public code, mention the bump only as `Bump private-nix-config` and keep private details out of the subject and body.
