@@ -213,6 +213,9 @@ in
   home.sessionVariables = {
     MOZ_ENABLE_WAYLAND = "1";
     MOZ_DISABLE_RDD_SANDBOX = "1";
+    # Stop magento-cloud from rewriting ~/.ssh/config (a home-manager symlink);
+    # programs.ssh already includes ~/.magento-cloud/ssh/*.config.
+    MAGENTO_CLOUD_CLI_API_WRITE_USER_SSH_CONFIG = "0";
   };
 
   # Configure scdaemon to not hold exclusive access to YubiKey,
