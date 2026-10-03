@@ -24,4 +24,4 @@ This repo is public. When a commit bumps `private-nix-config` in `flake.lock`, t
 chore(flake): bump private-nix-config
 ```
 
-No suffix, no body — never describe what changed in the private repo (module names, secrets, features). For commits that also change public code, mention the bump only as `Bump private-nix-config` and keep private details out of the subject and body.
+No suffix, no body — never describe what changed in the private repo (module names, secrets, features). Enforced by `.githooks/commit-msg`, which the dev shell enables via `core.hooksPath`. For commits that also change public code, mention the bump only as `Bump private-nix-config` and keep private details out of the subject and body.

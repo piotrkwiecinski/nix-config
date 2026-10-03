@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Keep private-nix-config details out of this public repo's history.
+#
+# A commit that bumps the private-nix-config rev in flake.lock must say
+# nothing about what changed there:
+#   * lock-only commit: the message is exactly
+#     "chore(flake): bump private-nix-config" (or the auto-update timer's
+#     "chore: auto-update"), with no body;
+#   * commit that also changes public code: any line mentioning
+#     private-nix-config is exactly "Bump private-nix-config".
+#
+# Plain bash + awk on purpose: the auto-update timers commit with only nix and
+# git on PATH.
+set -euo pipefail
+
+msg_file=$1
+
+# The `rev` of the private-nix-config node in a flake.lock read from stdin.
+# Nix pretty-prints the lock with one node per 4-space-indented key.
+private_rev() {
+  awk '
+    /^    "private-nix-config": \{/ { inside = 1; next }
+    inside && /^    [}"]/ { exit }
+    inside && /"rev":/ { gsub(/[",]/, "", $2); print $2; exit }
+  '
+}
+
+new_rev=$(git show :flake.lock 2>/dev/null | private_rev || true)
+old_rev=$(git show HEAD:flake.lock 2>/dev/null | private_rev || true)
+[ "$new_rev" = "$old_rev" ] && exit 0
+
+msg=$(git stripspace --strip-comments <"$msg_file")
+staged=$(git diff --cached --name-only)
+
+reject() {
+  {
+    echo "commit-msg: this commit bumps private-nix-config (see CLAUDE.md)."
+    echo "$1"
+    echo "Do not describe what changed in the private repo."
+  } >&2
+  exit 1
+}
+
+if [ "$staged" = flake.lock ]; then
+  case "$msg" in
+    "chore(flake): bump private-nix-config" | "chore: auto-update") exit 0 ;;
+  esac
+  reject 'A lock-only bump must be exactly "chore(flake): bump private-nix-config", with no body.'
+fi
+
+if printf '%s\n' "$msg" | grep -i 'private-nix-config' | grep -vqx 'Bump private-nix-config'; then
+  reject 'Mention the bump only as a "Bump private-nix-config" line.'
+fi
