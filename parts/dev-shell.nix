@@ -16,7 +16,7 @@
           })
           (writeShellApplication {
             name = "nix-switch";
-            text = ''sudo nixos-rebuild switch --flake ".#$(hostname)"'';
+            text = ''nixos-rebuild switch --sudo --flake ".#$(hostname)"'';
           })
         ];
       };
