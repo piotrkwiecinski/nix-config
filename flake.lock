@@ -523,11 +523,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791059971,
-        "narHash": "sha256-g7LTeOptmB6Pl2faU0ESw1SBEQTRZVrRN2P9Jdd8xM4=",
+        "lastModified": 1791060712,
+        "narHash": "sha256-atSEW12heFi2xBk8HNSjaT6V1T438TJfrFs4MZN9GXo=",
         "ref": "refs/heads/main",
-        "rev": "9e95bbb215e34f014cb37dd48e84ed7067ca906a",
-        "revCount": 91,
+        "rev": "3ef77f10fa6ab9e021fd44c04463fd400119ced1",
+        "revCount": 93,
         "type": "git",
         "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
       },
