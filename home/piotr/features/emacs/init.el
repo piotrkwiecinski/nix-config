@@ -166,7 +166,10 @@
   (add-to-list 'completion-at-point-functions #'yasnippet-capf)
   (add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
   (setq completion-at-point-functions
-        (remove 'ispell-completion-at-point completion-at-point-functions)))
+        (remove 'ispell-completion-at-point completion-at-point-functions))
+  ;; Emacs 30 text-mode adds ispell-completion-at-point buffer-locally;
+  ;; it errors without a plain word-list (ispell-alternate-dictionary).
+  (setq text-mode-ispell-word-completion nil))
 
 ;;; User interface
 (set-face-attribute 'default nil
@@ -504,6 +507,9 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;;;; Version control
 (use-package magit
+  :config
+  ;; magit-refresh-buffer reads `hi-lock-mode' without loading hi-lock.
+  (require 'hi-lock)
   :custom
   (magit-log-section-commit-count 10)
   (magit-reflog-limit 64)
