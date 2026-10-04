@@ -431,6 +431,12 @@ $0`(yas-escape-text yas-selected-text)`")
   (yas-expand-snippet (buffer-string) (point-min) (point-max)))
 
 (use-package envrc
+  :custom
+  ;; Block at most 2s waiting for direnv, then continue asynchronously,
+  ;; so sentinels can't pile up inside a long wait.
+  (envrc-async 2)
+  ;; Never run direnv in debugger buffers (avoids repeating the hang on C-g / USR2).
+  (envrc-global-modes '((not debugger-mode) t))
   :init
   (envrc-global-mode))
 
