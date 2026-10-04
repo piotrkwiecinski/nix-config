@@ -959,7 +959,27 @@ document.addEventListener('DOMContentLoaded', () => {
       (apply orig-fun args)))
 
   (advice-add 'claude-code-ide--create-terminal-session
-              :around #'my/claude-code-propagate-envrc))
+              :around #'my/claude-code-propagate-envrc)
+
+  (defun my/claude-code-session-name (dir)
+    "Stable session name for DIR: its basename, or parent-basename when generic."
+    (let* ((dir (directory-file-name (expand-file-name dir)))
+           (base (file-name-nondirectory dir)))
+      (if (member base '("db" "src" "app" "web" "cli"))
+          (concat (file-name-nondirectory (directory-file-name (file-name-directory dir)))
+                  "-" base)
+        base)))
+
+  (defun my/claude-code-name-session (orig-fun buffer-name working-dir &rest args)
+    "Start Claude Code with `-n <project>' so other sessions can @-address it."
+    (let ((claude-code-ide-cli-extra-flags
+           (string-trim
+            (concat claude-code-ide-cli-extra-flags " -n "
+                    (shell-quote-argument (my/claude-code-session-name working-dir))))))
+      (apply orig-fun buffer-name working-dir args)))
+
+  (advice-add 'claude-code-ide--create-terminal-session
+              :around #'my/claude-code-name-session))
 
 (use-package claude-code-ide-companion
   :config
