@@ -979,7 +979,50 @@ document.addEventListener('DOMContentLoaded', () => {
       (apply orig-fun buffer-name working-dir args)))
 
   (advice-add 'claude-code-ide--create-terminal-session
-              :around #'my/claude-code-name-session))
+              :around #'my/claude-code-name-session)
+
+  (defun my/claude-code--background-sessions ()
+    "Alist of (LABEL . SESSION) for background sessions from `claude agents'."
+    (let* ((json (with-temp-buffer
+                   (unless (zerop (call-process "claude" nil t nil "agents" "--json"))
+                     (user-error "claude agents --json failed: %s" (buffer-string)))
+                   (goto-char (point-min))
+                   (json-parse-buffer :object-type 'alist :null-object nil)))
+           (sessions (seq-filter (lambda (s)
+                                   (and (equal (alist-get 'kind s) "background")
+                                        (alist-get 'id s)))
+                                 json)))
+      (mapcar (lambda (s)
+                (cons (format "%-24s %-8s %s"
+                              (alist-get 'name s)
+                              (or (alist-get 'state s) "")
+                              (abbreviate-file-name (alist-get 'cwd s)))
+                      s))
+              sessions)))
+
+  (defun my/claude-code-attach (session)
+    "Attach to a background Claude Code SESSION in a ghostel side window.
+The session keeps running when the buffer is killed; `claude agents'
+still lists it."
+    (interactive
+     (let ((choices (or (my/claude-code--background-sessions)
+                        (user-error "No background Claude sessions"))))
+       (list (cdr (assoc (completing-read "Attach to: " choices nil t) choices)))))
+    (let* ((id (alist-get 'id session))
+           (name (format "*claude-attach[%s]*" (alist-get 'name session)))
+           (buffer (get-buffer name)))
+      (unless (and buffer (get-buffer-process buffer))
+        (setq buffer (get-buffer-create name))
+        (with-current-buffer buffer
+          (setq default-directory (file-name-as-directory (alist-get 'cwd session))))
+        ;; Display first so ghostel sizes the terminal to the window.
+        (claude-code-ide--display-buffer-in-side-window buffer)
+        (ghostel-exec buffer "claude" (list "attach" id)))
+      (claude-code-ide--display-buffer-in-side-window buffer)))
+
+  (with-eval-after-load 'claude-code-ide-transient
+    (transient-append-suffix 'claude-code-ide-menu "l"
+      '("a" "Attach to background session" my/claude-code-attach))))
 
 (use-package claude-code-ide-companion
   :config
