@@ -90,6 +90,16 @@
     memoryPercent = 50;
   };
 
+  # zram lives in RAM, so a full zram swap means the kernel OOM killer never
+  # fires — the box just thrashes until it's unusable (2026-10-05 freeze).
+  # Let systemd-oomd kill the worst offender on sustained memory pressure in
+  # system/user slices, or on swap usage above SwapUsedLimit (90%).
+  systemd.oomd = {
+    enableSystemSlice = true;
+    enableUserSlices = true;
+  };
+  systemd.slices."-".sliceConfig.ManagedOOMSwap = "kill";
+
   boot.kernel.sysctl = {
     "vm.swappiness" = 180;
     "vm.watermark_boost_factor" = 0;
@@ -424,7 +434,16 @@
     };
   };
 
-  systemd.services.ollama.serviceConfig.EnvironmentFile = config.sops.templates."ollama-env".path;
+  systemd.services.ollama.serviceConfig = {
+    EnvironmentFile = config.sops.templates."ollama-env".path;
+    # llama-server keeps an in-RAM prompt cache of up to 8 GiB (~380 MiB per
+    # cached prompt) on top of CPU-side weights and KV cache. Long eval runs
+    # fill it completely; on 2026-10-05 that tipped an already loaded system
+    # into a freeze. Cap the service so it gets reclaimed/killed, not the desktop.
+    MemoryHigh = "10G";
+    MemoryMax = "12G";
+    MemorySwapMax = "2G";
+  };
 
   services.traefik = {
     enable = true;
