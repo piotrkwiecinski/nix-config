@@ -67,6 +67,15 @@
     };
   };
 
+  # org-protocol:// links (capture bookmarklets) go to the running daemon.
+  # Without a handler for the scheme, gio refuses them before Emacs sees them.
+  xdg.desktopEntries.org-protocol = {
+    name = "Org Protocol";
+    exec = "emacsclient -- %u";
+    noDisplay = true;
+    mimeType = [ "x-scheme-handler/org-protocol" ];
+  };
+
   home.sessionVariables = {
     ALTERNATIVE_EDITOR = "";
     EDITOR = "emacsclient -t";
