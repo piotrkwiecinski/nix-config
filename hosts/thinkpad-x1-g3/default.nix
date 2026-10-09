@@ -51,7 +51,8 @@
 
   boot.kernelPackages = pkgs.linuxPackages_6_18;
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-  boot.binfmt.registrations.aarch64-linux.fixBinary = true;
+  # Static qemu: no exec chain, so it works in the nix sandbox with fixBinary (the default)
+  boot.binfmt.preferStaticEmulators = true;
 
   boot.kernelParams = [
     "nvidia_drm.modeset=1"
