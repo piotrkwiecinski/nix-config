@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  bluetti-bt-lib = pkgs.home-assistant.python.pkgs.buildPythonPackage rec {
+  bluetti-bt-lib = pkgs.home-assistant.python3Packages.buildPythonPackage rec {
     pname = "bluetti-bt-lib";
     version = "0.1.6";
     pyproject = true;
@@ -11,8 +11,8 @@ let
       hash = "sha256-2+/d3Rb1icVMsTCrtWqtk9WBBe8/82r05It2RxaeVSY=";
     };
     env.LIB_VERSION = version;
-    build-system = with pkgs.home-assistant.python.pkgs; [ setuptools ];
-    dependencies = with pkgs.home-assistant.python.pkgs; [
+    build-system = with pkgs.home-assistant.python3Packages; [ setuptools ];
+    dependencies = with pkgs.home-assistant.python3Packages; [
       bleak
       bleak-retry-connector
       crcmod

@@ -9,7 +9,7 @@ pkgs.buildHomeAssistantComponent rec {
     tag = "v${version}";
     hash = "sha256-SsUObH3g3i9xQ4JvRDcCm1Fg2giH+MN3rC3NMPYO5m0=";
   };
-  propagatedBuildInputs = with pkgs.home-assistant.python.pkgs; [
+  propagatedBuildInputs = with pkgs.home-assistant.python3Packages; [
     aiofiles
   ];
   # Skip manifest requirements check — bundled pysolarman is vendored in-tree,

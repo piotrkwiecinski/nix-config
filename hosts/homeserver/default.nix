@@ -40,6 +40,14 @@ in
   boot.loader.grub.enable = false;
   boot.loader.generic-extlinux-compatible.enable = true;
 
+  # nixos-hardware's firmware module replaces the sd-image firmware partition;
+  # without U-Boot the Pi firmware has no kernel= to load (black screen)
+  hardware.raspberry-pi.firmware.uboot.enable = true;
+
+  # Mainline kernel is in cache.nixos.org; the nixos-hardware vendor kernel
+  # (linux-rpi) is not and takes hours to build
+  boot.kernelPackages = pkgs.linuxPackages;
+
   networking.hostName = "homeserver";
   networking.hosts."192.168.68.103" = [ "thinkpad-x1-g3.local" ];
 
@@ -165,7 +173,7 @@ in
   # Nextcloud
   services.nextcloud = {
     enable = true;
-    package = pkgs.nextcloud32;
+    package = pkgs.nextcloud33;
     hostName = "nextcloud.homeserver.local";
     https = false;
     config = {
@@ -185,7 +193,7 @@ in
       trusted_proxies = [ "127.0.0.1" ];
     };
     extraApps = {
-      inherit (pkgs.nextcloud32Packages.apps) spreed;
+      inherit (pkgs.nextcloud33Packages.apps) spreed;
     };
     extraAppsEnable = true;
   };
@@ -420,7 +428,9 @@ in
   };
 
   # Bluetooth (required for Bluetti BLE integration)
-  hardware.raspberry-pi."4".bluetooth.enable = true;
+  # The nixos-hardware overlay targets the vendor DT (uart0_pins); mainline
+  # bcm2711-rpi-4-b.dtb already has the bluetooth node on uart0
+  hardware.raspberry-pi."4".bluetooth.enable = false;
   hardware.bluetooth.enable = true;
   hardware.bluetooth.powerOnBoot = true;
 
@@ -635,7 +645,6 @@ in
   # Paperless-ngx document management
   services.paperless = {
     enable = true;
-    package = pkgs.unstable.paperless-ngx;
     address = "0.0.0.0";
     database.createLocally = true;
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
