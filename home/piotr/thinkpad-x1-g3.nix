@@ -66,6 +66,12 @@ let
   #   * trap INT and TERM alongside ERR. The old trap fired only on ERR, which
   #     a SIGTERM is not, so a killed run orphaned flake.lock.bak and left the
   #     lock dirty rather than restoring it.
+  #
+  # Evaluation and build run as this user, never as root: private sources are
+  # fetched over SSH through the user's ~/.ssh/config host aliases, which root
+  # lacks (`sudo nixos-rebuild build` failed every run from 2026-10-03 on).
+  # Root only activates the finished store path; sudoers already allows
+  # nixos-rebuild without a password.
   mkAutoUpdateScript =
     {
       name,
@@ -96,7 +102,8 @@ let
         exit 0
       fi
 
-      if ! sudo nixos-rebuild build --flake ".#thinkpad-x1-g3"; then
+      if ! system=$(nix build --no-link --print-out-paths \
+          ".#nixosConfigurations.thinkpad-x1-g3.config.system.build.toplevel"); then
         echo "Build failed, rolling back flake.lock"
         restoreLock
         exit 1
@@ -109,7 +116,7 @@ let
       # committed, so a SIGTERM from our own activation is harmless.
       trap - ERR INT TERM
 
-      sudo nixos-rebuild switch --flake ".#thinkpad-x1-g3"
+      sudo nixos-rebuild switch --store-path "$system"
     '';
 
   updateClaudeCodeScript = mkAutoUpdateScript {
