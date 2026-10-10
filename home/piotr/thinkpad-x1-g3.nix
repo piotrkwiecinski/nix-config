@@ -116,7 +116,9 @@ let
       # committed, so a SIGTERM from our own activation is harmless.
       trap - ERR INT TERM
 
-      sudo nixos-rebuild switch --store-path "$system"
+      # --no-reexec: without --flake, nixos-rebuild-ng would rebuild itself from
+      # <nixpkgs/nixos> before switching, which fails on a channel-less system.
+      sudo nixos-rebuild switch --no-reexec --store-path "$system"
     '';
 
   updateClaudeCodeScript = mkAutoUpdateScript {
