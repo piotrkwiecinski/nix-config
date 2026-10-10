@@ -10,6 +10,8 @@
     typescript-language-server
     yaml-language-server
     lldb
+    emacs-lsp-booster
+    taplo
     unstable.phpactor
     lua-language-server
     jetbrains-mono

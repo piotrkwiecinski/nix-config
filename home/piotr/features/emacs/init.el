@@ -153,7 +153,9 @@
 (use-package orderless
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles . (partial-completion))))))
+  (completion-category-overrides '((file (styles . (partial-completion)))
+                                   (eglot (styles . (orderless)))
+                                   (eglot-capf (styles . (orderless))))))
 
 (use-package yasnippet-capf
   :after yasnippet)
@@ -212,6 +214,8 @@
 (use-package compile
   :custom
   (compilation-auto-jump-to-first-error t)
+  ;; Only jump to errors, not cargo warnings.
+  (compilation-skip-threshold 2)
   (compilation-scroll-output t))
 
 (use-package ansi-color
@@ -384,23 +388,59 @@
 (use-package eldoc
   :hook (prog-mode . eldoc-mode))
 
+;; rust-analyzer replies are large; the 64k default means many reads per message.
+(setq read-process-output-max (* 1024 1024))
+
 (use-package eglot
+  :bind (:map eglot-mode-map
+         ("C-c l r" . eglot-rename)
+         ("C-c l a" . eglot-code-actions)
+         ("C-c l q" . eglot-code-action-quickfix)
+         ("C-c l o" . eglot-code-action-organize-imports)
+         ("C-c l f" . eglot-format-buffer)
+         ("C-c l i" . eglot-find-implementation)
+         ("C-c l t" . eglot-find-typeDefinition)
+         ("C-c l d" . flymake-show-buffer-diagnostics)
+         ("C-c l D" . flymake-show-project-diagnostics)
+         ("C-c l h" . eglot-inlay-hints-mode)
+         ("C-c l R" . eglot-reconnect))
+  :custom
+  ;; Logging every JSON-RPC message from rust-analyzer is expensive.
+  (eglot-events-buffer-config '(:size 0 :format full))
+  ;; rust-analyzer is memory hungry; stop it when the last buffer goes.
+  (eglot-autoshutdown t)
+  ;; Jumping into ~/.cargo/registry or rust-src keeps the project's server.
+  (eglot-extend-to-xref t)
   :config
   (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
-  (add-to-list 'eglot-server-programs
-               '((rust-ts-mode rust-mode) .
-                 ("rust-analyzer" :initializationOptions
+  (add-to-list 'eglot-server-programs '((rust-ts-mode rust-mode) . ("rust-analyzer")))
+  (add-to-list 'eglot-server-programs '(toml-ts-mode . ("taplo" "lsp" "stdio")))
+  ;; Sent via workspace/configuration so projects can override in .dir-locals.el:
+  ;; ((rust-ts-mode . ((eglot-workspace-configuration
+  ;;                    . (:rust-analyzer (:cargo (:features ["foo"]))))))
+  (setq-default eglot-workspace-configuration
+                '(:rust-analyzer
                   (:check (:command "clippy")
                    :procMacro (:enable t
                                :attributes (:enable t))
                    :cargo (:buildScripts (:enable t)
-                           :features "all")
-                   :diagnostics (:disabled ["unresolved-proc-macro"])
+                           :features "all"
+                           ;; Own target dir: no cargo lock contention with
+                           ;; builds/tests run from compile or a terminal.
+                           :targetDir t)
                    :inlayHints (:bindingModeHints (:enable t)
                                 :closingBraceHints (:minLines 20)
                                 :closureReturnTypeHints (:enable "with_block")
-                                :lifetimeElisionHints (:enable "skip_trivial"))))))
+                                :lifetimeElisionHints (:enable "skip_trivial")))))
+  ;; Fresh candidates from the server on every keystroke (Corfu wiki).
+  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook (eglot-managed-mode . eglot-inlay-hints-mode))
+
+;; Wraps rust-analyzer's stdio in emacs-lsp-booster (JSON -> bytecode, buffered I/O).
+(use-package eglot-booster
+  :after eglot
+  :config
+  (eglot-booster-mode 1))
 
 (use-package editorconfig
   :hook (prog-mode . editorconfig-mode))
@@ -438,7 +478,19 @@ $0`(yas-escape-text yas-selected-text)`")
   ;; Never run direnv in debugger buffers (avoids repeating the hang on C-g / USR2).
   (envrc-global-modes '((not debugger-mode) t))
   :init
-  (envrc-global-mode))
+  (envrc-global-mode)
+  :config
+  ;; When direnv outlives `envrc-async', eglot-ensure has already run without
+  ;; the devshell PATH (no global rust-analyzer/nil), so start it once the
+  ;; environment lands.  envrc has no public hook for this.
+  (defun pk--envrc-eglot-ensure (buf _result)
+    (when (buffer-live-p buf)
+      (with-current-buffer buf
+        (when (and (derived-mode-p 'rust-ts-mode 'nix-mode 'toml-ts-mode)
+                   (fboundp 'eglot-current-server)
+                   (not (eglot-current-server)))
+          (eglot-ensure)))))
+  (advice-add 'envrc--apply :after #'pk--envrc-eglot-ensure))
 
 (use-package rainbow-mode)
 
@@ -472,20 +524,74 @@ $0`(yas-escape-text yas-selected-text)`")
   :custom
   (dape-buffer-window-arrangement 'right)
   :config
-  (add-to-list 'dape-configs
-               `(rust-lldb
-                 modes (rust-ts-mode rust-mode)
-                 command "lldb-dap"
-                 :type "lldb"
-                 command-cwd dape-command-cwd
-                 :program (lambda ()
-                            (let ((root (project-root (project-current t))))
-                              (expand-file-name
-                               (concat "target/debug/"
-                                       (file-name-nondirectory
-                                        (directory-file-name root)))
-                               root)))
-                 :cwd dape-command-cwd)))
+  (defun pk--cargo-executables (&rest args)
+    "Run cargo ARGS with JSON output; return alist of (LABEL . EXECUTABLE)."
+    (message "Running cargo %s..." (string-join args " "))
+    ;; Carry the buffer's direnv environment into the temp buffer.
+    (inheritenv (with-temp-buffer
+                  (unless (zerop (apply #'process-file "cargo" nil '(t nil) nil
+                                        (append args '("--message-format=json"))))
+                    (user-error "cargo %s failed; run it in a terminal for details"
+                                (string-join args " ")))
+                  (goto-char (point-min))
+                  (let (result)
+                    (while (not (eobp))
+                      (let ((msg (ignore-errors
+                                   (json-parse-string
+                                    (buffer-substring (point) (line-end-position))
+                                    :object-type 'alist :null-object nil))))
+                        (when-let* (((equal (alist-get 'reason msg) "compiler-artifact"))
+                                    (exe (alist-get 'executable msg))
+                                    (target (alist-get 'target msg)))
+                          (push (cons (format "%s (%s%s)" (alist-get 'name target)
+                                              (string-join (alist-get 'kind target) ",")
+                                              ;; `cargo test` also emits a bin's unit-test harness.
+                                              (if (and (eq (alist-get 'test (alist-get 'profile msg)) t)
+                                                       (not (seq-contains-p (alist-get 'kind target) "test")))
+                                                  " unittests" ""))
+                                      exe)
+                                result)))
+                      (forward-line 1))
+                    (nreverse result)))))
+
+  (defun pk--cargo-pick-executable (&rest args)
+    "Build with cargo ARGS and pick one of the produced executables."
+    (let ((exes (or (apply #'pk--cargo-executables args)
+                    (user-error "cargo %s produced no executables"
+                                (string-join args " ")))))
+      (if (cdr exes)
+          (cdr (assoc (completing-read "Debug: " exes nil t) exes))
+        (cdar exes))))
+
+  (defun pk--rust-lldb-init-commands ()
+    "lldb commands loading rustc's pretty-printers for Vec, String, Option, ..."
+    (let* ((sysroot (string-trim (shell-command-to-string "rustc --print sysroot")))
+           (etc (expand-file-name "lib/rustlib/etc" sysroot))
+           (lookup (expand-file-name "lldb_lookup.py" etc))
+           ;; Older toolchains register types from a separate commands file.
+           (commands (expand-file-name "lldb_commands" etc)))
+      (vconcat
+       (when (file-exists-p lookup)
+         (list (format "command script import %s" (shell-quote-argument lookup))))
+       (when (file-exists-p commands)
+         (list (format "command source -s 0 %s" (shell-quote-argument commands)))))))
+
+  (let ((rust-common
+         `(modes (rust-ts-mode rust-mode)
+           ensure dape-ensure-command
+           command "lldb-dap"
+           command-cwd dape-command-cwd
+           :type "lldb-dap"
+           :cwd dape-command-cwd
+           :initCommands pk--rust-lldb-init-commands)))
+    (add-to-list 'dape-configs
+                 `(rust-lldb-test
+                   ,@rust-common
+                   :program (lambda () (pk--cargo-pick-executable "test" "--no-run"))))
+    (add-to-list 'dape-configs
+                 `(rust-lldb
+                   ,@rust-common
+                   :program (lambda () (pk--cargo-pick-executable "build" "--bins"))))))
 
 (use-package dap-mode
   :config
@@ -606,15 +712,22 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package rust-ts-mode
   :mode "\\.rs\\'"
-  :hook (rust-ts-mode . eglot-ensure))
+  :hook ((rust-ts-mode . eglot-ensure)
+         (rust-ts-mode . pk--rust-format-on-save))
+  :init
+  ;; rustic's format-on-save only fires in rust-mode/rustic-mode; let
+  ;; rust-analyzer run the devshell's rustfmt instead.
+  (defun pk--rust-format-on-save ()
+    (add-hook 'before-save-hook
+              (lambda () (when (eglot-managed-p) (eglot-format-buffer)))
+              nil t)))
 
+;; Only for the cargo commands below (they inherit the direnv environment).
 (use-package rustic
   :after rust-ts-mode
   :custom
   (rustic-lsp-client 'eglot)
   (rustic-lsp-setup-p nil)
-  (rustic-format-on-save t)
-  (rustic-format-trigger 'on-save)
   (rustic-cargo-use-last-stored-arguments t)
   :bind (:map rust-ts-mode-map
          ("C-c C-c t" . rustic-cargo-current-test)
@@ -628,7 +741,8 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package toml-ts-mode
   :if (treesit-available-p)
-  :mode ("Cargo\\.toml\\'" "\\.toml\\'"))
+  :mode ("Cargo\\.toml\\'" "\\.toml\\'")
+  :hook (toml-ts-mode . eglot-ensure))
 
 ;;;;; Web
 (use-package web-mode
