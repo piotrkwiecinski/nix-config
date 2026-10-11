@@ -14,13 +14,13 @@
     taplo
     unstable.phpactor
     lua-language-server
-    jetbrains-mono
     pandoc
+    fd # consult-fd
   ];
 
   xdg.configFile."emacs/init.el".source = ./init.el;
   xdg.configFile."emacs/early-init.el".source = ./early-init.el;
-  xdg.configFile."emacs/dap-php-debug".source =
+  xdg.configFile."emacs/php-debug".source =
     "${pkgs.vscode-extensions.xdebug.php-debug}/share/vscode/extensions/xdebug.php-debug";
 
   programs.emacs.enable = true;

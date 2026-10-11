@@ -2,6 +2,9 @@
 (add-to-list 'load-path (locate-user-emacs-file "lisp"))
 (add-to-list 'load-path (locate-user-emacs-file "lisp-private"))
 
+;; Load on :bind/:hook/:commands/:mode autoloads; startup-critical packages use :demand.
+(setq use-package-always-defer t)
+
 (use-package emacs
   :custom
   (native-comp-async-report-warnings-errors 'silent)
@@ -9,7 +12,13 @@
   (use-short-answers t)
   (use-file-dialog nil)
   (use-dialog-box nil)
-  (tab-always-indent 'complete))
+  (tab-always-indent 'complete)
+  :init
+  (delete-selection-mode 1)
+  (electric-pair-mode 1)
+  (save-place-mode 1)
+  (global-so-long-mode 1)
+  (pixel-scroll-precision-mode 1))
 
 (defgroup pk-emacs nil
   "User options for my dotemacs."
@@ -18,8 +27,13 @@
 (setq user-full-name "Piotr Kwiecinski")
 
 (use-package exec-path-from-shell
+  :demand t
   :config
-  (exec-path-from-shell-initialize))
+  (exec-path-from-shell-initialize)
+  ;; Subprocesses (ghostel, claude-code-ide) edit in this frame: the session-wide
+  ;; `emacsclient -t' fails inside an Emacs terminal ("Fontset 'tty' does not exist").
+  (setenv "EDITOR" "emacsclient")
+  (setenv "VISUAL" "emacsclient"))
 
 (use-package recentf
   :custom
@@ -48,7 +62,8 @@
   :init
   (savehist-mode 1))
 
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+;; Customize writes are throwaway; keep settings in this file.
+(setq custom-file (make-temp-file "emacs-custom-" nil ".el"))
 (setq initial-scratch-message nil)
 
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
@@ -64,7 +79,8 @@
   :hook (dired-mode . dired-hide-details-mode))
 
 (use-package dired-x
-  :after dired)
+  :after dired
+  :demand t)
 
 (use-package dired-subtree
   :after dired
@@ -72,6 +88,7 @@
               ("<tab>" . dired-subtree-toggle)))
 
 (use-package no-littering
+  :demand t
   :config
   (require 'recentf)
   (add-to-list 'recentf-exclude
@@ -97,6 +114,7 @@
 (defvar xref-show-definitions-function)
 
 (use-package consult
+  :demand t
   :bind (("C-x M-:" . consult-complex-command)
          ("C-x b" . consult-buffer)
          ("C-x 4 b" . consult-buffer-other-window)
@@ -108,7 +126,11 @@
          ("M-g g" . consult-goto-line)
          ("M-g M-g" . consult-goto-line)
          ("M-g i" . consult-imenu)
-         ("M-g I" . consult-imenu-multi))
+         ("M-g I" . consult-imenu-multi)
+         ("M-s l" . consult-line)
+         ("M-s L" . consult-line-multi)
+         ("M-s r" . consult-ripgrep)
+         ("M-s f" . consult-fd))
   :config
   (setq consult-line-numbers-widen t)
   (setq completion-in-region-function #'consult-completion-in-region)
@@ -117,10 +139,14 @@
     (setq xref-show-xrefs-function #'consult-xref
           xref-show-definitions-function #'consult-xref)))
 
-(use-package embark)
+(use-package embark
+  :bind (("C-." . embark-act)
+         ("C-;" . embark-dwim)
+         ("C-h B" . embark-bindings)))
 
 (use-package embark-consult
-  :after (embark consult))
+  :after (embark consult)
+  :demand t)
 
 (use-package corfu
   :bind (:map corfu-map
@@ -142,31 +168,31 @@
   (vertico-mode 1))
 
 (use-package vertico-directory
-  :after vertico)
+  :after vertico
+  :bind (:map vertico-map
+         ("RET" . vertico-directory-enter)
+         ("DEL" . vertico-directory-delete-char)
+         ("M-DEL" . vertico-directory-delete-word))
+  :hook (rfn-eshadow-update-overlay . vertico-directory-tidy))
 
 (use-package marginalia
-  :custom
-  (marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
   :init
   (marginalia-mode 1))
 
 (use-package orderless
+  :demand t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles . (partial-completion)))
                                    (eglot (styles . (orderless)))
                                    (eglot-capf (styles . (orderless))))))
 
-(use-package yasnippet-capf
-  :after yasnippet)
-
 (use-package cape
   :init
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  (add-to-list 'completion-at-point-functions #'yasnippet-capf)
-  (add-to-list 'completion-at-point-functions #'cape-elisp-symbol)
+  ;; Elisp buffers already get symbols from `elisp-completion-at-point'.
   (setq completion-at-point-functions
         (remove 'ispell-completion-at-point completion-at-point-functions))
   ;; Emacs 30 text-mode adds ispell-completion-at-point buffer-locally;
@@ -293,29 +319,16 @@
   (unless (daemonp) (pk--apply-ui-padding)))
 
 (setq-default line-prefix (propertize " " 'display '(space :width (15))))
-(use-package vterm
-  :commands (vterm vterm-other-window)
-  :hook (vterm-mode . pk--disable-line-prefix)
+(use-package ghostel
+  :commands (ghostel ghostel-project)
+  :hook (ghostel-mode . pk--disable-line-prefix)
   :init
   (defun pk--disable-line-prefix ()
     "Disable line-prefix in terminal buffers."
     (setq-local line-prefix nil))
-  (defun vterm-project ()
-    "Open a vterm buffer in the current project's root directory."
-    (interactive)
-    (defvar vterm-buffer-name)
-    (let* ((default-directory (project-root (project-current t)))
-           (vterm-buffer-name (project-prefixed-buffer-name "vterm"))
-           (vterm-buffer (get-buffer vterm-buffer-name)))
-      (if (and vterm-buffer (not current-prefix-arg))
-          (pop-to-buffer vterm-buffer (bound-and-true-p display-comint-buffer-action))
-        (vterm-other-window t))))
   (with-eval-after-load 'project
-    (add-to-list 'project-switch-commands '(vterm-project "vterm" "t") t)
-    (keymap-set project-prefix-map "t" #'vterm-project)))
-
-(use-package ghostel
-  :commands (ghostel ghostel-project))
+    (add-to-list 'project-switch-commands '(ghostel-project "Terminal" "t") t)
+    (keymap-set project-prefix-map "t" #'ghostel-project)))
 
 (use-package tab-bar
   :custom
@@ -330,6 +343,7 @@
                          'tab-bar-tab-inactive)))))
 
 (use-package nerd-icons
+  :demand t
   :config
   (if (daemonp)
       (add-hook 'server-after-make-frame-hook #'nerd-icons-set-font)
@@ -341,11 +355,6 @@
   (let ((icon (nerd-icons-icon-for-mode major-mode)))
     (if (stringp icon) (concat icon " ") "")))
 
-(defun pk-modeline--right-align (right)
-  "Return a space string that right-aligns RIGHT in the mode line."
-  (let ((rlen (string-width (format-mode-line right))))
-    (propertize " " 'display `(space :align-to (- right ,rlen)))))
-
 (defun pk-modeline--vc-branch ()
   "Return the current VC branch name, or empty string if detached/not tracked."
   (when-let* ((vc vc-mode)
@@ -355,18 +364,16 @@
       (unless (string-match-p "\\`[0-9a-f]\\{7,\\}\\'" name)
         (concat " " (nerd-icons-octicon "nf-oct-git_branch") " " name)))))
 
-(defvar pk-modeline--right-segment
-  '("" (:eval (pk-modeline--vc-branch)) "  %l:%c"))
-
 (setq-default mode-line-format
               '(" "
                 (:eval (pk-modeline--major-mode-icon))
                 "%b"
-                (:eval (pk-modeline--right-align pk-modeline--right-segment))
+                mode-line-format-right-align
                 (:eval (pk-modeline--vc-branch))
                 "  %l:%c "))
 (use-package nerd-icons-corfu
   :after (nerd-icons corfu)
+  :demand t
   :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
@@ -412,7 +419,7 @@
   ;; Jumping into ~/.cargo/registry or rust-src keeps the project's server.
   (eglot-extend-to-xref t)
   :config
-  (add-to-list 'eglot-server-programs '(nix-mode . ("nil")))
+  (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
   (add-to-list 'eglot-server-programs '((rust-ts-mode rust-mode) . ("rust-analyzer")))
   (add-to-list 'eglot-server-programs '(toml-ts-mode . ("taplo" "lsp" "stdio")))
   ;; Sent via workspace/configuration so projects can override in .dir-locals.el:
@@ -439,6 +446,7 @@
 ;; Wraps rust-analyzer's stdio in emacs-lsp-booster (JSON -> bytecode, buffered I/O).
 (use-package eglot-booster
   :after eglot
+  :demand t
   :config
   (eglot-booster-mode 1))
 
@@ -452,6 +460,7 @@
   (auto-insert-mode 1))
 
 (use-package yasnippet
+  :demand t
   :custom
   (yas-new-snippet-default "\
 # -*- mode: snippet -*-
@@ -486,11 +495,13 @@ $0`(yas-escape-text yas-selected-text)`")
   (defun pk--envrc-eglot-ensure (buf _result)
     (when (buffer-live-p buf)
       (with-current-buffer buf
-        (when (and (derived-mode-p 'rust-ts-mode 'nix-mode 'toml-ts-mode)
+        (when (and (derived-mode-p 'rust-ts-mode 'nix-ts-mode 'toml-ts-mode 'php-ts-mode)
                    (fboundp 'eglot-current-server)
                    (not (eglot-current-server)))
           (eglot-ensure)))))
-  (advice-add 'envrc--apply :after #'pk--envrc-eglot-ensure))
+  (if (fboundp 'envrc--apply)
+      (advice-add 'envrc--apply :after #'pk--envrc-eglot-ensure)
+    (display-warning 'envrc "`envrc--apply' is gone: eglot won't start after slow direnv loads")))
 
 (use-package rainbow-mode)
 
@@ -498,27 +509,6 @@ $0`(yas-escape-text yas-selected-text)`")
   :hook (prog-mode . rainbow-delimiters-mode)
   :custom
   (rainbow-delimiters-max-face-count 6))
-
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :custom
-  (lsp-completion-provider :none)
-  (lsp-phpactor-path nil)
-  (lsp-clients-php-server-command "phpactor")
-  (lsp-headerline-breadcrumb-mode nil)
-  :init
-  (defun my/orderless-dispatch-flex-first (_pattern index _total)
-    (and (eq index 0) 'orderless-flex))
-
-  (defun my/lsp-mode-setup-completion ()
-    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-          '(orderless)))
-   (add-hook 'orderless-style-dispatchers #'my/orderless-dispatch-flex-first nil 'local)
-
-   (setq-local completion-at-point-functions (list (cape-capf-buster #'lsp-completion-at-point)))
-
-   :hook (lsp-completion-mode . my/lsp-mode-setup-completion)
-   :hook (php-ts-mode . lsp-deferred))
 
 (use-package dape
   :custom
@@ -591,25 +581,18 @@ $0`(yas-escape-text yas-selected-text)`")
     (add-to-list 'dape-configs
                  `(rust-lldb
                    ,@rust-common
-                   :program (lambda () (pk--cargo-pick-executable "build" "--bins"))))))
+                   :program (lambda () (pk--cargo-pick-executable "build" "--bins")))))
 
-(use-package dap-mode
-  :config
-  (dap-auto-configure-mode))
-
-(use-package dap-php
-  :after dap-mode
-  :custom
-  (dap-php-debug-path (locate-user-emacs-file "dap-php-debug"))
-  (dap-php-debug-program `("node" ,(expand-file-name "out/phpDebug.js"
-                                                      (locate-user-emacs-file "dap-php-debug"))))
-  :config
-  (dap-register-debug-template "PHP Listen for Xdebug"
-                               (list :type "php"
-                                     :request "launch"
-                                     :name "PHP Listen for Xdebug"
-                                     :port 9003
-                                     :stopOnEntry nil)))
+  ;; Built-in `xdebug' expects the adapter under dape-adapter-dir; ours comes from nixpkgs.
+  (add-to-list 'dape-configs
+               `(php-xdebug
+                 modes (php-mode php-ts-mode)
+                 ensure dape-ensure-command
+                 command "node"
+                 command-args (,(expand-file-name "out/phpDebug.js"
+                                                  (locate-user-emacs-file "php-debug")))
+                 :type "php"
+                 :port 9003)))
 
 (defun project-environment-command (command)
   "Run project environment related command."
@@ -647,7 +630,8 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;;;;; GitHub
 (use-package forge
-  :after magit)
+  :after magit
+  :demand t)
 
 ;;;; Programming languages
 (use-package paredit
@@ -664,21 +648,25 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;;;;; Nix
 
-(use-package nix-mode
+(use-package nix-ts-mode
   :mode "\\.nix\\'"
-  :hook (nix-mode . eglot-ensure))
+  :hook (nix-ts-mode . eglot-ensure))
 
 ;;;;; PHP
 
 (use-package php-mode)
 
+;; Eglot's default server for php-ts-mode is phpactor.
 (use-package php-ts-mode
-  :if (treesit-available-p))
+  :if (treesit-available-p)
+  :mode "\\.php\\'"
+  :hook (php-ts-mode . eglot-ensure))
 
 (use-package magento2-yasnippets
   :if (file-directory-p "~/projects/opensource/magento2-yasnippets")
   :load-path "~/projects/opensource/magento2-yasnippets"
   :after yasnippet
+  :demand t
   :config
   (auto-insert-mode 1)
   (let ((di-template (concat magento2-yasnippets-templates-dir "xml/di.xml")))
@@ -688,7 +676,12 @@ $0`(yas-escape-text yas-selected-text)`")
                '(("etc/module\\.xml\\'" . "Magento 2 module.xml") . ["magento/module.xml" autoinsert-yas-expand]))
   (add-to-list 'auto-insert-alist '(("\\.php\\'" . "PHP class") . "skeleton.php")))
 
-(use-package magento-cache-clean)
+;; trivialBuild package: no generated autoloads.
+(use-package magento-cache-clean
+  :commands (magento-cache-clean
+             magento-cache-clean-watch
+             magento-cache-clean-watch-stop
+             magento-cache-clean-transient))
 
 (use-package composer)
 
@@ -714,28 +707,44 @@ $0`(yas-escape-text yas-selected-text)`")
   :mode "\\.rs\\'"
   :hook ((rust-ts-mode . eglot-ensure)
          (rust-ts-mode . pk--rust-format-on-save))
+  :bind (:map rust-ts-mode-map
+         ("C-c C-c t" . pk-cargo-test-at-point)
+         ("C-c C-c r" . pk-cargo-run)
+         ("C-c C-c b" . pk-cargo-build)
+         ("C-c C-c l" . pk-cargo-clippy))
   :init
-  ;; rustic's format-on-save only fires in rust-mode/rustic-mode; let
-  ;; rust-analyzer run the devshell's rustfmt instead.
+  ;; rust-analyzer runs the devshell's rustfmt.
   (defun pk--rust-format-on-save ()
     (add-hook 'before-save-hook
               (lambda () (when (eglot-managed-p) (eglot-format-buffer)))
-              nil t)))
+              nil t))
 
-;; Only for the cargo commands below (they inherit the direnv environment).
-(use-package rustic
-  :after rust-ts-mode
-  :custom
-  (rustic-lsp-client 'eglot)
-  (rustic-lsp-setup-p nil)
-  (rustic-cargo-use-last-stored-arguments t)
-  :bind (:map rust-ts-mode-map
-         ("C-c C-c t" . rustic-cargo-current-test)
-         ("C-c C-c r" . rustic-cargo-run)
-         ("C-c C-c b" . rustic-cargo-build)
-         ("C-c C-c l" . rustic-cargo-clippy))
-  :config
-  (setq auto-mode-alist (delete '("\\.rs\\'" . rustic-mode) auto-mode-alist)))
+  (defun pk--cargo (args)
+    "Compile `cargo ARGS' from the nearest crate; prefix arg edits the command.
+`compile' carries this buffer's direnv environment."
+    (let ((default-directory (or (locate-dominating-file default-directory "Cargo.toml")
+                                 (project-root (project-current t))))
+          (command (concat "cargo " args))
+          ;; On compile's pty nextest shows only a progress bar, then erases it.
+          (compilation-environment (cons "NEXTEST_HIDE_PROGRESS_BAR=1"
+                                         compilation-environment)))
+      (compile (if current-prefix-arg (compilation-read-command command) command))))
+
+  (defun pk-cargo-test-at-point ()
+    "Run the test function at point, or all tests outside one; nextest if present."
+    (interactive)
+    (let* ((fn (treesit-parent-until
+                (treesit-node-at (point))
+                (lambda (n) (equal (treesit-node-type n) "function_item"))
+                t))
+           (name (and fn (treesit-node-text
+                          (treesit-node-child-by-field-name fn "name") t))))
+      (pk--cargo (concat (if (executable-find "cargo-nextest") "nextest run" "test")
+                         (and name (concat " " name))))))
+
+  (defun pk-cargo-run () (interactive) (pk--cargo "run"))
+  (defun pk-cargo-build () (interactive) (pk--cargo "build"))
+  (defun pk-cargo-clippy () (interactive) (pk--cargo "clippy --all-targets")))
 
 ;;;;; TOML
 
@@ -840,6 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 (use-package elfeed-tube
   :after (elfeed)
+  :demand t
   :bind (:map elfeed-show-mode-map
               ("F" . elfeed-tube-fetch)
               ([remap save-buffer] . elfeed-tube-save)
@@ -858,17 +868,20 @@ document.addEventListener('DOMContentLoaded', () => {
               ("v" . elfeed-tube-mpv)
               ("C-c C-f" . elfeed-tube-mpv-follow-mode)
               ("C-c C-w" . elfeed-tube-mpv-where))
-  :after (elfeed elfeed-tube mpv))
+  :after elfeed-tube
+  :demand t)
 
 ;;; Personal information management
+;; Demanded: org-protocol must be live for browser capture links.
 (use-package org
+  :demand t
   :custom
   (org-return-follows-link t)
   (org-mouse-1-follows-link t)
   (org-src-preserve-indentation t)
   (org-confirm-babel-evaluate nil)
   (org-src-strip-leading-add-trailing-blank-lines t)
-  (org-agenda-files (list org-directory))
+  (org-agenda-files (list "~/projects/personal/second-brain/"))
   (org-agenda-include-diary t)
   (org-log-done t)
   (org-support-shift-select t)
@@ -902,6 +915,7 @@ document.addEventListener('DOMContentLoaded', () => {
 (use-package org-roam
       :if (file-directory-p "~/projects/personal/second-brain/")
       :after org
+      :demand t
       :custom
       (org-roam-directory (file-truename "~/projects/personal/second-brain/"))
       :bind (("C-c n l" . org-roam-buffer-toggle)
@@ -1028,11 +1042,9 @@ document.addEventListener('DOMContentLoaded', () => {
 (use-package org-roam-ui
   :after (org-roam websocket))
 
-;;;; Search
-
-(use-package rg)
-
 (use-package async
+  :after dired
+  :demand t
   :config
   (dired-async-mode 1)
   (async-bytecomp-package-mode 1))
@@ -1071,10 +1083,6 @@ document.addEventListener('DOMContentLoaded', () => {
                          (buffer-local-value 'process-environment (current-buffer))
                          (default-value 'process-environment)
                          :test #'string=)))
-           ;; For vterm: add to vterm-environment (dynamically scoped)
-           (vterm-environment (append envrc-env (when (boundp 'vterm-environment)
-                                                  vterm-environment)))
-           ;; For eat: add to process-environment
            (process-environment (append envrc-env process-environment)))
       (apply orig-fun args)))
 
@@ -1145,12 +1153,17 @@ still lists it."
       '("a" "Attach to background session" my/claude-code-attach))))
 
 (use-package claude-code-ide-companion
+  :demand t
   :config
   (claude-code-ide-companion-project-switch-mode 1))
 
 (use-package pilish
   :commands (pilish pilish-toggle pilish-session-browser)
   :bind ("C-c C-;" . pilish)
+  :custom
+  (pilish-grammar-declined-set
+   '(c cpp go ruby java cmake dockerfile c-sharp clojure elixir haskell
+       heex kotlin gomod scala))
   :config
   (defalias 'pi 'pilish))
 
@@ -1158,4 +1171,5 @@ still lists it."
   :hook ((prog-mode text-mode) . abbrev-mode))
 
 (use-package work
+  :demand t
   :load-path "lisp-private")
