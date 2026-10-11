@@ -6,6 +6,7 @@
 (setq use-package-always-defer t)
 
 (use-package emacs
+  :ensure nil
   :custom
   (native-comp-async-report-warnings-errors 'silent)
   (delete-by-moving-to-trash t)
@@ -36,6 +37,7 @@
   (setenv "VISUAL" "emacsclient"))
 
 (use-package recentf
+  :ensure nil
   :custom
   (recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"))
   (recentf-max-saved-items 1000)
@@ -43,6 +45,7 @@
 
 ;;; Defaults
 (use-package autorevert
+  :ensure nil
   :custom
   (global-auto-revert-non-file-buffers t)
   :init
@@ -57,6 +60,7 @@
 (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 
 (use-package savehist
+  :ensure nil
   :custom
   (history-delete-duplicates t)
   :init
@@ -70,6 +74,7 @@
 
 ;;; File management
 (use-package dired
+  :ensure nil
   :custom
   (dired-listing-switches "-agFv --group-directories-first")
   (dired-dwim-target #'dired-dwim-target-next)
@@ -79,6 +84,7 @@
   :hook (dired-mode . dired-hide-details-mode))
 
 (use-package dired-x
+  :ensure nil
   :after dired
   :demand t)
 
@@ -98,6 +104,7 @@
   (no-littering-theme-backups))
 
 (use-package files
+  :ensure nil
   :custom
   (backup-by-copying t)
   (delete-old-versions t)
@@ -106,6 +113,7 @@
   (version-control t))
 
 (use-package bookmark
+  :ensure nil
   :custom
   (bookmark-save-flag 1))
 
@@ -147,6 +155,10 @@
 (use-package embark-consult
   :after (embark consult)
   :demand t)
+
+(use-package which-key
+  :ensure nil
+  :hook (after-init . which-key-mode))
 
 (use-package corfu
   :bind (:map corfu-map
@@ -238,6 +250,7 @@
 
 ;;;; Compilation buffer
 (use-package compile
+  :ensure nil
   :custom
   (compilation-auto-jump-to-first-error t)
   ;; Only jump to errors, not cargo warnings.
@@ -245,9 +258,11 @@
   (compilation-scroll-output t))
 
 (use-package ansi-color
+  :ensure nil
   :hook (compilation-filter . ansi-color-compilation-filter))
 
 (use-package term
+  :ensure nil
   :hook (term-mode . compilation-shell-minor-mode))
 
 (use-package olivetti
@@ -331,6 +346,7 @@
     (keymap-set project-prefix-map "t" #'ghostel-project)))
 
 (use-package tab-bar
+  :ensure nil
   :custom
   (tab-bar-close-button-show nil)
   (tab-bar-separator " ")
@@ -384,21 +400,25 @@
 ;;; IDE
 
 (use-package prog-mode
+  :ensure nil
   :hook ((prog-mode . column-number-mode)
          (prog-mode . display-line-numbers-mode)))
 
 (use-package flymake
+  :ensure nil
   :bind (:map flymake-mode-map
          ("M-n" . flymake-goto-next-error)
          ("M-p" . flymake-goto-prev-error)))
 
 (use-package eldoc
+  :ensure nil
   :hook (prog-mode . eldoc-mode))
 
 ;; rust-analyzer replies are large; the 64k default means many reads per message.
 (setq read-process-output-max (* 1024 1024))
 
 (use-package eglot
+  :ensure nil
   :bind (:map eglot-mode-map
          ("C-c l r" . eglot-rename)
          ("C-c l a" . eglot-code-actions)
@@ -451,9 +471,11 @@
   (eglot-booster-mode 1))
 
 (use-package editorconfig
+  :ensure nil
   :hook (prog-mode . editorconfig-mode))
 
 (use-package autoinsert
+  :ensure nil
   :custom
   (auto-insert-query nil)
   :init
@@ -624,6 +646,7 @@ $0`(yas-escape-text yas-selected-text)`")
      magit-insert-unpushed-to-upstream-or-recent)))
 
 (use-package ediff
+  :ensure nil
   :custom
   (ediff-split-window-function 'split-window-horizontally)
   (ediff-window-setup-function 'ediff-setup-windows-plain))
@@ -658,6 +681,7 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;; Eglot's default server for php-ts-mode is phpactor.
 (use-package php-ts-mode
+  :ensure nil
   :if (treesit-available-p)
   :mode "\\.php\\'"
   :hook (php-ts-mode . eglot-ensure))
@@ -714,6 +738,7 @@ $0`(yas-escape-text yas-selected-text)`")
 ;;;;; Rust
 
 (use-package rust-ts-mode
+  :ensure nil
   :mode "\\.rs\\'"
   :hook ((rust-ts-mode . eglot-ensure)
          (rust-ts-mode . pk--rust-format-on-save))
@@ -759,6 +784,7 @@ $0`(yas-escape-text yas-selected-text)`")
 ;;;;; TOML
 
 (use-package toml-ts-mode
+  :ensure nil
   :if (treesit-available-p)
   :mode ("Cargo\\.toml\\'" "\\.toml\\'")
   :hook (toml-ts-mode . eglot-ensure))
@@ -770,7 +796,8 @@ $0`(yas-escape-text yas-selected-text)`")
   (add-to-list 'web-mode-engines-alist '("php" . "\\.phtml\\'")))
 
 ;;;;; XML
-(use-package nxml-mode)
+(use-package nxml-mode
+  :ensure nil)
 
 ;;;;; YAML
 
@@ -804,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ;;; Tools
 
 (use-package man
+  :ensure nil
   :custom
   (Man-notify-method 'aggressive))
 
@@ -884,6 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ;;; Personal information management
 ;; Demanded: org-protocol must be live for browser capture links.
 (use-package org
+  :ensure nil
   :demand t
   :custom
   (org-return-follows-link t)
@@ -1178,6 +1207,7 @@ still lists it."
   (defalias 'pi 'pilish))
 
 (use-package abbrev
+  :ensure nil
   :hook ((prog-mode text-mode) . abbrev-mode))
 
 (use-package work
