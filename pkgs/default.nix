@@ -24,8 +24,8 @@ rec {
     src = pkgs.fetchFromGitHub {
       owner = "piotrkwiecinski";
       repo = "claude-code-ide-companion.el";
-      rev = "120445f0dc249e80fdf8be85f35b130655c917c0";
-      hash = "sha256-tuRwdDtW8ctTSZyj7g7ohdhfJj0nfV8uFyPAHYzphqM=";
+      rev = "fac8b928926f271b8625e13e5a3c0293fa004447";
+      hash = "sha256-YgJ642sqMH7QjP6lFw/kjMKYLbzV7+v+DtgpdWnH0AM=";
     };
     packageRequires = [ claude-code-ide ];
     meta.homepage = "https://github.com/piotrkwiecinski/claude-code-ide-companion.el";
