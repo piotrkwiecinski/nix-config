@@ -662,6 +662,16 @@ $0`(yas-escape-text yas-selected-text)`")
   :mode "\\.php\\'"
   :hook (php-ts-mode . eglot-ensure))
 
+;; Magento vendor modules are nested git checkouts, so project.el stops at the
+;; module and phpactor starts without vendor/autoload.php.  For Eglot only,
+;; root the server at the nearest .phpactor.json instead.
+(defun pk--eglot-phpactor-root (dir)
+  "Use the nearest dir above DIR containing .phpactor.json as the LSP root."
+  (when-let* ((_ (bound-and-true-p eglot-lsp-context))
+              (root (locate-dominating-file dir ".phpactor.json")))
+    (cons 'transient (expand-file-name root))))
+(add-hook 'project-find-functions #'pk--eglot-phpactor-root)
+
 (use-package magento2-yasnippets
   :if (file-directory-p "~/projects/opensource/magento2-yasnippets")
   :load-path "~/projects/opensource/magento2-yasnippets"
