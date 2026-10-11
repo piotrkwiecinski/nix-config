@@ -458,7 +458,9 @@
                    :inlayHints (:bindingModeHints (:enable t)
                                 :closingBraceHints (:minLines 20)
                                 :closureReturnTypeHints (:enable "with_block")
-                                :lifetimeElisionHints (:enable "skip_trivial")))))
+                                :lifetimeElisionHints (:enable "skip_trivial")))
+                  ;; Fetch missing flake inputs without the "Fetch them now?" prompt.
+                  :nil (:nix (:flake (:autoArchive t)))))
   ;; Fresh candidates from the server on every keystroke (Corfu wiki).
   (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook (eglot-managed-mode . eglot-inlay-hints-mode))
