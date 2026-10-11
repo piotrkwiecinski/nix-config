@@ -1,0 +1,66 @@
+name: Update Flake Lock
+
+on:
+  schedule:
+    - cron: '0 5 * * 6'
+  workflow_dispatch:
+
+permissions:
+  actions: write # cache-nix-action purges stale caches
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-flake-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Cache Nix store
+        uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/*.nix', '**/flake.lock', 'Cargo.lock') }}
+          restore-prefixes-first-match: nix-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-
+          gc-max-store-size-linux: 1G
+          purge: true
+          purge-prefixes: nix-${{ github.job }}-${{ runner.os }}-${{ runner.arch }}-
+          purge-created: 0
+          purge-primary-key: never
+
+      - name: Update flake lock
+        run: nix flake update
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.changes.outputs.changed == 'true'
+        id: pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          commit-message: 'chore: update flake lock'
+          branch: automation/update-flake-lock
+          title: 'chore: update flake lock'
+          body: |
+            Automated weekly flake lock update.
+
+            This PR will be merged automatically after CI checks pass.
+          delete-branch: true
+
+      # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows, but
+      # workflow_dispatch is exempt; CI merges the PR when its checks pass.
+      - name: Run CI on the PR branch
+        if: steps.pr.outputs.pull-request-number != ''
+        run: gh workflow run ci.yml --ref automation/update-flake-lock
+        env:
+          GH_TOKEN: ${{ github.token }}

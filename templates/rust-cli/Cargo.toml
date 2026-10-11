@@ -1,0 +1,73 @@
+[package]
+name = "rust-cli-template"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+publish = false
+description = "A Rust command-line tool"
+
+[dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+
+# Lints live here rather than in `[build] rustflags`, which would also apply
+# them to dependency builds.
+[lints.rust]
+# `deny` rather than `forbid` so tests can set process-global env through the
+# unsafe 2024-edition `std::env::set_var` with a per-site allow.
+unsafe_code = "deny"
+missing_debug_implementations = "warn"
+# Every public item carries rustdoc; see AGENTS.md.
+missing_docs = "warn"
+
+[lints.rustdoc]
+broken_intra_doc_links = "deny"
+private_intra_doc_links = "deny"
+
+[lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+
+# --- restriction picks (https://www.namtao.com/rust/) ------------------
+# Panicking / partial operations are banned in production code; tests get
+# the exemptions configured in `clippy.toml`.
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+arithmetic_side_effects = "deny"
+unreachable = "deny"
+unimplemented = "deny"
+unchecked_time_subtraction = "deny"
+todo = "deny"
+string_slice = "deny"
+panic_in_result_fn = "deny"
+panic = "deny"
+exit = "deny"
+as_conversions = "deny"
+
+# --- pedantic opt-outs -------------------------------------------------
+# missing_errors_doc, missing_panics_doc and doc_markdown stay on: fallible
+# functions document `# Errors`, and identifiers in docs are `quoted`.
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+unreadable_literal = "allow"
+cast_possible_truncation = "allow"
+cast_possible_wrap = "allow"
+cast_sign_loss = "allow"
+cast_precision_loss = "allow"
+significant_drop_tightening = "allow"
+needless_pass_by_value = "allow"
+return_self_not_must_use = "allow"
+too_many_lines = "allow"
+too_many_arguments = "allow"
+single_match_else = "allow"
+similar_names = "allow"
+unnested_or_patterns = "allow"
+match_same_arms = "allow"
+large_enum_variant = "allow"
+implicit_hasher = "allow"
+if_not_else = "allow"
+wildcard_imports = "allow"
+enum_glob_use = "allow"
+float_cmp = "allow"
+items_after_statements = "allow"

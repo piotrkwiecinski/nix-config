@@ -1,0 +1,2 @@
+[alias]
+gate = "clippy --all-targets -- -D warnings"
