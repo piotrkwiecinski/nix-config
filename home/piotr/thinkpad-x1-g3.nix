@@ -552,6 +552,9 @@ in
       Description = "Auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay flake inputs";
       After = [ "network-online.target" ];
       Wants = [ "network-online.target" ];
+      # The run activates the generation that redefines this unit; keep the
+      # running instance instead of SIGTERMing it and starting a fresh run.
+      X-SwitchMethod = "keep-old";
     };
     Service = {
       Type = "oneshot";
@@ -587,6 +590,9 @@ in
       Description = "Auto-update flake inputs (excluding CUDA and overlays)";
       After = [ "network-online.target" ];
       Wants = [ "network-online.target" ];
+      # The run activates the generation that redefines this unit; keep the
+      # running instance instead of SIGTERMing it and starting a fresh run.
+      X-SwitchMethod = "keep-old";
     };
     Service = {
       Type = "oneshot";
