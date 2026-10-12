@@ -696,7 +696,10 @@ $0`(yas-escape-text yas-selected-text)`")
   (when-let* ((_ (bound-and-true-p eglot-lsp-context))
               (root (locate-dominating-file dir ".phpactor.json")))
     (cons 'transient (expand-file-name root))))
-(add-hook 'project-find-functions #'pk--eglot-phpactor-root)
+;; Defer until project.el is loaded: adding to the still-unbound hook would
+;; make its defvar a no-op and drop the default `project-try-vc'.
+(with-eval-after-load 'project
+  (add-hook 'project-find-functions #'pk--eglot-phpactor-root))
 
 (use-package magento2-yasnippets
   :if (file-directory-p "~/projects/opensource/magento2-yasnippets")
