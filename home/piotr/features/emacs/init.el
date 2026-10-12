@@ -629,6 +629,15 @@ $0`(yas-escape-text yas-selected-text)`")
   :config
   ;; magit-refresh-buffer reads `hi-lock-mode' without loading hi-lock.
   (require 'hi-lock)
+  ;; magit-region-sections calls `magit-section-siblings' on nil when the
+  ;; region starts outside any section (e.g. the blank line after the status
+  ;; headers), erroring on every redisplay.  Remove once fixed upstream.
+  (defun pk--magit-region-sections-guard (fn &rest args)
+    (unless (and (region-active-p)
+                 (not (magit-section-at (region-beginning))))
+      (apply fn args)))
+  (advice-add 'magit-region-sections :around
+              #'pk--magit-region-sections-guard)
   :custom
   (magit-log-section-commit-count 10)
   (magit-reflog-limit 64)
