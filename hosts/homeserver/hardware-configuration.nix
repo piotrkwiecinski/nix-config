@@ -13,7 +13,6 @@
   boot.initrd.availableKernelModules = lib.mkForce [
     "usbhid"
     "usb_storage"
-    "vc4"
     "pcie_brcmstb"
     "reset-raspberrypi"
   ];

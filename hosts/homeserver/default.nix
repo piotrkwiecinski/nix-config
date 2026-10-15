@@ -48,6 +48,11 @@ in
   # (linux-rpi) is not and takes hours to build
   boot.kernelPackages = pkgs.linuxPackages;
 
+  # Headless: vc4 HDMI audio defers forever on the firmware DT + mainline
+  # kernel (-EPROBE_DEFER on the DMA channel), so vc4 rebinds in a loop and
+  # blanks the console. U-Boot's simple-framebuffer still gives a text console.
+  boot.blacklistedKernelModules = [ "vc4" ];
+
   networking.hostName = "homeserver";
   networking.hosts."192.168.68.103" = [ "thinkpad-x1-g3.local" ];
 
@@ -106,6 +111,16 @@ in
   networking.nameservers = [ "127.0.0.1" ];
 
   time.timeZone = "Europe/Rome";
+
+  # No RTC: after a long power-off the clock lags and Blocky's DoH upstreams
+  # fail TLS (cert "not yet valid"), so DNS-named NTP servers never resolve.
+  # Plain NTP by IP needs neither DNS nor valid certs.
+  networking.timeServers = [
+    "162.159.200.1" # time.cloudflare.com
+    "162.159.200.123" # time.cloudflare.com
+    "216.239.35.0" # time.google.com
+    "216.239.35.4" # time.google.com
+  ];
 
   i18n.defaultLocale = "en_GB.UTF-8";
 
@@ -535,7 +550,7 @@ in
         customTTL = "1h";
         mapping = {
           "tailfbbc95.ts.net" = "100.100.100.100";
-          "homeserver.local" = "192.168.68.106";
+          "homeserver.local" = "192.168.68.105";
         };
       };
     };
