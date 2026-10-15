@@ -141,11 +141,10 @@ in
       22 # SSH
       53 # DNS (Blocky)
       80 # HTTP (redirect to HTTPS)
-      443 # HTTPS (LAN subdomains + Tailscale Nextcloud)
+      443 # HTTPS (LAN subdomains)
       6600 # MPD
       8443 # Home Assistant (Tailscale HTTPS)
       8444 # Paperless (Tailscale HTTPS)
-      8445 # Calibre (Tailscale HTTPS)
       8447 # Forgejo (Tailscale HTTPS)
       8600 # MPD HTTP stream
       5000 # Harmonia binary cache (LAN)
@@ -185,34 +184,6 @@ in
     bantime = "1h";
   };
 
-  # Nextcloud
-  services.nextcloud = {
-    enable = true;
-    package = pkgs.nextcloud33;
-    hostName = "nextcloud.homeserver.local";
-    https = false;
-    config = {
-      adminuser = "admin";
-      adminpassFile = config.sops.secrets."nextcloud-admin-pass".path;
-      dbtype = "pgsql";
-    };
-    database.createLocally = true;
-    configureRedis = true;
-    maxUploadSize = "10G";
-    settings = {
-      overwriteprotocol = "https";
-      trusted_domains = [
-        "nextcloud.homeserver.local"
-        "homeserver.tailfbbc95.ts.net"
-      ];
-      trusted_proxies = [ "127.0.0.1" ];
-    };
-    extraApps = {
-      inherit (pkgs.nextcloud33Packages.apps) spreed;
-    };
-    extraAppsEnable = true;
-  };
-
   services.nginx = {
     enable = true;
     recommendedTlsSettings = true;
@@ -231,42 +202,6 @@ in
       extraConfig = ''
         return 301 https://$host$request_uri;
       '';
-    };
-
-    # Nextcloud LAN HTTPS + internal backend (auto-generated vhost from services.nextcloud)
-    virtualHosts."nextcloud.homeserver.local" = {
-      listen = [
-        {
-          addr = "127.0.0.1";
-          port = 8081;
-        }
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      extraConfig = lanSslConfig;
-    };
-
-    # Nextcloud via Tailscale HTTPS (port 443, SNI)
-    virtualHosts."nextcloud-tailscale" = {
-      serverName = "homeserver.tailfbbc95.ts.net";
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      extraConfig = ''
-        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
-        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
-      '';
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8081";
-        proxyWebsockets = true;
-      };
     };
 
     # Home Assistant LAN HTTPS
@@ -304,21 +239,6 @@ in
           proxy_send_timeout 300;
           client_max_body_size 100M;
         '';
-      };
-    };
-
-    # Calibre LAN HTTPS
-    virtualHosts."calibre.homeserver.local" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      extraConfig = lanSslConfig;
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8080";
       };
     };
 
@@ -397,24 +317,6 @@ in
           proxy_send_timeout 300;
           client_max_body_size 100M;
         '';
-      };
-    };
-
-    # Calibre via Tailscale HTTPS (port 8445)
-    virtualHosts."calibre-tailscale" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 8445;
-          ssl = true;
-        }
-      ];
-      extraConfig = ''
-        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
-        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
-      '';
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8080";
       };
     };
 
@@ -556,16 +458,6 @@ in
         };
       };
     };
-  };
-
-  # Calibre ebook server
-  services.calibre-server = {
-    enable = true;
-    # pinned to stable; unstable 8.16.2 is broken (missing qmake)
-    package = pkgs.calibre;
-    libraries = [ "/var/lib/calibre-server" ];
-    host = "127.0.0.1";
-    port = 8080;
   };
 
   # Forgejo git forge
