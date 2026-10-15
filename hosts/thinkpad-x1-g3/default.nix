@@ -146,7 +146,7 @@
   services.fwupd.enable = true;
 
   networking.hostName = "thinkpad-x1-g3";
-  networking.hosts."192.168.68.106" = [ "homeserver" ];
+  networking.hosts."192.168.68.105" = [ "homeserver" ];
 
   nix = {
     settings = {
@@ -292,7 +292,7 @@
       address = [
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
-        "/homeserver.local/192.168.68.106"
+        "/homeserver.local/192.168.68.105"
       ];
     };
   };
