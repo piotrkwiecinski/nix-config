@@ -32,7 +32,6 @@ in
         config.allowUnfree = true;
       };
       claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
-      codex = (inputs.codex-overlay.overlays.default final prev).codex;
       magento-pkgs = inputs.magento-overlay.overlays.default final prev;
       additions = import ../pkgs {
         pkgs = final.pkgs;
@@ -43,7 +42,7 @@ in
         unstable-cuda = pkgs-unstable-cuda;
         master = pkgs-master;
       };
-      base = additions // magento-pkgs // unstable // { inherit claude-code codex; };
+      base = additions // magento-pkgs // unstable // { inherit claude-code; };
     in
     base // (composeModifications modifications final (prev // base));
 }

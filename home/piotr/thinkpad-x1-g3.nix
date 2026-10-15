@@ -126,10 +126,8 @@ let
     inputsToUpdate = [
       "claude-code-overlay"
       "magento-overlay"
-      "opencode-nix"
-      "codex-overlay"
     ];
-    commitMessage = "flake: auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay";
+    commitMessage = "flake: auto-update claude-code-overlay and magento-overlay";
   };
 
   updateFlakeInputsScript = mkAutoUpdateScript {
@@ -308,83 +306,6 @@ in
     };
   };
 
-  # opencode local model provider via Ollama.
-  # Models: qwen3:4b-32k (fast, tools, 32k ctx), translategemma:4b (translation),
-  # deepseek-r1:7b (reasoning, CPU+RAM). Use /models in opencode to switch.
-  xdg.configFile."opencode/opencode.json".text = builtins.toJSON {
-    "$schema" = "https://opencode.ai/config.json";
-    mcp = {
-      translate = {
-        type = "local";
-        command = [
-          "node"
-          "/home/piotr/.local/share/mcp-translate/index.mjs"
-        ];
-        environment = {
-          OLLAMA_HOST = "http://localhost:11434";
-          OLLAMA_MODEL = "gemma3:4b";
-        };
-      };
-    };
-    provider.ollama = {
-      npm = "@ai-sdk/openai-compatible";
-      name = "Ollama (local)";
-      options = {
-        baseURL = "http://localhost:11434/v1";
-        apiKey = "{file:~/.config/ollama/api-key}";
-      };
-      models = {
-        "qwen3:4b-32k" = {
-          name = "Qwen3 4B (GPU, 32k tools)";
-          tools = true;
-          reasoning = true;
-          limit = {
-            context = 32768;
-            output = 8192;
-          };
-        };
-        "translategemma:4b" = {
-          name = "TranslateGemma 4B (GPU, EN/IT/PL/JA)";
-          limit = {
-            context = 128000;
-            output = 8192;
-          };
-        };
-        "llama3.2:3b" = {
-          name = "Llama 3.2 3B (GPU, tools)";
-          tools = true;
-          limit = {
-            context = 32768;
-            output = 8192;
-          };
-        };
-        "mistral:7b" = {
-          name = "Mistral 7B (GPU, tools)";
-          tools = true;
-          limit = {
-            context = 4096;
-            output = 4096;
-          };
-        };
-        "deepseek-r1:7b" = {
-          name = "DeepSeek R1 7B (CPU, reasoning)";
-          limit = {
-            context = 131072;
-            output = 16384;
-          };
-        };
-        "qwen2.5:3b" = {
-          name = "Qwen 2.5 3B (GPU, tools, fast)";
-          tools = true;
-          limit = {
-            context = 32768;
-            output = 8192;
-          };
-        };
-      };
-    };
-  };
-
   # Ordered ahead of gpg-agent so the first gpg operation of the session never
   # meets a leaked lock. See gnupgStaleLockCleanup above for the full story.
   systemd.user.services.gnupg-stale-lock-cleanup = {
@@ -472,7 +393,7 @@ in
     inherit (pkgs.unstable.jetbrains) idea;
     inherit (pkgs) typescript-language-server;
     inherit (pkgs.unstable.nixVersions) latest;
-    inherit (pkgs) claude-code codex;
+    inherit (pkgs) claude-code;
     inherit (pkgs.unstable) mochi;
   };
 
@@ -549,7 +470,7 @@ in
 
   systemd.user.services.update-claude-code-flake = {
     Unit = {
-      Description = "Auto-update claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay flake inputs";
+      Description = "Auto-update claude-code-overlay and magento-overlay flake inputs";
       After = [ "network-online.target" ];
       Wants = [ "network-online.target" ];
       # The run activates the generation that redefines this unit; keep the
@@ -572,7 +493,7 @@ in
   };
 
   systemd.user.timers.update-claude-code-flake = {
-    Unit.Description = "Timer for claude-code-overlay, magento-overlay, opencode-nix, and codex-overlay update";
+    Unit.Description = "Timer for claude-code-overlay and magento-overlay update";
     Timer = {
       OnCalendar = [
         "*-*-* 08:00:00"
