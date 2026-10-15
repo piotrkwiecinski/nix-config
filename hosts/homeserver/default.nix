@@ -545,11 +545,13 @@ in
         prefetching = true;
       };
       # Forward Tailscale peer names to MagicDNS so *.tailfbbc95.ts.net resolves
-      # even though Tailscale no longer manages resolv.conf.
+      # even though Tailscale no longer manages resolv.conf. This must be a
+      # conditional upstream: a customDNS mapping would answer every peer name
+      # with 100.100.100.100 itself.
+      conditional.mapping."tailfbbc95.ts.net" = "100.100.100.100";
       customDNS = {
         customTTL = "1h";
         mapping = {
-          "tailfbbc95.ts.net" = "100.100.100.100";
           "homeserver.local" = "192.168.68.105";
         };
       };
