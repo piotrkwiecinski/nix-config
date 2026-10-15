@@ -299,6 +299,25 @@
 
 (setq-default line-spacing 5)
 
+;; Must load before the theme: solaire decides on `load-theme' whether the
+;; theme is supported, and modus isn't by default.
+(use-package solaire-mode
+  :demand t
+  :custom
+  (solaire-mode-supported-themes '("^modus-"))
+  :config
+  ;; Tint non-file buffers with modus `bg-dim' (slightly lighter than the
+  ;; editor in vivendi, like Zed's side panels).
+  (defun pk--apply-solaire-faces (&rest _)
+    "Derive solaire faces from the current modus palette."
+    (when (fboundp 'modus-themes-get-color-value)
+      (let ((bg (modus-themes-get-color-value 'bg-dim)))
+        (dolist (face '(solaire-default-face solaire-fringe-face
+                        solaire-line-number-face))
+          (set-face-attribute face nil :background bg)))))
+  (add-hook 'enable-theme-functions #'pk--apply-solaire-faces)
+  (solaire-global-mode +1))
+
 (use-package modus-themes
   :bind (("C-c t t" . modus-themes-toggle))
   :custom
