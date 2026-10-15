@@ -894,13 +894,17 @@ in
     serviceConfig.Type = "oneshot";
   };
 
-  # Tailscale HTTPS certificate provisioning
+  # Tailscale HTTPS certificate provisioning. nginx must not wait on this: it
+  # needs the network up, and during a switch NetworkManager only starts after
+  # nginx's restart finishes, so an nginx -> tailscale-cert dependency deadlocks
+  # the switch with the network down. nginx starts on whatever cert exists and
+  # is reloaded once a fresh one lands.
   systemd.services.tailscale-cert = {
     description = "Provision Tailscale HTTPS certificates";
     after = [ "tailscaled.service" ];
     wants = [ "tailscaled.service" ];
-    before = [ "nginx.service" ];
     wantedBy = [ "multi-user.target" ];
+    restartIfChanged = false;
     path = [
       pkgs.tailscale
       pkgs.jq
@@ -927,16 +931,38 @@ in
       chmod 600 /var/lib/tailscale-certs/homeserver.key
       chown nginx:nginx /var/lib/tailscale-certs/*
 
+      # --no-block: never wait on nginx from here
+      systemctl --no-block reload-or-restart nginx.service
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      # Not RemainAfterExit: the weekly timer can't re-run an active unit
+      TimeoutStartSec = "15min";
+    };
+  };
+
+  # Self-signed placeholder so nginx's config test passes before the first
+  # Tailscale cert is fetched (fresh install, or tailnet not logged in yet)
+  systemd.services.tailscale-cert-placeholder = {
+    description = "Placeholder Tailscale HTTPS certificate for nginx";
+    before = [ "nginx.service" ];
+    requiredBy = [ "nginx.service" ];
+    path = [ pkgs.openssl ];
+    script = ''
+      dir=/var/lib/tailscale-certs
+      [ -s $dir/homeserver.crt ] && [ -s $dir/homeserver.key ] && exit 0
+      mkdir -p $dir
+      openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj /CN=placeholder \
+        -keyout $dir/homeserver.key -out $dir/homeserver.crt
+      chmod 644 $dir/homeserver.crt
+      chmod 600 $dir/homeserver.key
+      chown nginx:nginx $dir/*
     '';
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
     };
   };
-
-  # Make nginx wait for certs
-  systemd.services.nginx.after = [ "tailscale-cert.service" ];
-  systemd.services.nginx.requires = [ "tailscale-cert.service" ];
 
   # Timer to renew certs weekly (Tailscale certs expire after 90 days)
   systemd.timers.tailscale-cert = {
