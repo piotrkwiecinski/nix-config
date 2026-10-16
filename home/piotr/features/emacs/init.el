@@ -484,13 +484,6 @@
   (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
   :hook (eglot-managed-mode . eglot-inlay-hints-mode))
 
-;; Wraps rust-analyzer's stdio in emacs-lsp-booster (JSON -> bytecode, buffered I/O).
-(use-package eglot-booster
-  :after eglot
-  :demand t
-  :config
-  (eglot-booster-mode 1))
-
 (use-package editorconfig
   :ensure nil
   :hook (prog-mode . editorconfig-mode))
