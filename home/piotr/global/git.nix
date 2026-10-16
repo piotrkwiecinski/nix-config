@@ -47,6 +47,9 @@
             tag.gpgSign = true;
 
             core.sshCommand = "ssh -i ~/.ssh/gh_rsa";
+
+            # Forge reads its GitHub account from here
+            github.user = "piotrkwiecinski";
           };
         }
       ]

@@ -675,6 +675,13 @@ $0`(yas-escape-text yas-selected-text)`")
   (ediff-window-setup-function 'ediff-setup-windows-plain))
 
 ;;;;; GitHub
+;; Tokens live in KeePassXC, reached through the Secret Service default
+;; collection; Forge looks up host api.github.com, user <github.user>^forge.
+(use-package auth-source
+  :ensure nil
+  :custom
+  (auth-sources '(default)))
+
 (use-package forge
   :after magit
   :demand t)
