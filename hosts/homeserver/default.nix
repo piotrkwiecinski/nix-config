@@ -20,6 +20,7 @@ in
     inputs.hardware.nixosModules.raspberry-pi-4
     "${inputs.nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
     ./hardware-configuration.nix
+    ./wifi-watchdog.nix
     ../../users/piotr
     inputs.private-nix-config.nixosModules.homeserver-secrets
   ];
@@ -103,6 +104,8 @@ in
   networking.networkmanager = {
     enable = true;
     dns = "none"; # Don't let NM overwrite resolv.conf; managed via networking.nameservers
+    # brcmfmac power-save wedges the SDIO bus on the Pi 4 (see wifi-watchdog.nix)
+    wifi.powersave = false;
   };
 
   # Point resolv.conf at Blocky (127.0.0.1) instead of Tailscale MagicDNS.
