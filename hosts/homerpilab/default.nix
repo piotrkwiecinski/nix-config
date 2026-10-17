@@ -1,9 +1,14 @@
-{ config, inputs, ... }:
+{
+  config,
+  inputs,
+  ...
+}:
 {
   imports = [
     ../common/rpi4-server.nix
     ./hardware-configuration.nix
     inputs.private-nix-config.nixosModules.homerpilab-secrets
+    inputs.private-nix-config.nixosModules.homerpilab-shares
   ];
 
   networking.hostName = "homerpilab";
@@ -41,6 +46,38 @@
       enable = true;
       addresses = true;
     };
+    # nixpkgs builds samba without mDNS, so advertise _smb._tcp statically
+    # for GNOME/gvfs and macOS (wsdd covers Windows)
+    extraServiceFiles.smb = ''
+      <?xml version="1.0" standalone='no'?>
+      <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+      <service-group>
+        <name replace-wildcards="yes">%h</name>
+        <service>
+          <type>_smb._tcp</type>
+          <port>445</port>
+        </service>
+      </service-group>
+    '';
+  };
+
+  # Samba file sharing; shares, their directories and users
+  # come from private-nix-config.homerpilab-shares. Passwords are not
+  # declarative: `sudo smbpasswd -a <user>`.
+  services.samba = {
+    enable = true;
+    openFirewall = true;
+    settings.global = {
+      workgroup = "WORKGROUP";
+      "server string" = "homerpilab";
+      security = "user";
+      "map to guest" = "never";
+    };
+  };
+
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
   };
 
   system.stateVersion = "26.05";
