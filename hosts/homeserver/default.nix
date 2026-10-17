@@ -434,15 +434,25 @@ in
   };
 
   # wsdd only reaches Windows; GNOME/gvfs and macOS discover shares via mDNS.
-  # Samba registers _smb._tcp with avahi over D-Bus, which needs userServices.
+  # nixpkgs builds samba without mDNS, so advertise _smb._tcp statically.
   services.avahi = {
     enable = true;
     nssmdns4 = true;
     publish = {
       enable = true;
       addresses = true;
-      userServices = true;
     };
+    extraServiceFiles.smb = ''
+      <?xml version="1.0" standalone='no'?>
+      <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+      <service-group>
+        <name replace-wildcards="yes">%h</name>
+        <service>
+          <type>_smb._tcp</type>
+          <port>445</port>
+        </service>
+      </service-group>
+    '';
   };
 
   # Paperless-ngx document management
