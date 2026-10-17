@@ -19,12 +19,12 @@
       systemd
     ];
     script = ''
-      set -uo pipefail
       STATE=/run/wifi-watchdog.failures
       RELOAD_AFTER=3
       REBOOT_AFTER=10
 
-      gw=$(ip -4 route show default dev wlan0 | grep -oP 'via \K\S+' | head -1)
+      # No default route (e.g. NetworkManager restarting) counts as a failure.
+      gw=$(ip -4 route show default dev wlan0 | grep -oP 'via \K\S+' | head -1 || true)
       if [ -n "$gw" ] && ping -c 3 -W 2 -q "$gw" >/dev/null; then
         rm -f "$STATE"
         exit 0
