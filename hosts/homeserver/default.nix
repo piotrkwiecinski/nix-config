@@ -433,6 +433,18 @@ in
     openFirewall = true;
   };
 
+  # wsdd only reaches Windows; GNOME/gvfs and macOS discover shares via mDNS.
+  # Samba registers _smb._tcp with avahi over D-Bus, which needs userServices.
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+    publish = {
+      enable = true;
+      addresses = true;
+      userServices = true;
+    };
+  };
+
   # Paperless-ngx document management
   services.paperless = {
     enable = true;

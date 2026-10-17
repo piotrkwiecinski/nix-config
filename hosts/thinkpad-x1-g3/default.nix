@@ -245,6 +245,9 @@
   # Enable the GNOME Desktop Environment.
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
+
+  # Resolve *.local (homeserver.local, homerpilab.local) outside of gvfs too
+  services.avahi.nssmdns4 = true;
   environment.gnome.excludePackages = builtins.attrValues {
     inherit (pkgs)
       epiphany
