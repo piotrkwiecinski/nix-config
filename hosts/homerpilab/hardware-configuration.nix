@@ -8,17 +8,18 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  # Raspberry Pi 4B with USB SSD boot
+  # Raspberry Pi 4B booting from a 1TB USB hard drive
   # Use mkForce to override SD image module defaults that include unavailable modules
   boot.initrd.availableKernelModules = lib.mkForce [
     "usbhid"
     "usb_storage"
-    "vc4"
+    "uas" # most USB-SATA bridges; usb_storage refuses UAS devices when uas is a module
     "pcie_brcmstb"
     "reset-raspberrypi"
   ];
 
-  # Root filesystem on USB SSD
+  # Root filesystem on the USB drive; the sd-image root partition grows to
+  # fill the disk on first boot
   fileSystems."/" = {
     device = "/dev/disk/by-label/NIXOS_SD";
     fsType = "ext4";

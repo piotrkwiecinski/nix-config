@@ -4,7 +4,7 @@
 * Prerequisites
 
 - Raspberry Pi 4B with USB boot enabled (most units shipped after 2020 have this)
-- USB 3.0 SATA SSD
+- USB 3.0 SATA SSD or hard drive (a 2.5" HDD may draw more than the Pi's USB ports supply; use a powered hub or enclosure if it fails to spin up)
 - Access to workstation for building the SD image (cross-compiled via QEMU binfmt)
 
 #+begin_quote
@@ -22,6 +22,8 @@ Create the following files (using =homeserver= or =homerpilab= as reference):
 | =hosts/<hostname>/default.nix=         | System configuration                         |
 | =hosts/<hostname>/hardware-configuration.nix= | RPi 4B aarch64 hardware config (USB SSD boot) |
 | =home/piotr/<hostname>.nix=            | Home-manager config                          |
+
+Have =default.nix= import =../common/rpi4-server.nix= (the shared Pi 4 base: U-Boot, mainline kernel, remote builds, SSH, Tailscale) and keep only host-specific services in it.
 
 Register the host in flake-parts:
 
