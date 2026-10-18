@@ -425,13 +425,15 @@
         insecure = true;
         dashboard = true;
       };
+      # Loopback only: *.test/*.loc resolve to 127.0.0.1, and a wildcard bind
+      # collides with `tailscale serve` holding 443 on the tailnet address
       entryPoints = {
         web = {
-          address = ":80";
+          address = "127.0.0.1:80";
           reusePort = true;
         };
         websecure = {
-          address = ":443";
+          address = "127.0.0.1:443";
           reusePort = true;
         };
       };
