@@ -19,16 +19,16 @@ Private configuration and all encrypted secrets live in a separate flake, =nix-c
 | iso            | LiveCD for setup/restore                    | ISO     | x86_64-linux  |
 
 *** homeserver services
-- [[https://www.home-assistant.io/][Home Assistant]] - Home automation (ZHA on a ConBee stick, Bluetooth)
+- [[https://www.home-assistant.io/][Home Assistant]] - Home automation (ZHA on a ConBee stick, Bluetooth), with the [[https://github.com/Patrick762/hassio-bluetti-bt][Bluetti BLE]] and [[https://github.com/davidrapan/ha-solarman][Solarman]] custom integrations
 - [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management
 - [[https://forgejo.org/][Forgejo]] - Git forge
 - [[https://www.samba.org/][Samba]] - File shares for the LAN
 - nginx - HTTPS for the services: =*.homeserver.local= on the LAN, plus Let's Encrypt certificates from [[https://tailscale.com/][Tailscale]] for tailnet access
-- [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache, reachable over Tailscale
 - [[https://restic.net/][restic]] - Encrypted daily backups of Home Assistant and Paperless to homerpilab
 
 *** homerpilab services
 - [[https://github.com/restic/rest-server][restic rest-server]] - Append-only backup target for homeserver, with weekly prune and check
+- [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache for the other hosts, reachable over Tailscale; thinkpad and homeserver use it as a substituter
 - [[https://www.samba.org/][Samba]] - File shares for the LAN
 
 *** thinkpad-x1-g3
@@ -43,7 +43,7 @@ Private configuration and all encrypted secrets live in a separate flake, =nix-c
 
 *** Networking and security
 - *DNS*: all hosts use [[https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html][systemd-resolved]]. NetworkManager hands it each connection's DHCP/VPN servers, and Tailscale registers MagicDNS as a split-DNS route for the tailnet only, so short names like =homerpilab= work. mDNS (=*.local=, Samba discovery) stays with Avahi; resolved's own mDNS and LLMNR are off. The thinkpad publishes =thinkpad-x1-g3.local= on Wi-Fi, which the Pis use for their remote builder.
-- *Firewall*: =tailscale0= is trusted everywhere. On the LAN, homeserver only opens SSH, Samba and 80/443; everything else (Tailscale HTTPS ports, Harmonia) is Tailscale-only. On the thinkpad, dev ports are open only on Docker bridges, and Docker publishes ports on 127.0.0.1.
+- *Firewall*: =tailscale0= is trusted everywhere. On the LAN, homeserver only opens SSH, Samba and 80/443; everything else (Tailscale HTTPS ports) is Tailscale-only. homerpilab opens only SSH and Samba on the LAN; rest-server and Harmonia are Tailscale-only. On the thinkpad, dev ports are open only on Docker bridges, and Docker publishes ports on 127.0.0.1.
 - *SSH*: key-only, no keyboard-interactive auth, no root login. The Pis pin the thinkpad's host key. Agent forwarding is off by default.
 
 ** Usage
@@ -74,7 +74,7 @@ homeserver and homerpilab rebuild themselves from a clone in =~/nix-config=, fet
 1. Create =hosts/{hostname}/default.nix= with the host-specific system configuration. =mkHost= already adds =modules/nixos/base.nix= (nixpkgs, home-manager, the piotr user, nix settings, locale, SSH, resolved, Tailscale) and the private sops modules. Import on top of that:
    - =./hardware-configuration.nix=
    - Profiles: =outputs.nixosModules.server= (always-on), =outputs.nixosModules.desktop= (GNOME workstation), =outputs.nixosModules.rpi4= (Raspberry Pi 4, includes =server=)
-   - Features: =outputs.nixosModules.samba=, =outputs.nixosModules.wifi-watchdog=
+   - Features: =outputs.nixosModules.samba=, =outputs.nixosModules.wifi-watchdog=, =outputs.nixosModules.home-cache= (Harmonia substituter on homerpilab)
    - Any relevant =inputs.private-nix-config.nixosModules.*= for secrets
    - Optionally: =inputs.hardware.nixosModules.{profile}=, =inputs.disko.nixosModules.disko=
 
@@ -153,6 +153,7 @@ hosts/                     # Per-host NixOS configurations
     disk-config.nix        # Disko declarative disk layout (optional)
     hardware-configuration.nix
   homeserver/backup.nix    # restic backups + homeserver-restore (restore.sh)
+  homeserver/{bluetti-bt,solarman}.nix  # Home Assistant custom integrations
 
 checks/                    # VM tests, run by `nix flake check` (x86_64)
 
@@ -165,7 +166,7 @@ home/piotr/                # Home-manager configurations
 modules/nixos/             # Shared NixOS modules, exported as nixosModules.*
   base.nix                 # Added to every host by mkHost
   profiles/                # server, desktop, rpi4
-  features/                # user-piotr, samba, wifi-watchdog
+  features/                # user-piotr, samba, wifi-watchdog, home-cache
 
 parts/                     # Flake-parts modules (nixos, modules, checks, iso, overlays, dev-shell, formatter, packages, templates)
 
