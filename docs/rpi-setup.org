@@ -171,20 +171,18 @@ Alternatively, create a DHCP reservation in your router for the Pi's MAC address
 
 Both Pis rebuild themselves the same way. Root fetches the private flake inputs with the GitHub token from the =nix-access-tokens= sops secret (=/run/secrets/nix-access-tokens=, included into nix.conf by =base.nix=).
 
-On the Pi. Needs a clone in =~/nix-config= (=git clone https://github.com/piotrkwiecinski/nix-config ~/nix-config=). Push first, then run the switch as a transient unit, so that a Wi-Fi drop during activation cannot kill it:
+On the Pi. Needs a clone in =~/nix-config= (=git clone https://github.com/piotrkwiecinski/nix-config ~/nix-config=). Push first, then run from the dev shell:
 
 #+begin_src bash
-ssh piotr@<hostname> 'cd ~/nix-config && git pull --ff-only && sudo systemd-run --unit=nixos-rebuild-manual \
-  --working-directory=/home/piotr/nix-config --setenv=HOME=/root \
-  --setenv=PATH=/run/current-system/sw/bin:/home/piotr/.nix-profile/bin --property=Type=exec \
-  /run/current-system/sw/bin/nixos-rebuild switch --flake /home/piotr/nix-config#<hostname>'
-ssh piotr@<hostname> journalctl -fu nixos-rebuild-manual
+nix develop -c pi-switch <hostname>
 #+end_src
 
-From the thinkpad, for the first deploy of a new Pi or one whose sops file has no token yet. Evaluates and builds there (aarch64 through binfmt) and copies the result:
+It pulls the clone and runs the switch as a transient unit (=nixos-rebuild-manual=), so that a Wi-Fi drop during activation cannot kill it, and streams its log until it finishes. If the SSH session drops, the switch carries on: =ssh piotr@<hostname> journalctl -fu nixos-rebuild-manual=.
+
+From the thinkpad, for the first deploy of a new Pi or one whose sops file has no token yet. Evaluates there, builds and activates on the Pi:
 
 #+begin_src bash
-nix develop -c nixos-rebuild switch --flake .#<hostname> --target-host piotr@<hostname> --sudo
+nix develop -c pi-deploy <hostname>
 #+end_src
 
 * Troubleshooting

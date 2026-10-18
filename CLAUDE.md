@@ -1,9 +1,15 @@
 # CLAUDE.md
 
-Remote deployment to homeserver:
+Deploying the Pis (homeserver, homerpilab), from the dev shell. Push first; the Pi pulls its `~/nix-config` clone and rebuilds itself in a transient `nixos-rebuild-manual` unit:
 ```bash
-nixos-rebuild switch --flake ".#homeserver" --build-host piotr@homeserver --target-host piotr@homeserver --sudo
+nix develop -c pi-switch homeserver
 ```
+Fallback for a Pi without its clone or token yet (evaluates here, builds and activates on the Pi):
+```bash
+nix develop -c pi-deploy homerpilab
+```
+
+Private flake inputs are fetched from GitHub with the token in the `nix-access-tokens` sops secret, which `modules/nixos/base.nix` includes into nix.conf, so root can fetch them too. A host without it needs the token in `NIX_CONFIG` for its first build.
 
 **Important**: New files must be staged with `git add` before running nix builds. Flakes only see files tracked by git.
 
