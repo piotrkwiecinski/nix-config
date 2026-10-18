@@ -202,10 +202,9 @@ in
     inputs.private-nix-config.inputs.calstart.homeManagerModules.default
     inputs.private-nix-config.homeManagerModules.work
     inputs.private-nix-config.homeManagerModules.media
-    inputs.private-nix-config.homeManagerModules.activitywatch-private
+    inputs.private-nix-config.homeManagerModules.leechblock
     inputs.private-nix-config.homeManagerModules.thinkpad-x1-g3
     ./profiles/workstation.nix
-    ./features/desktop/activitywatch.nix
     ./features/mpv.nix
   ];
 

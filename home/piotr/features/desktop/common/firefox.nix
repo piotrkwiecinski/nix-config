@@ -26,11 +26,8 @@
       Certificates.ImportEnterpriseRoots = true;
       DontCheckDefaultBrowser = true;
       ExtensionSettings = {
-        # aw-watcher-web — ActivityWatch browser time tracking
-        "aw-watcher-web@activitywatch.net" = {
-          installation_mode = "force_installed";
-          install_url = "https://addons.mozilla.org/firefox/downloads/latest/aw-watcher-web/latest.xpi";
-        };
+        # Uninstalls the previously force-installed ActivityWatch watcher
+        "aw-watcher-web@activitywatch.net".installation_mode = "blocked";
         # LeechBlock NG — distraction enforcement
         "leechblockng@proginosko.com" = {
           installation_mode = "force_installed";

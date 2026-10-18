@@ -56,7 +56,6 @@
         ghostel
         pkgs.magento-cache-clean-el
         ob-php
-        activity-watch-mode
       ];
   };
 
