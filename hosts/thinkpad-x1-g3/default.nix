@@ -218,7 +218,16 @@
     ];
   };
 
-  services.tailscale.enable = true;
+  # dnsmasq owns resolv.conf (dev domains); keep tailscale from rewriting it
+  # and forward MagicDNS names through dnsmasq instead. Subnet routes stay off
+  # so they cannot shadow OpenVPN or docker networks.
+  services.tailscale = {
+    enable = true;
+    extraSetFlags = [
+      "--accept-dns=false"
+      "--accept-routes=false"
+    ];
+  };
 
   # Set your time zone.
   time.timeZone = "Europe/Rome";
@@ -297,6 +306,7 @@
         "/loc/127.0.0.1"
         "/homeserver.local/192.168.68.105"
       ];
+      server = [ "/ts.net/100.100.100.100" ];
     };
   };
 
