@@ -1136,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   (require 'emms-player-mpd)
   (emms-all)
   (setq emms-player-list '(emms-player-mpd emms-player-mpv))
-  (setq emms-player-mpd-server-name "homeserver.tailfbbc95.ts.net")
+  (setq emms-player-mpd-server-name "homeserver")
   (setq emms-player-mpd-server-port "6600")
   (setq emms-player-mpd-music-directory "/var/lib/music")
   (setq emms-info-functions '(emms-info-mpd)))

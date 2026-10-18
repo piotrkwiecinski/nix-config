@@ -27,9 +27,7 @@
   security.pam.yubico = {
     enable = true;
     mode = "challenge-response";
-    # Note: YubiKey ID cannot be moved to sops because it's needed at Nix evaluation time
-    # for PAM configuration. sops secrets are only available at activation time.
-    id = [ "32878882" ];
+    # No `id`: challenge-response matches ~/.yubico/challenge-<serial> files
   };
 
   boot.kernelPackages = pkgs.linuxPackages_6_18;
@@ -130,7 +128,6 @@
   services.fwupd.enable = true;
 
   networking.hostName = "thinkpad-x1-g3";
-  networking.hosts."192.168.68.105" = [ "homeserver" ];
 
   nix = {
     settings = {
@@ -170,17 +167,24 @@
     networkmanager-openvpn
   ];
 
-  networking.firewall = {
-    allowedTCPPorts = [
-      3000
-      9001
-      9003
-      9090
-      9000
-      8123
-      8282
-    ];
-  };
+  # Dev ports for containers calling back into the host (e.g. Xdebug on 9003);
+  # only open on the docker bridges, never on Wi-Fi.
+  networking.firewall.interfaces =
+    let
+      devPorts.allowedTCPPorts = [
+        3000
+        9001
+        9003
+        9090
+        9000
+        8123
+        8282
+      ];
+    in
+    {
+      docker0 = devPorts;
+      "br-+" = devPorts; # user-defined docker networks (iptables wildcard)
+    };
 
   # With resolved, tailscale registers MagicDNS as a split-DNS route for the
   # tailnet only. Subnet routes stay off so they cannot shadow OpenVPN or
@@ -290,7 +294,6 @@
       };
     };
   };
-  security.pki.certificateFiles = [ ./mkcert-rootCA.pem ];
   services.pipewire = {
     extraConfig.pipewire."92-low-latency" = {
       "context.properties" = {
@@ -370,6 +373,8 @@
   virtualisation.docker = {
     enable = true;
     enableOnBoot = false;
+    # Published ports (-p 3306:3306) bypass the NixOS firewall; keep them local
+    daemon.settings.ip = "127.0.0.1";
   };
   users.extraGroups.docker.members = [ "piotr" ];
 

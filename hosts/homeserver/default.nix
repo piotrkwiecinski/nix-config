@@ -20,26 +20,22 @@ in
     outputs.nixosModules.samba
     ./hardware-configuration.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
+    # Samba shares and users, Paperless tailnet hostnames
+    inputs.private-nix-config.nixosModules.homeserver
   ];
 
   networking.hostName = "homeserver";
 
-  # Firewall (SSH and Tailscale are opened by their modules)
-  networking.firewall = {
-    allowedTCPPorts = [
-      80 # HTTP (redirect to HTTPS)
-      443 # HTTPS (LAN subdomains)
-      6600 # MPD
-      8443 # Home Assistant (Tailscale HTTPS)
-      8444 # Paperless (Tailscale HTTPS)
-      8447 # Forgejo (Tailscale HTTPS)
-      8600 # MPD HTTP stream
-      5000 # Harmonia binary cache (LAN)
-      5600 # ActivityWatch aggregator (LAN + Tailscale)
-    ];
-  };
+  # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
+  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447, MPD
+  # 6600/8600, Harmonia 5000, ActivityWatch 5600) is reached over tailscale0,
+  # which is a trusted interface.
+  networking.firewall.allowedTCPPorts = [
+    80 # HTTP (redirect to HTTPS)
+    443 # HTTPS (LAN subdomains)
+  ];
 
-  # Binary cache for LAN clients (thinkpad fetches pre-built aarch64 paths)
+  # Binary cache over Tailscale (thinkpad fetches pre-built aarch64 paths)
   users.users.harmonia = {
     isSystemUser = true;
     group = "harmonia";
@@ -280,18 +276,10 @@ in
     };
   };
 
-  # Shared media group and music directory
-  users.groups.media = { };
-  systemd.tmpfiles.rules = [
-    "d /var/lib/music 2775 root media - -"
-    "d /var/lib/shared 2775 root media - -"
-  ];
-
   # MPD music daemon
   services.mpd = {
     enable = true;
-    # 6600/8600 are opened explicitly in networking.firewall.allowedTCPPorts;
-    # set false so the module doesn't warn about bind_to_address = "any".
+    # Tailscale-only (tailscale0 is trusted); the LAN firewall stays closed.
     openFirewall = false;
     settings = {
       music_directory = "/var/lib/music";
@@ -313,34 +301,15 @@ in
   };
   users.users.mpd.extraGroups = [ "media" ];
 
-  # Samba shares (server, wsdd and mDNS come from the samba module)
-  services.samba = {
-    settings = {
-      music = {
-        path = "/var/lib/music";
-        browseable = "yes";
-        "read only" = "no";
-        "valid users" = "piotr gosia";
-        "create mask" = "0664";
-        "directory mask" = "2775";
-        "force group" = "media";
-      };
-      shared = {
-        path = "/var/lib/shared";
-        browseable = "yes";
-        "read only" = "no";
-        "valid users" = "piotr gosia";
-        "create mask" = "0664";
-        "directory mask" = "2775";
-        "force group" = "media";
-      };
-    };
-  };
+  # Samba shares and their users come from private-nix-config.homeserver;
+  # server, wsdd and mDNS from the samba module.
 
-  # Paperless-ngx document management
+  # Paperless-ngx document management. Allowed hosts, CSRF origins and the
+  # Gmail OAuth client come from private-nix-config.homeserver.
   services.paperless = {
     enable = true;
-    address = "0.0.0.0";
+    # nginx proxies to it; nothing else needs to reach it
+    address = "127.0.0.1";
     database.createLocally = true;
     passwordFile = config.sops.secrets."paperless-admin-pass".path;
     exporter = {
@@ -350,22 +319,10 @@ in
     settings = {
       PAPERLESS_ADMIN_USER = "admin";
       PAPERLESS_URL = "https://paperless.homeserver.local";
-      PAPERLESS_ALLOWED_HOSTS = builtins.concatStringsSep "," [
-        "paperless.homeserver.local"
-        "homeserver.tailfbbc95.ts.net"
-        "localhost"
-        "127.0.0.1"
-      ];
-      PAPERLESS_CSRF_TRUSTED_ORIGINS = builtins.concatStringsSep "," [
-        "https://paperless.homeserver.local"
-        "https://homeserver.tailfbbc95.ts.net:8444"
-      ];
       PAPERLESS_PROXY_SSL_HEADER = [
         "HTTP_X_FORWARDED_PROTO"
         "https"
       ];
-      PAPERLESS_GMAIL_OAUTH_CLIENT_ID = "277222441434-ecser4h8qrin4uu0tiak5cbqolue2rou.apps.googleusercontent.com";
-      PAPERLESS_OAUTH_CALLBACK_BASE_URL = "https://homeserver.tailfbbc95.ts.net:8444";
       PAPERLESS_EMAIL_TASK_CRON = "*/10 * * * *";
     };
     environmentFile = config.sops.secrets."paperless-gmail-oauth-secret".path;
@@ -481,7 +438,7 @@ in
   };
 
   # ActivityWatch aggregator - receives bucket pushes from thinkpad and
-  # Android. Port 5600 is reachable from LAN and tailscale0.
+  # Android over Tailscale (port 5600 is closed on the LAN).
   users.users.aw-server = {
     isSystemUser = true;
     group = "aw-server";
@@ -649,16 +606,6 @@ in
       OnCalendar = "weekly";
       Persistent = true;
     };
-  };
-
-  users.users."piotr" = {
-    extraGroups = [ "media" ];
-  };
-
-  users.users.gosia = {
-    isNormalUser = true;
-    shell = "${pkgs.shadow}/bin/nologin";
-    extraGroups = [ "media" ];
   };
 
   system.stateVersion = "26.05";

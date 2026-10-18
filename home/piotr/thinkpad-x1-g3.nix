@@ -376,7 +376,6 @@ in
     '';
 
     shellAliases = {
-      "bhc" = "bluetoothctl connect 00:16:94:22:81:6C";
       "c2" = "dm composer";
       "m2" = "dm magento";
       "mr2" = "dm n98-magerun2";
@@ -409,7 +408,7 @@ in
     settings = {
       "*" = {
         ServerAliveInterval = 300;
-        ForwardAgent = true;
+        ForwardAgent = false;
         AddKeysToAgent = "no";
         Compression = false;
         ServerAliveCountMax = 3;
