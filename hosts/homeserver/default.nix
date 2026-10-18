@@ -16,25 +16,15 @@ let
 in
 {
   imports = [
-    ../common/rpi4-server.nix
+    outputs.nixosModules.rpi4
+    outputs.nixosModules.samba
     ./hardware-configuration.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
   ];
 
   networking.hostName = "homeserver";
 
-  # resolved is the system resolver; tailscale adds MagicDNS as a split-DNS
-  # route for the tailnet. mDNS stays with avahi.
-  services.resolved = {
-    enable = true;
-    settings.Resolve = {
-      MulticastDNS = false;
-      LLMNR = false;
-      DNSSEC = false;
-    };
-  };
-
-  # Firewall (SSH and Tailscale opened in common/rpi4-server.nix)
+  # Firewall (SSH and Tailscale are opened by their modules)
   networking.firewall = {
     allowedTCPPorts = [
       80 # HTTP (redirect to HTTPS)
@@ -323,17 +313,9 @@ in
   };
   users.users.mpd.extraGroups = [ "media" ];
 
-  # Samba file sharing
+  # Samba shares (server, wsdd and mDNS come from the samba module)
   services.samba = {
-    enable = true;
-    openFirewall = true;
     settings = {
-      global = {
-        workgroup = "WORKGROUP";
-        "server string" = "homeserver";
-        security = "user";
-        "map to guest" = "never";
-      };
       music = {
         path = "/var/lib/music";
         browseable = "yes";
@@ -353,43 +335,6 @@ in
         "force group" = "media";
       };
     };
-  };
-
-  services.samba-wsdd = {
-    enable = true;
-    openFirewall = true;
-  };
-
-  # wsdd only reaches Windows; GNOME/gvfs and macOS discover shares via mDNS.
-  # nixpkgs builds samba without mDNS, so advertise _smb._tcp statically.
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-    publish = {
-      enable = true;
-      addresses = true;
-    };
-    extraServiceFiles.smb = ''
-      <?xml version="1.0" standalone='no'?>
-      <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-      <service-group>
-        <name replace-wildcards="yes">%h</name>
-        <service>
-          <type>_smb._tcp</type>
-          <port>445</port>
-        </service>
-      </service-group>
-    '';
-  };
-
-  # A SIGHUP during startup kills avahi before its handlers are installed;
-  # systemd counts that as a clean exit and the stale PID file then blocks
-  # every later start. The "+" runs the cleanup outside the unit's capability
-  # sandbox, which otherwise denies root access to the avahi-owned file.
-  systemd.services.avahi-daemon.serviceConfig = {
-    Restart = "always";
-    RestartSec = "2s";
-    ExecStartPre = "-+${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid";
   };
 
   # Paperless-ngx document management

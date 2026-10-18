@@ -2,17 +2,16 @@
   lib,
   pkgs,
   config,
-  inputs,
-  outputs,
   ...
 }:
 {
   imports = [ ./git.nix ];
 
+  # nixpkgs (overlays, unfree) comes from the system: home-manager runs as a
+  # NixOS module with useGlobalPkgs.
   nix = {
     package = lib.mkDefault pkgs.unstable.nixVersions.latest;
     settings = {
-      auto-optimise-store = true;
       experimental-features = [
         "auto-allocate-uids"
         "nix-command"
@@ -39,13 +38,6 @@
     };
   };
 
-  nixpkgs = {
-    overlays = [
-      inputs.emacs-overlay.overlays.default
-      outputs.overlays.default
-    ];
-  };
-
   news.display = "silent";
 
   programs.home-manager.enable = true;
@@ -56,5 +48,16 @@
     username = lib.mkDefault "piotr";
     homeDirectory = lib.mkDefault "/home/${config.home.username}";
     stateVersion = lib.mkDefault "23.11";
+  };
+
+  home.packages = with pkgs; [
+    htop
+    jq
+    tree
+  ];
+
+  programs.bash = {
+    enable = true;
+    enableCompletion = true;
   };
 }

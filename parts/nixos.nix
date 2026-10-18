@@ -8,6 +8,7 @@ let
     inputs.nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
+        self.nixosModules.base
         ../hosts/${hostname}
         inputs.private-nix-config.nixosModules.sops
         inputs.private-nix-config.nixosModules.secrets

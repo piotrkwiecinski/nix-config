@@ -45,9 +45,6 @@ nix develop
 # Rebuild NixOS system configuration
 nix-switch
 
-# Rebuild home-manager configuration
-home-switch
-
 # Format all Nix files
 nix fmt
 #+end_src
@@ -70,19 +67,19 @@ ssh piotr@homeserver "cd ~/nix-config && git pull && sudo nixos-rebuild switch -
 
 ** Adding a New Host
 
-1. Create =hosts/{hostname}/default.nix= with system configuration. This file should import:
-   - =inputs.home-manager.nixosModules.home-manager=
+1. Create =hosts/{hostname}/default.nix= with the host-specific system configuration. =mkHost= already adds =modules/nixos/base.nix= (nixpkgs, home-manager, the piotr user, nix settings, locale, SSH, resolved, Tailscale) and the private sops modules. Import on top of that:
    - =./hardware-configuration.nix=
-   - =../../users/piotr= (user account module)
+   - Profiles: =outputs.nixosModules.server= (always-on), =outputs.nixosModules.desktop= (GNOME workstation), =outputs.nixosModules.rpi4= (Raspberry Pi 4, includes =server=)
+   - Features: =outputs.nixosModules.samba=, =outputs.nixosModules.wifi-watchdog=
    - Any relevant =inputs.private-nix-config.nixosModules.*= for secrets
    - Optionally: =inputs.hardware.nixosModules.{profile}=, =inputs.disko.nixosModules.disko=
 
 2. Create =hosts/{hostname}/hardware-configuration.nix= (generate with =nixos-generate-config= or copy from an existing host)
 
 3. Create =home/piotr/{hostname}.nix= — this is the home-manager entry point for the host:
-   - Always import =./global= for shared config (git, nix settings)
-   - Selectively import features: =./features/emacs=, =./features/direnv.nix=, =./features/desktop/common/firefox.nix=
-   - For servers: disable desktop features with =lib.mkForce false=
+   - Servers import =./global= (git, nix settings, CLI basics)
+   - Desktop machines import =./profiles/workstation.nix= (global + emacs, direnv, firefox, fonts)
+   - Add further =./features/*= as needed
 
 4. Register the host in =parts/nixos.nix=:
    #+begin_src nix
@@ -146,13 +143,17 @@ hosts/                     # Per-host NixOS configurations
     hardware-configuration.nix
 
 home/piotr/                # Home-manager configurations
-  global/                  # Shared across all hosts (git, nix settings)
+  global/                  # Shared across all hosts (git, nix settings, CLI basics)
+  profiles/                # Bundles of features (workstation)
   features/                # Optional modules (emacs, direnv, firefox)
   {hostname}.nix           # Host-specific user config
 
-users/piotr/               # User account NixOS module (dynamic hostname-based import)
+modules/nixos/             # Shared NixOS modules, exported as nixosModules.*
+  base.nix                 # Added to every host by mkHost
+  profiles/               # server, desktop, rpi4
+  features/               # user-piotr, samba, wifi-watchdog
 
-parts/                     # Flake-parts modules (nixos, home-manager, iso, overlays, dev-shell, formatter, packages)
+parts/                     # Flake-parts modules (nixos, modules, iso, overlays, dev-shell, formatter, packages, templates)
 
 overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
 

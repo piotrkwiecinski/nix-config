@@ -138,7 +138,6 @@ let
     inputsToUpdate = [
       "nixpkgs"
       "nixpkgs-unstable"
-      "nixpkgs-master"
       "flake-parts"
       "systems"
       "hardware"
@@ -205,10 +204,7 @@ in
     inputs.private-nix-config.homeManagerModules.media
     inputs.private-nix-config.homeManagerModules.activitywatch-private
     inputs.private-nix-config.homeManagerModules.thinkpad-x1-g3
-    ./global
-    ./features/emacs
-    ./features/direnv.nix
-    ./features/desktop/common/firefox.nix
+    ./profiles/workstation.nix
     ./features/desktop/activitywatch.nix
     ./features/mpv.nix
   ];
@@ -232,8 +228,6 @@ in
     card-timeout = 1;
   };
 
-  xdg.mime.enable = true;
-
   programs.obs-studio = {
     enable = true;
     package = (
@@ -246,8 +240,6 @@ in
       obs-pipewire-audio-capture
     ];
   };
-
-  fonts.fontconfig.enable = true;
 
   dconf.settings = {
     "org/gnome/mutter" = {
@@ -330,10 +322,6 @@ in
     inherit (pkgs)
       sox
       magento-cache-clean
-      fira-code
-      fira-code-symbols
-      htop
-      jq
       yq-go
       openvpn
       montserrat
@@ -366,7 +354,7 @@ in
       ripgrep
       forgejo-cli
       ;
-    inherit (pkgs.master) pi-coding-agent;
+    inherit (pkgs.unstable) pi-coding-agent;
     inherit (pkgs.unstable) davinci-resolve;
     inherit (pkgs.unstable.nerd-fonts) symbols-only;
     inherit (pkgs.unstable.jetbrains) idea;
@@ -377,9 +365,6 @@ in
   };
 
   programs.bash = {
-    enable = true;
-    enableCompletion = true;
-
     # Source the sops-rendered Ollama env file in login shells (terminals,
     # SSH sessions).  Graphical apps get OLLAMA_API_KEY via the
     # ollama-env systemd user service instead.

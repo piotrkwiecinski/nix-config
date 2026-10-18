@@ -10,12 +10,9 @@
   imports = [
     inputs.disko.nixosModules.disko
     ./disk-config.nix
-    inputs.home-manager.nixosModules.home-manager
     inputs.hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen3
     ./hardware-configuration.nix
-    ../../users/piotr
-    inputs.private-nix-config.nixosModules.sops
-    inputs.private-nix-config.nixosModules.secrets
+    outputs.nixosModules.desktop
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3-secrets
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3
   ];
@@ -34,19 +31,6 @@
     # for PAM configuration. sops secrets are only available at activation time.
     id = [ "32878882" ];
   };
-
-  nixpkgs = {
-    config = {
-      allowUnfree = true;
-    };
-    overlays = [
-      inputs.emacs-overlay.overlays.default
-      outputs.overlays.default
-    ];
-  };
-
-  home-manager.backupFileExtension = "backup";
-  home-manager.extraSpecialArgs = { inherit inputs outputs; };
 
   boot.kernelPackages = pkgs.linuxPackages_6_18;
   boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
@@ -150,7 +134,6 @@
 
   nix = {
     settings = {
-      auto-optimise-store = true;
       max-jobs = 4;
       cores = 4;
       max-substitution-jobs = 32;
@@ -162,14 +145,12 @@
       extra-substituters = [
         # Disabled for now: homeserver:5000 is unreachable and stalls builds.
         # "http://homeserver:5000?priority=40"
-        "https://nix-community.cachix.org?priority=41"
         "https://emacs-ci.cachix.org?priority=42"
         "https://devenv.cachix.org?priority=43"
         "https://cache.nixos-cuda.org?priority=44"
       ];
       extra-trusted-public-keys = [
         "homeserver-cache:GnyJnLGzLHN2pdm9D6kzkSd3s3IHMb6SNDh0y9Akoz4="
-        "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
         "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
@@ -177,33 +158,19 @@
       flake-registry = "";
       keep-outputs = true;
       keep-derivations = true;
-      experimental-features = "nix-command flakes";
     };
     daemonCPUSchedPolicy = "batch";
     daemonIOSchedClass = "best-effort";
     daemonIOSchedPriority = 4;
-    channel.enable = false;
-    nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 7d";
-    };
-    registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
   systemd.services.NetworkManager-wait-online.enable = false;
 
-  # Enable networking
-  networking.networkmanager = {
-    enable = true;
-    plugins = with pkgs; [
-      networkmanager-openvpn
-    ];
-  };
+  networking.networkmanager.plugins = with pkgs; [
+    networkmanager-openvpn
+  ];
 
   networking.firewall = {
-    trustedInterfaces = [ "tailscale0" ];
     allowedTCPPorts = [
       3000
       9001
@@ -213,27 +180,15 @@
       8123
       8282
     ];
-    allowedUDPPorts = [
-      41641 # Tailscale
-    ];
   };
 
   # With resolved, tailscale registers MagicDNS as a split-DNS route for the
   # tailnet only. Subnet routes stay off so they cannot shadow OpenVPN or
   # docker networks.
-  services.tailscale = {
-    enable = true;
-    extraSetFlags = [
-      "--accept-dns=true"
-      "--accept-routes=false"
-    ];
-  };
-
-  # Set your time zone.
-  time.timeZone = "Europe/Rome";
-
-  # Select internationalisation properties.
-  i18n.defaultLocale = "en_GB.UTF-8";
+  services.tailscale.extraSetFlags = [
+    "--accept-dns=true"
+    "--accept-routes=false"
+  ];
 
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "it_IT.UTF-8";
@@ -247,13 +202,7 @@
     LC_TIME = "it_IT.UTF-8";
   };
 
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
-
-  # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
-  services.desktopManager.gnome.enable = true;
 
   # Resolve *.local (homeserver.local, homerpilab.local) outside of gvfs too,
   # and publish thinkpad-x1-g3.local for the Pis' remote builder. Only on
@@ -288,38 +237,17 @@
   services.gnome.rygel.enable = false;
   services.gnome.gnome-user-share.enable = false;
 
-  # Configure keymap in X11
-  services.xserver.xkb = {
-    layout = "gb";
-    variant = "colemak";
-  };
-
-  # Configure console keymap
-  console.keyMap = "uk";
-
-  # Enable CUPS to print documents.
-  services.printing.enable = true;
   services.printing.browsed.enable = false;
 
-  # resolved is the system resolver: per-link DHCP/VPN DNS with ordered
-  # failover, plus tailscale split DNS. mDNS stays with avahi.
-  services.resolved = {
-    enable = true;
-    settings.Resolve = {
-      MulticastDNS = false;
-      LLMNR = false;
-      DNSSEC = false;
-    };
-    # resolved has no wildcard records, so these zones go to dnsmasq
-    dnsDelegates.dev.Delegate = {
-      DNS = "127.0.0.1:5300";
-      # "~" makes them routing-only, not search domains
-      Domains = [
-        "~test"
-        "~loc"
-        "~homeserver.local"
-      ];
-    };
+  # resolved has no wildcard records, so these zones go to dnsmasq
+  services.resolved.dnsDelegates.dev.Delegate = {
+    DNS = "127.0.0.1:5300";
+    # "~" makes them routing-only, not search domains
+    Domains = [
+      "~test"
+      "~loc"
+      "~homeserver.local"
+    ];
   };
 
   # Wildcard dev domains (*.test → traefik) and *.homeserver.local vhosts,
@@ -344,8 +272,6 @@
   # Ad/tracker blocking via /etc/hosts, which resolved answers from
   networking.stevenblack.enable = true;
 
-  # Enable sound with pipewire.
-  services.pulseaudio.enable = false;
   hardware.nvidia = {
     open = false;
     nvidiaPersistenced = false; # Disabled: allows GPU D3 sleep with finegrained PM
@@ -365,13 +291,7 @@
     };
   };
   security.pki.certificateFiles = [ ./mkcert-rootCA.pem ];
-  security.rtkit.enable = true;
   services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-
     extraConfig.pipewire."92-low-latency" = {
       "context.properties" = {
         "default.clock.rate" = 48000;
@@ -574,22 +494,6 @@
     enableExtraSocket = true;
   };
 
-  users.users."piotr" = {
-    hashedPasswordFile = config.sops.secrets."piotr-password-hash".path;
-    openssh.authorizedKeys.keys = [
-      "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC1AkWOqdmzCuLtD1hbJHNbli12oqco1Zh8BHf1tif7zFAz6sNgkFGSp4+gySMIBv+Qk2SbNpGCI1XL2kpgTFUu2LbF3tfOjdP5uXGZfb1Af+rv/ESprBJjjiM8YuvD1TZ4Q25ie1eIyjcey30JJReA4K9nvHPr/nthpch7xfgnoO7Pkyf1OlEeZbp1Luo1s8mqb+oFYW9mcIfDzn5R7YvPshfflMQMXfbgXQ4usKpLNNrr5NjKpBETu9/wf/T9OUD/+2BFyiMrRZkJWtM3QCoXEYDWqcW0qvc4uSXMUyCYbHNtrxuhU1VIbDXDx2Gmkcs58NPnpxw9ONdkA5XS2pfEihElYNc8jF7uh24mjs1MICFZqFgsWWz6S9bYkqW1y/MDuhKy8IA2vdHiSFxVZbSFv6jf8LMQXDbxIHNhGoF8wTJCK/zNRtmOmSQnzi1DQcncYxy0WqoHTlR/beiPqtyaUNSEEyapr9vwagePvuY/4BKMTpamfEe/nGADJpBfcvs= piotr@piotr-laptop"
-    ];
-  };
-
-  # SSH for remote nix builds from homeserver
-  services.openssh = {
-    enable = true;
-    settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
-    };
-  };
-
   # Builder user for remote nix builds from homeserver
   users.users.builder = {
     isNormalUser = true;
@@ -599,11 +503,7 @@
     ];
   };
 
-  nix.settings.trusted-users = [
-    "root"
-    "piotr"
-    "builder"
-  ];
+  nix.settings.trusted-users = [ "builder" ];
 
   security.sudo.extraRules = [
     {

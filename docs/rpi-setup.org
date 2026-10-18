@@ -23,7 +23,7 @@ Create the following files (using =homeserver= or =homerpilab= as reference):
 | =hosts/<hostname>/hardware-configuration.nix= | RPi 4B aarch64 hardware config (USB SSD boot) |
 | =home/piotr/<hostname>.nix=            | Home-manager config                          |
 
-Have =default.nix= import =../common/rpi4-server.nix= (the shared Pi 4 base: U-Boot, mainline kernel, remote builds, SSH, Tailscale) and keep only host-specific services in it.
+Have =default.nix= import =outputs.nixosModules.rpi4= (the shared Pi 4 base: U-Boot, mainline kernel, remote builds, server profile; SSH and Tailscale come from the base module every host gets) and keep only host-specific services in it.
 
 Register the host in flake-parts:
 

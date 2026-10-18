@@ -1,21 +1,11 @@
 { pkgs, ... }:
 {
-  imports = [
-    ./global
-    ./features/emacs
-    ./features/direnv.nix
-    ./features/desktop/common/firefox.nix
-  ];
+  imports = [ ./profiles/workstation.nix ];
 
-  xdg.mime.enable = true;
+  home.stateVersion = "26.05";
 
   home.packages = with pkgs; [
-    nodejs_20
-    htop
-    fira-code
-    fira-code-symbols
     nerd-fonts.fira-code
-    jq
     unstable.devenv
     unstable.element-desktop
     unstable.signal-desktop
@@ -27,11 +17,4 @@
     yt-dlp
     openvpn
   ];
-
-  programs.bash = {
-    enable = true;
-    enableCompletion = true;
-  };
-
-  fonts.fontconfig.enable = true;
 }

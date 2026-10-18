@@ -263,22 +263,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1791730368,
-        "narHash": "sha256-RPqqMacSJtBZW/HzIEVvLc2kw0e30yRY/K2mFZ2BT/k=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b25ca73fc378975732a8e78f892eba5324a9d440",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1791662279,
@@ -440,7 +424,6 @@
         "home-manager": "home-manager",
         "magento-overlay": "magento-overlay",
         "nixpkgs": "nixpkgs_4",
-        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-unstable-cuda": "nixpkgs-unstable-cuda",
         "private-nix-config": "private-nix-config",

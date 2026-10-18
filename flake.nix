@@ -5,7 +5,6 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs-unstable-cuda.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
@@ -59,7 +58,7 @@
         ./parts/overlays.nix
         ./parts/packages.nix
         ./parts/nixos.nix
-        ./parts/home-manager.nix
+        ./parts/modules.nix
         ./parts/iso.nix
         ./parts/templates.nix
       ];

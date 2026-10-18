@@ -27,10 +27,6 @@ in
         config.allowUnfree = true;
         config.cudaSupport = true;
       };
-      pkgs-master = import inputs.nixpkgs-master {
-        inherit (final.stdenv.hostPlatform) system;
-        config.allowUnfree = true;
-      };
       claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
       magento-pkgs = inputs.magento-overlay.overlays.default final prev;
       additions = import ../pkgs {
@@ -40,7 +36,6 @@ in
       unstable = {
         unstable = pkgs-unstable;
         unstable-cuda = pkgs-unstable-cuda;
-        master = pkgs-master;
       };
       base = additions // magento-pkgs // unstable // { inherit claude-code; };
     in
