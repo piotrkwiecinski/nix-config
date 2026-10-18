@@ -10,16 +10,15 @@
       "locked": {
         "lastModified": 1769708287,
         "narHash": "sha256-jFrgYB59/439fHOc8/mAbcEu0EciqBTujgN/IuCpBW0=",
-        "ref": "main",
+        "owner": "piotrkwiecinski",
+        "repo": "calstart",
         "rev": "9208160b0607e429b0722377e6a5e9084abe50d4",
-        "revCount": 25,
-        "type": "git",
-        "url": "ssh://pkgithub/piotrkwiecinski/calstart"
+        "type": "github"
       },
       "original": {
-        "ref": "main",
-        "type": "git",
-        "url": "ssh://pkgithub/piotrkwiecinski/calstart"
+        "owner": "piotrkwiecinski",
+        "repo": "calstart",
+        "type": "github"
       }
     },
     "claude-code-overlay": {
@@ -401,17 +400,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792338086,
-        "narHash": "sha256-Qvjd2r+d5wX6UKu3a3QcwhidoF2FmnlQEWogHxm96qU=",
-        "ref": "refs/heads/main",
-        "rev": "af5925f41ea4ee687e5ecd3d338a4479807033fb",
-        "revCount": 151,
-        "type": "git",
-        "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
+        "lastModified": 1792341609,
+        "narHash": "sha256-YVupcllBfm0eEqQ8Y4qnQ68NksBsXUzwEfmZGIfwdo0=",
+        "owner": "piotrkwiecinski",
+        "repo": "nix-config-private",
+        "rev": "a9174e3559497d6fbdf8be7cde29262a155b4637",
+        "type": "github"
       },
       "original": {
-        "type": "git",
-        "url": "ssh://pkgithub/piotrkwiecinski/nix-config-private"
+        "owner": "piotrkwiecinski",
+        "repo": "nix-config-private",
+        "type": "github"
       }
     },
     "root": {

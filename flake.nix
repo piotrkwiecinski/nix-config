@@ -39,7 +39,7 @@
     };
 
     private-nix-config = {
-      url = "git+ssh://pkgithub/piotrkwiecinski/nix-config-private";
+      url = "github:piotrkwiecinski/nix-config-private";
       inputs.sops-nix.follows = "sops-nix";
       inputs.nixpkgs-unstable.follows = "nixpkgs-unstable";
     };

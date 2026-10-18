@@ -63,17 +63,11 @@ nix-switch
 nix fmt
 #+end_src
 
-Run =nix-switch= rather than =sudo nixos-rebuild=. It evaluates as your user, which can fetch the private flake input over SSH; root cannot.
+Private flake inputs are fetched from GitHub with the token in the =nix-access-tokens= sops secret, which =base.nix= includes into nix.conf, so both piotr and root can fetch them.
 
 *** Remote Deployment
 
-From the thinkpad (builds there, aarch64 through binfmt, and copies the closure):
-
-#+begin_src bash
-nix develop -c nixos-rebuild switch --flake ".#homerpilab" --target-host piotr@homerpilab --sudo
-#+end_src
-
-homeserver can also rebuild itself, fetching from cache.nixos.org. See "Deploying future updates" in [[file:docs/rpi-setup.org][docs/rpi-setup.org]].
+homeserver and homerpilab rebuild themselves from a clone in =~/nix-config=, fetching from cache.nixos.org. A first deploy, or a Pi without the token yet, goes from the thinkpad instead. See "Deploying future updates" in [[file:docs/rpi-setup.org][docs/rpi-setup.org]].
 
 ** Adding a New Host
 

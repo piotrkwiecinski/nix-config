@@ -2,10 +2,17 @@
 # home-manager wiring, nix daemon settings, the piotr user, locale, SSH,
 # resolved and Tailscale. Profiles and hosts only add on top of this.
 {
+  config,
+  lib,
   inputs,
   outputs,
   ...
 }:
+let
+  # GitHub token for the private flake inputs (`access-tokens = github.com=...`),
+  # on hosts whose sops file carries it.
+  accessTokens = config.sops.secrets."nix-access-tokens" or null;
+in
 {
   imports = [
     inputs.home-manager.nixosModules.home-manager
@@ -47,6 +54,7 @@
     # Flakes only; nixosSystem already pins the nixpkgs registry entry and
     # NIX_PATH to this flake's nixpkgs.
     channel.enable = false;
+    extraOptions = lib.mkIf (accessTokens != null) "!include ${accessTokens.path}";
     gc = {
       automatic = true;
       dates = "weekly";
