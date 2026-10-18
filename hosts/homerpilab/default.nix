@@ -1,5 +1,6 @@
 {
   config,
+  pkgs,
   inputs,
   ...
 }:
@@ -59,6 +60,14 @@
         </service>
       </service-group>
     '';
+  };
+
+  # A SIGHUP during startup kills avahi before its handlers are installed;
+  # systemd counts that as a clean exit and the stale PID file then blocks
+  # every later start.
+  systemd.services.avahi-daemon.serviceConfig = {
+    Restart = "always";
+    ExecStartPre = "-${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid";
   };
 
   # Samba file sharing; shares, their directories and users
