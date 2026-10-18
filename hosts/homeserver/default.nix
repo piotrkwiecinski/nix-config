@@ -457,10 +457,12 @@ in
 
   # A SIGHUP during startup kills avahi before its handlers are installed;
   # systemd counts that as a clean exit and the stale PID file then blocks
-  # every later start.
+  # every later start. The "+" runs the cleanup outside the unit's capability
+  # sandbox, which otherwise denies root access to the avahi-owned file.
   systemd.services.avahi-daemon.serviceConfig = {
     Restart = "always";
-    ExecStartPre = "-${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid";
+    RestartSec = "2s";
+    ExecStartPre = "-+${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid";
   };
 
   # Paperless-ngx document management
