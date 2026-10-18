@@ -1,36 +1,50 @@
 #+title: My NixOS config
 
 ** Overview
-Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-parts][flake-parts]] for modular management. Uses two nixpkgs channels (stable, unstable), [[https://github.com/nix-community/home-manager][home-manager]] for user environments, [[https://github.com/Mic92/sops-nix][sops-nix]] for secrets, and [[https://github.com/nix-community/disko][disko]] for declarative disk layouts.
+Multi-host NixOS configuration built with [[https://github.com/hercules-ci/flake-parts][flake-parts]]:
+- nixpkgs: stable (=nixos-26.05=) as the base, =unstable= for selected packages, and a separately pinned unstable for CUDA
+- [[https://github.com/nix-community/home-manager][home-manager]] for the user environment, run as a NixOS module
+- [[https://github.com/Mic92/sops-nix][sops-nix]] for secrets
+- [[https://github.com/nix-community/disko][disko]] for declarative disk layouts
+
+Private configuration and all encrypted secrets live in a separate flake, =nix-config-private=.
 
 ** Host specification
 
-| Name           | Description               | Type    | Arch          |
-| homelab        | Workstation               | Desktop | x86_64-linux  |
-| thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3 | Laptop  | x86_64-linux  |
-| homeserver     | Raspberry Pi 4B           | Server  | aarch64-linux |
-| homerpilab     | Raspberry Pi 4B           | Server  | aarch64-linux |
-| iso            | LiveCD for setup/restore  | ISO     | x86_64-linux  |
+| Name           | Description                                 | Type    | Arch          |
+| homelab        | Workstation (being reinstalled on an HDD)   | Desktop | x86_64-linux  |
+| thinkpad-x1-g3 | Thinkpad X1 Extreme Gen 3                   | Laptop  | x86_64-linux  |
+| homeserver     | Raspberry Pi 4B                             | Server  | aarch64-linux |
+| homerpilab     | Raspberry Pi 4B, 1 TB HDD                   | Server  | aarch64-linux |
+| iso            | LiveCD for setup/restore                    | ISO     | x86_64-linux  |
 
 *** homeserver services
-- [[https://nextcloud.com/][Nextcloud]] - File sync, calendar, contacts
-- [[https://www.home-assistant.io/][Home Assistant]] - Home automation
-- [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management with automated backups to thinkpad
-- [[https://calibre-ebook.com/][Calibre]] - E-book library server
+- [[https://www.home-assistant.io/][Home Assistant]] - Home automation (ZHA on a ConBee stick, Bluetooth)
+- [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management
 - [[https://forgejo.org/][Forgejo]] - Git forge
-- [[https://tailscale.com/][Tailscale]] - VPN with auto-provisioned Let's Encrypt HTTPS via nginx reverse proxy
-- [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache for LAN clients
+- [[https://www.samba.org/][Samba]] - File shares for the LAN
+- nginx - HTTPS for the services: =*.homeserver.local= on the LAN, plus Let's Encrypt certificates from [[https://tailscale.com/][Tailscale]] for tailnet access
+- [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache, reachable over Tailscale
+- [[https://restic.net/][restic]] - Encrypted daily backups of Home Assistant and Paperless to homerpilab
 
-*** thinkpad-x1-g3 services
-- [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for development (devenv and Docker)
+*** homerpilab services
+- [[https://github.com/restic/rest-server][restic rest-server]] - Append-only backup target for homeserver, with weekly prune and check
+- [[https://www.samba.org/][Samba]] - File shares for the LAN
+
+*** thinkpad-x1-g3
+- [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for development (devenv and Docker), bound to loopback
 - [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Wildcard =*.test= / =*.loc= → 127.0.0.1 for Traefik, reached only through a systemd-resolved DNS delegate
 - [[https://github.com/StevenBlack/hosts][StevenBlack hosts]] - Ad/tracker blocklist in =/etc/hosts=
-
-*** DNS
-All hosts use [[https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html][systemd-resolved]]: NetworkManager hands it each connection's DHCP/VPN servers, and Tailscale registers MagicDNS as a split-DNS route for the tailnet only (short names like =homerpilab= work). mDNS (=*.local=, Samba discovery) stays with Avahi; resolved's own mDNS and LLMNR are off. The thinkpad publishes =thinkpad-x1-g3.local= on Wi-Fi, which the Pis use for their remote builder.
-- [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (btrfs, adoption mode)
+- [[https://ollama.com/][Ollama]] - Local LLMs on the NVIDIA GPU
+- Remote builder for the Pis (aarch64 through binfmt/QEMU)
+- [[https://github.com/nix-community/disko][Disko]] - Declarative disk layout (btrfs, adoption mode, dual-boot with Windows)
 - YubiKey PAM authentication (challenge-response)
 - NVIDIA PRIME offload (Intel iGPU primary, NVIDIA dGPU on demand)
+
+*** Networking and security
+- *DNS*: all hosts use [[https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html][systemd-resolved]]. NetworkManager hands it each connection's DHCP/VPN servers, and Tailscale registers MagicDNS as a split-DNS route for the tailnet only, so short names like =homerpilab= work. mDNS (=*.local=, Samba discovery) stays with Avahi; resolved's own mDNS and LLMNR are off. The thinkpad publishes =thinkpad-x1-g3.local= on Wi-Fi, which the Pis use for their remote builder.
+- *Firewall*: =tailscale0= is trusted everywhere. On the LAN, homeserver only opens SSH, Samba and 80/443; everything else (Tailscale HTTPS ports, Harmonia) is Tailscale-only. On the thinkpad, dev ports are open only on Docker bridges, and Docker publishes ports on 127.0.0.1.
+- *SSH*: key-only, no keyboard-interactive auth, no root login. The Pis pin the thinkpad's host key. Agent forwarding is off by default.
 
 ** Usage
 
@@ -42,28 +56,24 @@ Enter the development shell, then use the provided commands:
 # Enter development shell
 nix develop
 
-# Rebuild NixOS system configuration
+# Rebuild NixOS (and home-manager, which runs as a NixOS module)
 nix-switch
 
 # Format all Nix files
 nix fmt
 #+end_src
 
+Run =nix-switch= rather than =sudo nixos-rebuild=. It evaluates as your user, which can fetch the private flake input over SSH; root cannot.
+
 *** Remote Deployment
 
-Deploy to a remote host from thinkpad:
+From the thinkpad (builds there, aarch64 through binfmt, and copies the closure):
 
 #+begin_src bash
-nixos-rebuild switch --flake ".#homeserver" \
-  --target-host piotr@homeserver \
-  --build-host localhost
+nix develop -c nixos-rebuild switch --flake ".#homerpilab" --target-host piotr@homerpilab --sudo
 #+end_src
 
-Or build directly on the Pi (recommended for RPi hosts — fetches from cache.nixos.org):
-
-#+begin_src bash
-ssh piotr@homeserver "cd ~/nix-config && git pull && sudo nixos-rebuild switch --flake .#homeserver"
-#+end_src
+homeserver can also rebuild itself, fetching from cache.nixos.org. See "Deploying future updates" in [[file:docs/rpi-setup.org][docs/rpi-setup.org]].
 
 ** Adding a New Host
 
@@ -76,7 +86,7 @@ ssh piotr@homeserver "cd ~/nix-config && git pull && sudo nixos-rebuild switch -
 
 2. Create =hosts/{hostname}/hardware-configuration.nix= (generate with =nixos-generate-config= or copy from an existing host)
 
-3. Create =home/piotr/{hostname}.nix= — this is the home-manager entry point for the host:
+3. Create =home/piotr/{hostname}.nix=. This is the home-manager entry point for the host:
    - Servers import =./global= (git, nix settings, CLI basics)
    - Desktop machines import =./profiles/workstation.nix= (global + emacs, direnv, firefox, fonts)
    - Add further =./features/*= as needed
@@ -87,24 +97,25 @@ ssh piotr@homeserver "cd ~/nix-config && git pull && sudo nixos-rebuild switch -
    # For aarch64: mkHost { hostname = "new-host"; system = "aarch64-linux"; };
    #+end_src
 
-5. Register the home config in =parts/home-manager.nix=:
-   #+begin_src nix
-   "piotr@new-host" = mkHome { username = "piotr"; hostname = "new-host"; };
-   #+end_src
+5. Stage all new files: =git add hosts/new-host/ home/piotr/new-host.nix= (flakes only see git-tracked files)
 
-6. Stage all new files: =git add hosts/new-host/ home/piotr/new-host.nix= (flakes only see git-tracked files)
-
-7. Build: =nixos-rebuild switch --flake ".#new-host"=
+6. Build and switch on the new host: =nix develop -c nix-switch=
 
 For Raspberry Pi hosts, see [[file:docs/rpi-setup.org][docs/rpi-setup.org]] for the full setup workflow (SD image build, USB SSD boot, sops key provisioning).
 
 ** Remote Builds
 
-RPi hosts (aarch64) delegate builds to thinkpad-x1-g3 (x86_64) using distributed builds with QEMU emulation.
+RPi hosts (aarch64) delegate builds to thinkpad-x1-g3 (x86_64), which runs aarch64 through QEMU binfmt.
 
-- A =builder= user on thinkpad accepts SSH connections from RPi hosts
-- The builder SSH key is managed via sops-nix and deployed to =/etc/nix/builder_key=
-- Thinkpad enables =boot.binfmt.emulatedSystems = [ "aarch64-linux" ]= for cross-compilation
+- A =builder= user on the thinkpad accepts the Pis' builder key. The key is restricted to =nix-daemon --stdio=, so it gives no shell.
+- The key is managed with sops-nix and deployed to =/etc/nix/builder_key=
+- The Pis reach the thinkpad as =thinkpad-x1-g3.local= (mDNS) and pin its SSH host key
+
+** Backups
+
+homeserver backs up Home Assistant and Paperless with restic to an append-only =rest-server= on homerpilab, over Tailscale. homeserver can add snapshots but never delete them; retention runs on homerpilab.
+
+Listing, verifying, restoring and rolling back are all scripted (=homeserver-restore= on homeserver). The step-by-step procedures, including rebuilding homeserver from scratch, are in [[file:docs/backup-restore.org][docs/backup-restore.org]].
 
 ** Secrets Management
 
@@ -118,9 +129,15 @@ Secrets are managed via [[https://github.com/Mic92/sops-nix][sops-nix]] with age
 *** Editing Secrets
 
 #+begin_src bash
-cd ~/projects/nix-config-private
+cd ~/projects/personal/nix-config-private
 sops secrets/homeserver.yaml
 #+end_src
+
+*** Public repository hygiene
+
+This repository is public. A commit that bumps =private-nix-config= in =flake.lock= must not describe what changed there. The =commit-msg= hook (enabled by the dev shell) enforces it:
+- a lock-only bump must be exactly =chore(flake): bump private-nix-config=
+- a commit that also changes public code may mention the bump only as a =Bump private-nix-config= line
 
 ** LiveCD ISO
 
@@ -141,17 +158,18 @@ hosts/                     # Per-host NixOS configurations
     default.nix            # Host-specific system config
     disk-config.nix        # Disko declarative disk layout (optional)
     hardware-configuration.nix
+  homeserver/restore.*     # homeserver-restore backup tool
 
 home/piotr/                # Home-manager configurations
   global/                  # Shared across all hosts (git, nix settings, CLI basics)
   profiles/                # Bundles of features (workstation)
-  features/                # Optional modules (emacs, direnv, firefox)
+  features/                # Optional modules (emacs, direnv, firefox, mpv)
   {hostname}.nix           # Host-specific user config
 
 modules/nixos/             # Shared NixOS modules, exported as nixosModules.*
   base.nix                 # Added to every host by mkHost
-  profiles/               # server, desktop, rpi4
-  features/               # user-piotr, samba, wifi-watchdog
+  profiles/                # server, desktop, rpi4
+  features/                # user-piotr, samba, wifi-watchdog
 
 parts/                     # Flake-parts modules (nixos, modules, iso, overlays, dev-shell, formatter, packages, templates)
 
@@ -159,7 +177,9 @@ overlays/modifications/    # Package overlays (auto-loaded, no registration need
 
 pkgs/                      # Custom package definitions
 
-docs/                      # Setup guides and documentation
+templates/rust-cli/        # `nix flake init -t .#rust-cli` scaffold
+
+docs/                      # Setup guides and runbooks (Pi setup, backup restore, …)
 #+end_src
 
 ** Resources

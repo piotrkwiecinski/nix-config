@@ -1,0 +1,166 @@
+#+TITLE: Backups and Restore
+#+DESCRIPTION: How homeserver's Home Assistant and Paperless data is backed up with restic, and how to restore it
+
+* What is backed up
+
+| Data                         | Source on homeserver        | Schedule                                        |
+|------------------------------+-----------------------------+-------------------------------------------------|
+| Home Assistant state         | =/var/lib/hass=             | daily 12:00 (=restic-backups-hass.timer=)       |
+| Paperless documents + database | =/var/lib/paperless/export= | after the nightly 23:00 =paperless-exporter= run |
+
+- *Repository*: =rest:http://…@homerpilab:8000/homeserver/=, served by an append-only =rest-server= on homerpilab (=/var/lib/restic/homeserver=) and reached over Tailscale. Port 8000 is closed on the LAN.
+- *Encryption*: restic encrypts on homeserver before anything is sent. The repository password is =restic-password= in the private repo's =secrets/homeserver.yaml= (and =secrets/homerpilab.yaml= for the prune job). Without it the backups cannot be read. The sops admin key decrypts both files, so keep that key backed up outside these machines.
+- *Append-only*: homeserver can add snapshots but not delete or change them, so a compromised homeserver cannot destroy its own backups.
+- *Retention*: =restic-backups-homeserver-prune= on homerpilab runs Sundays at 04:00. It keeps 7 daily, 4 weekly and 6 monthly snapshots per path, then reads back 5% of the data to check it.
+- *Consistency*: Home Assistant is stopped while its snapshot is taken (about a minute) and started again even if the backup fails. Paperless is backed up from =document_exporter= output (documents, thumbnails, =manifest.json= with the whole database), never from the live PostgreSQL files.
+
+There is no off-site copy yet (tracked in the private repo's issue #2).
+
+* Tools
+
+Everything below is scripted. Run the steps as written rather than improvising with raw =restic= or =mv= commands.
+
+- =homeserver-restore= (on homeserver, from =hosts/homeserver/restore.sh=):
+  #+begin_src
+  sudo homeserver-restore <hass|paperless> list
+  sudo homeserver-restore <hass|paperless> verify   [SNAPSHOT]
+  sudo homeserver-restore <hass|paperless> restore  [SNAPSHOT] [--yes]
+  sudo homeserver-restore <hass|paperless> rollback STAMP      [--yes]
+  #+end_src
+  =SNAPSHOT= defaults to =latest= (the newest snapshot that contains that service's data).
+- =restic-homeserver= (private repo's dev shell, any machine with the sops admin key): plain =restic= with the repository and password already set. Used when homeserver itself is gone:
+  #+begin_src bash
+  cd ~/projects/personal/nix-config-private
+  nix develop -c restic-homeserver snapshots
+  #+end_src
+
+* Routine check (monthly)
+
+Prove the backups restore, without touching live data:
+
+#+begin_src bash
+ssh homeserver
+sudo homeserver-restore hass list
+sudo homeserver-restore hass verify        # restores to a scratch dir, checks both SQLite DBs
+sudo homeserver-restore paperless verify   # checks every file the manifest references is present
+#+end_src
+
+=verify= restores into =/var/lib/hass-restore-<stamp>= or =/var/lib/paperless/restore-<stamp>=, runs the checks, and deletes the scratch directory again. It ends with =Snapshot … is restorable.= Anything else is a failure: see [[*Troubleshooting][Troubleshooting]].
+
+Also glance at the prune job on homerpilab:
+
+#+begin_src bash
+ssh homerpilab journalctl -u restic-backups-homeserver-prune -n 20 --no-pager
+#+end_src
+
+The last lines should include =no errors were found=.
+
+* Restore Home Assistant (homeserver is running)
+
+1. *Pick the snapshot.* Use the newest one from before the problem started:
+   #+begin_src bash
+   sudo homeserver-restore hass list
+   #+end_src
+2. *Verify it* (changes nothing):
+   #+begin_src bash
+   sudo homeserver-restore hass verify <ID>
+   #+end_src
+3. *Restore it.* Type =restore= when asked:
+   #+begin_src bash
+   sudo homeserver-restore hass restore <ID>
+   #+end_src
+   The script:
+   - restores and re-checks the snapshot in =/var/lib/hass-restore-<stamp>=
+   - stops =home-assistant.service=
+   - moves the current data to =/var/lib/hass.pre-restore-<stamp>=
+   - moves the snapshot into =/var/lib/hass= and fixes ownership
+   - starts Home Assistant again
+
+   The last lines print the =<stamp>= and the matching =rollback= command.
+4. *Check.* Open https://hass.homeserver.local and confirm the integrations, Zigbee devices (ZHA, from =zigbee.db=) and history are back. The ConBee stick must be plugged in.
+5. *If it is wrong*, undo it:
+   #+begin_src bash
+   sudo homeserver-restore hass rollback <stamp>
+   #+end_src
+6. *Clean up*, once you are happy with the result:
+   #+begin_src bash
+   sudo rm -rf /var/lib/hass.pre-restore-<stamp>
+   #+end_src
+
+* Restore Paperless (homeserver is running)
+
+1. *Pick the snapshot.* Each one is a complete export from one night:
+   #+begin_src bash
+   sudo homeserver-restore paperless list
+   #+end_src
+2. *Verify it*:
+   #+begin_src bash
+   sudo homeserver-restore paperless verify <ID>
+   #+end_src
+3. *Restore it.* Type =restore= when asked:
+   #+begin_src bash
+   sudo homeserver-restore paperless restore <ID>
+   #+end_src
+   The script:
+   - restores and re-checks the export in =/var/lib/paperless/restore-<stamp>=
+   - stops all Paperless services and the exporter timer
+   - saves the current database to =/var/lib/paperless/db.pre-restore-<stamp>.sql= and moves =media= and =index= to =*.pre-restore-<stamp>=. =document_importer= only works on an empty install.
+   - drops and recreates the =paperless= database, runs =paperless-manage migrate=, then =paperless-manage document_importer= (which also rebuilds the search index)
+   - starts Paperless and the exporter timer again. The NixOS-managed =admin= password is re-applied on start.
+4. *Check.* Open https://paperless.homeserver.local, confirm the document count and open a few documents.
+5. *If it is wrong*, undo it. This restores the SQL dump and swaps =media=/=index= back:
+   #+begin_src bash
+   sudo homeserver-restore paperless rollback <stamp>
+   #+end_src
+6. *Clean up*, once you are happy with the result:
+   #+begin_src bash
+   sudo rm -rf /var/lib/paperless/{media,index}.pre-restore-<stamp> \
+               /var/lib/paperless/db.pre-restore-<stamp>.sql
+   #+end_src
+
+The import has to match the running Paperless version. =document_importer= warns on a version mismatch and may fail. If it does, roll back, deploy the nixpkgs revision the export was made with (=git log= for =flake.lock= around the snapshot date), restore, then upgrade again.
+
+* Rebuild homeserver from scratch (homeserver is lost)
+
+1. *Reinstall* homeserver following [[file:rpi-setup.org][rpi-setup.org]], including Step 5: re-key =secrets/homeserver.yaml= to the new SSH host key and bump =private-nix-config=. The restic password and repository URL then decrypt on the new host.
+2. *Stop the automatic backups before restoring*, so that the empty new install isn't snapshotted:
+   #+begin_src bash
+   sudo systemctl stop restic-backups-hass.timer paperless-exporter.timer
+   #+end_src
+   An empty snapshot is harmless (old ones are kept), but it would become =latest=. Always restore by explicit ID from =list=.
+3. *Restore both services* by ID, as in the two procedures above:
+   #+begin_src bash
+   sudo homeserver-restore hass list
+   sudo homeserver-restore hass restore <ID>
+   sudo homeserver-restore paperless list
+   sudo homeserver-restore paperless restore <ID>
+   #+end_src
+4. *Re-enable the Home Assistant timer.* The Paperless restore restarts the exporter timer by itself.
+   #+begin_src bash
+   sudo systemctl start restic-backups-hass.timer
+   #+end_src
+5. Run the [[*Routine check (monthly)][routine check]] the next day, to confirm that fresh snapshots arrive.
+
+* Get files without homeserver
+
+To read a document or an old Home Assistant file while homeserver is down, restore it on any machine with the sops admin key and Tailscale. homerpilab must be up.
+
+#+begin_src bash
+cd ~/projects/personal/nix-config-private
+nix develop -c restic-homeserver snapshots
+nix develop -c restic-homeserver ls <ID> /var/lib/paperless/export | grep -i <name>
+nix develop -c restic-homeserver restore <ID> --target ~/restore \
+  --include "/var/lib/paperless/export/<file>"
+#+end_src
+
+=restic-homeserver mount ~/restore= also works, for browsing all snapshots as a filesystem.
+
+If homerpilab is the machine that is down but its disk is fine, plug the disk into another Linux machine. The repository is a plain directory (=/var/lib/restic/homeserver= on the ext4 root), readable with =restic -r <mountpoint>/var/lib/restic/homeserver= and the =restic-password=.
+
+* Troubleshooting
+
+- *=verify= fails with =snapshot has no …= or an SQLite error*: try the previous snapshot from =list=. Report the failing one; do not prune it by hand.
+- *=Fatal: unable to open config file=* or *=401 Unauthorized=*: =rest-server= is down or the credentials do not match. Check =systemctl status restic-rest-server= on homerpilab, and that =restic-repository= (homeserver) and =restic-htpasswd= (homerpilab) were generated together.
+- *=repository is already locked=*: a backup or prune is running. Wait for it. For a stale lock after a crash, run =sudo homeserver-restore hass list= (it only reads) to see what is there. The weekly prune job runs =restic unlock= first.
+- *A restore stopped half-way*: the script prints where the previous data is (=*.pre-restore-<stamp>=). Run =rollback <stamp>= to return to it.
+- *Backup job logs*: =journalctl -u restic-backups-hass= / =-u restic-backups-paperless= on homeserver.

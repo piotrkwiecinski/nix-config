@@ -19,6 +19,7 @@ in
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
     ./hardware-configuration.nix
+    ./restore.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
     # Samba shares and users, Paperless tailnet hostnames
     inputs.private-nix-config.nixosModules.homeserver
