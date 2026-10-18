@@ -27,9 +27,8 @@ in
   networking.hostName = "homeserver";
 
   # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
-  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447, MPD
-  # 6600/8600, Harmonia 5000, ActivityWatch 5600) is reached over tailscale0,
-  # which is a trusted interface.
+  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447,
+  # Harmonia 5000) is reached over tailscale0, which is a trusted interface.
   networking.firewall.allowedTCPPorts = [
     80 # HTTP (redirect to HTTPS)
     443 # HTTPS (LAN subdomains)
@@ -276,31 +275,6 @@ in
     };
   };
 
-  # MPD music daemon
-  services.mpd = {
-    enable = true;
-    # Tailscale-only (tailscale0 is trusted); the LAN firewall stays closed.
-    openFirewall = false;
-    settings = {
-      music_directory = "/var/lib/music";
-      bind_to_address = "any";
-      port = 6600;
-      audio_output = [
-        {
-          type = "httpd";
-          name = "HTTP Stream";
-          encoder = "lame";
-          port = "8600";
-          bitrate = "192";
-          format = "44100:16:2";
-          always_on = "yes";
-          tags = "yes";
-        }
-      ];
-    };
-  };
-  users.users.mpd.extraGroups = [ "media" ];
-
   # Samba shares and their users come from private-nix-config.homeserver;
   # server, wsdd and mDNS from the samba module.
 
@@ -433,98 +407,6 @@ in
       ls -t "$BACKUP_DIR"/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
       ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
         "ls -t $REMOTE_DIR/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
-    '';
-    serviceConfig.Type = "oneshot";
-  };
-
-  # ActivityWatch aggregator - receives bucket pushes from thinkpad and
-  # Android over Tailscale (port 5600 is closed on the LAN).
-  users.users.aw-server = {
-    isSystemUser = true;
-    group = "aw-server";
-    home = "/var/lib/aw-server";
-  };
-  users.groups.aw-server = { };
-
-  systemd.services.aw-server =
-    let
-      awConfigHome = pkgs.runCommand "aw-server-config" { } ''
-        mkdir -p $out/activitywatch/aw-server-rust
-        cat > $out/activitywatch/aw-server-rust/config.toml <<'EOF'
-        address = "0.0.0.0"
-        port = 5600
-        # Allow the web UI served from this same host to call the API.
-        # aw-server-rust's default CORS whitelist only covers localhost.
-        cors = [
-          "http://homeserver:5600",
-          "http://homeserver.local:5600",
-        ]
-        cors_regex = []
-
-        [custom_static]
-        EOF
-      '';
-    in
-    {
-      description = "ActivityWatch aggregator (aw-server-rust)";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network.target" ];
-      serviceConfig = {
-        ExecStart = "${pkgs.aw-server-rust}/bin/aw-server --host 0.0.0.0 --port 5600";
-        User = "aw-server";
-        Group = "aw-server";
-        StateDirectory = "aw-server";
-        Environment = [
-          "XDG_DATA_HOME=/var/lib/aw-server"
-          "XDG_CONFIG_HOME=${awConfigHome}"
-        ];
-        Restart = "on-failure";
-        RestartSec = 5;
-      };
-    };
-
-  systemd.timers.aw-backup-sync = {
-    description = "Daily ActivityWatch backup to thinkpad";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* 13:00:00";
-      Persistent = true;
-    };
-  };
-
-  systemd.services.aw-backup-sync = {
-    description = "Snapshot ActivityWatch state and send to thinkpad";
-    path = with pkgs; [
-      gnutar
-      zstd
-      openssh
-      coreutils
-    ];
-    script = ''
-      set -euo pipefail
-      AW_DIR="/var/lib/aw-server"
-      BACKUP_DIR="/var/lib/aw-server-backup"
-      TIMESTAMP=$(date +%Y%m%d)
-      ARCHIVE="aw-server-''${TIMESTAMP}.tar.zst"
-      SSH_KEY="${config.sops.secrets."builder-key".path}"
-      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
-      REMOTE="builder@thinkpad-x1-g3.local"
-      REMOTE_DIR="/data/backups/aw-server"
-
-      mkdir -p "$BACKUP_DIR"
-      tar -C "$AW_DIR" -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
-
-      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
-        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
-        exit 1
-      fi
-
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
-      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
-
-      ls -t "$BACKUP_DIR"/aw-server-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
-        "ls -t $REMOTE_DIR/aw-server-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
     '';
     serviceConfig.Type = "oneshot";
   };
