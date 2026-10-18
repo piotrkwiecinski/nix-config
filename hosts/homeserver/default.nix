@@ -13,6 +13,38 @@ let
   '';
   bluetti-bt = import ./bluetti-bt.nix { inherit pkgs; };
   solarman = import ./solarman.nix { inherit pkgs; };
+
+  # Backups go to the thinkpad's `backup` account, which only runs rrsync
+  # write-only into /data/backups (see hosts/thinkpad-x1-g3): this host can
+  # add archives but neither list nor delete them. Retention there is the
+  # thinkpad's job; here only the newest 3 archives are kept. Every run sends
+  # whatever the thinkpad is still missing, over Tailscale, so a laptop that
+  # was away just catches up on the next attempt.
+  pushBackups =
+    {
+      prefix,
+      localDir,
+      remoteDir,
+    }:
+    ''
+      rsync --times --ignore-existing \
+        -e "ssh -i ${config.sops.secrets."backup-key".path} -o BatchMode=yes" \
+        "${localDir}"/${prefix}-*.tar.zst backup@thinkpad-x1-g3:${remoteDir}/
+      ls -t "${localDir}"/${prefix}-*.tar.zst | tail -n +4 | xargs -r rm -f
+    '';
+  backupPath = with pkgs; [
+    gnutar
+    zstd
+    openssh
+    rsync
+    coreutils
+  ];
+  backupServiceConfig = {
+    Type = "oneshot";
+    # The thinkpad may be offline or asleep; retry the send until it is back
+    Restart = "on-failure";
+    RestartSec = "30min";
+  };
 in
 {
   imports = [
@@ -307,45 +339,26 @@ in
 
   systemd.services.paperless-backup-sync = {
     description = "Compress and send Paperless export to thinkpad";
-    path = with pkgs; [
-      gnutar
-      zstd
-      openssh
-      coreutils
-    ];
+    path = backupPath;
     script = ''
       set -euo pipefail
       EXPORT_DIR="/var/lib/paperless/export"
       BACKUP_DIR="/var/lib/paperless/backup"
-      TIMESTAMP=$(date +%Y%m%d)
-      ARCHIVE="paperless-''${TIMESTAMP}.tar.zst"
-      SSH_KEY="${config.sops.secrets."builder-key".path}"
-      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
-      REMOTE="builder@thinkpad-x1-g3.local"
-      REMOTE_DIR="/data/backups/paperless"
+      ARCHIVE="$BACKUP_DIR/paperless-$(date +%Y%m%d).tar.zst"
 
-      # Compress export into timestamped archive
-      mkdir -p "$BACKUP_DIR"
-      tar -C "$EXPORT_DIR" -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
-
-      # Verify archive was created and is non-empty
-      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
-        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
-        exit 1
+      # A retry after a failed send reuses the archive already made today
+      if [ ! -s "$ARCHIVE" ]; then
+        mkdir -p "$BACKUP_DIR"
+        tar -C "$EXPORT_DIR" -cf - . | zstd -f -o "$ARCHIVE"
       fi
 
-      # Send to thinkpad
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
-      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
-
-      # Cleanup local (keep 3)
-      ls -t "$BACKUP_DIR"/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
-
-      # Cleanup remote (keep 3)
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
-        "ls -t $REMOTE_DIR/paperless-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+      ${pushBackups {
+        prefix = "paperless";
+        localDir = "$BACKUP_DIR";
+        remoteDir = "paperless";
+      }}
     '';
-    serviceConfig.Type = "oneshot";
+    serviceConfig = backupServiceConfig;
   };
 
   # Home Assistant backup: stop HA briefly, compress /var/lib/hass, send to thinkpad
@@ -360,55 +373,41 @@ in
 
   systemd.services.hass-backup-sync = {
     description = "Snapshot Home Assistant state and send to thinkpad";
-    path = with pkgs; [
-      gnutar
-      zstd
-      openssh
-      coreutils
-      systemd
-    ];
+    path = backupPath ++ [ pkgs.systemd ];
     script = ''
       set -euo pipefail
       HASS_DIR="/var/lib/hass"
       BACKUP_DIR="/var/lib/hass-backup"
-      TIMESTAMP=$(date +%Y%m%d)
-      ARCHIVE="hass-''${TIMESTAMP}.tar.zst"
-      SSH_KEY="${config.sops.secrets."builder-key".path}"
-      SSH_OPTS="-o StrictHostKeyChecking=accept-new"
-      REMOTE="builder@thinkpad-x1-g3.local"
-      REMOTE_DIR="/data/backups/home-assistant"
+      ARCHIVE="$BACKUP_DIR/hass-$(date +%Y%m%d).tar.zst"
 
-      mkdir -p "$BACKUP_DIR"
+      # A retry after a failed send reuses today's snapshot instead of
+      # stopping Home Assistant again
+      if [ ! -s "$ARCHIVE" ]; then
+        mkdir -p "$BACKUP_DIR"
 
-      # Stop HA for a consistent SQLite snapshot, always restart on exit
-      trap 'systemctl start home-assistant.service' EXIT
-      systemctl stop home-assistant.service
+        # Stop HA for a consistent SQLite snapshot, always restart on exit
+        trap 'systemctl start home-assistant.service' EXIT
+        systemctl stop home-assistant.service
 
-      tar -C "$HASS_DIR" \
-        --exclude='./home-assistant.log*' \
-        --exclude='./OZW_Log.txt*' \
-        --exclude='./tmp' \
-        --exclude='./deps' \
-        --exclude='./.cache' \
-        -cf - . | zstd -f -o "$BACKUP_DIR/$ARCHIVE"
+        tar -C "$HASS_DIR" \
+          --exclude='./home-assistant.log*' \
+          --exclude='./OZW_Log.txt*' \
+          --exclude='./tmp' \
+          --exclude='./deps' \
+          --exclude='./.cache' \
+          -cf - . | zstd -f -o "$ARCHIVE"
 
-      systemctl start home-assistant.service
-      trap - EXIT
-
-      if [ ! -s "$BACKUP_DIR/$ARCHIVE" ]; then
-        echo "ERROR: Archive $BACKUP_DIR/$ARCHIVE is empty or missing"
-        exit 1
+        systemctl start home-assistant.service
+        trap - EXIT
       fi
 
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" "mkdir -p $REMOTE_DIR"
-      scp -i "$SSH_KEY" $SSH_OPTS "$BACKUP_DIR/$ARCHIVE" "$REMOTE:$REMOTE_DIR/"
-
-      # Retention: keep 3 locally, 3 remotely
-      ls -t "$BACKUP_DIR"/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f
-      ssh -i "$SSH_KEY" $SSH_OPTS "$REMOTE" \
-        "ls -t $REMOTE_DIR/hass-*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f"
+      ${pushBackups {
+        prefix = "hass";
+        localDir = "$BACKUP_DIR";
+        remoteDir = "home-assistant";
+      }}
     '';
-    serviceConfig.Type = "oneshot";
+    serviceConfig = backupServiceConfig;
   };
 
   # Tailscale HTTPS certificate provisioning. nginx must not wait on this: it

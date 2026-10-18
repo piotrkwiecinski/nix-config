@@ -501,16 +501,45 @@
     enableExtraSocket = true;
   };
 
-  # Builder user for remote nix builds from homeserver
+  # Builder user for remote nix builds from the Pis. The key may only speak
+  # the nix daemon protocol (ssh-ng), never open a shell.
   users.users.builder = {
     isNormalUser = true;
     description = "Nix remote builder";
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMB6N/SY2fb+OqMYrB1P24ac44V1D/qMHTQ+4oZizPiw piotr@thinkpad-x1-g3"
+      ''restrict,command="${config.nix.package}/bin/nix-daemon --stdio" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMB6N/SY2fb+OqMYrB1P24ac44V1D/qMHTQ+4oZizPiw piotr@thinkpad-x1-g3''
     ];
   };
 
   nix.settings.trusted-users = [ "builder" ];
+
+  # Backup drop for homeserver: its key only runs rrsync, append-only into
+  # /data/backups (no reads, deletes or overwrites), so a compromised Pi
+  # cannot touch existing archives. Retention is backup-prune below.
+  users.users.backup = {
+    isSystemUser = true;
+    group = "backup";
+    description = "Backup drop for homeserver";
+    # sshd runs the forced command through the login shell
+    useDefaultShell = true;
+    openssh.authorizedKeys.keys = [
+      ''restrict,command="${pkgs.rrsync}/bin/rrsync -wo -no-del -no-overwrite /data/backups" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO2USrwL2KI3uzWgyFchm5YbzTrXTaZ4ydBlkenYyWtd homeserver-backup''
+    ];
+  };
+  users.groups.backup = { };
+
+  # Keep the newest 3 archives per service
+  systemd.services.backup-prune = {
+    description = "Prune old homeserver backup archives";
+    startAt = "daily";
+    path = [ pkgs.coreutils ];
+    script = ''
+      for dir in /data/backups/paperless /data/backups/home-assistant; do
+        ls -t "$dir"/*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f --
+      done
+    '';
+    serviceConfig.Type = "oneshot";
+  };
 
   security.sudo.extraRules = [
     {
@@ -537,8 +566,11 @@
       '';
     in
     [
-      "d /data/backups/paperless 0755 builder users -"
-      "d /data/backups/home-assistant 0755 builder users -"
+      # Written by `backup`, readable by piotr through the users group
+      "d /data/backups/paperless 0750 backup users -"
+      "d /data/backups/home-assistant 0750 backup users -"
+      "z /data/backups/paperless/*.tar.zst 0640 backup users -"
+      "z /data/backups/home-assistant/*.tar.zst 0640 backup users -"
       "d /home/piotr/.config/traefik 0755 piotr users -"
       "d /home/piotr/.config/traefik/dynamic 0755 piotr users -"
       "L+ /home/piotr/.config/traefik/dynamic/tls.toml - - - - ${traefikTlsConfig}"

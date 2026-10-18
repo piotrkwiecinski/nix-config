@@ -57,6 +57,16 @@
     ];
   };
 
+  # The thinkpad is the remote builder (over mDNS) and homeserver's backup
+  # target (over Tailscale); pin its host key instead of trusting on first use.
+  programs.ssh.knownHosts.thinkpad-x1-g3 = {
+    hostNames = [
+      "thinkpad-x1-g3"
+      "thinkpad-x1-g3.local"
+    ];
+    publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGuvmI3g8KhNa3ZQBtCuqHXMRatB+1SeqXesixRVCMHj";
+  };
+
   # brcmfmac power-save wedges the SDIO bus on the Pi 4 (see wifi-watchdog.nix)
   networking.networkmanager.wifi.powersave = false;
 
