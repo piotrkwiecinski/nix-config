@@ -168,10 +168,6 @@ networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
 
 Alternatively, create a DHCP reservation in your router for the Pi's MAC address.
 
-* Optional: Router DNS
-
-To use the Pi as a DNS server (e.g. for ad-blocking via Blocky), point client DNS settings or router DNS to the Pi's IP.
-
 * Deploying future updates
 
 #+begin_src bash

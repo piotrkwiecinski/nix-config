@@ -15,7 +15,6 @@ Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-part
 *** homeserver services
 - [[https://nextcloud.com/][Nextcloud]] - File sync, calendar, contacts
 - [[https://www.home-assistant.io/][Home Assistant]] - Home automation
-- [[https://github.com/0xERR0R/blocky][Blocky]] - DNS ad blocker (Pi-hole alternative)
 - [[https://docs.paperless-ngx.com/][Paperless-ngx]] - Document management with automated backups to thinkpad
 - [[https://calibre-ebook.com/][Calibre]] - E-book library server
 - [[https://forgejo.org/][Forgejo]] - Git forge
@@ -23,8 +22,12 @@ Multi-host NixOS configuration using [[https://github.com/hercules-ci/flake-part
 - [[https://github.com/nix-community/harmonia][Harmonia]] - Nix binary cache for LAN clients
 
 *** thinkpad-x1-g3 services
-- [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for Docker-based development
-- [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Local DNS for =.test= and =.loc= development domains
+- [[https://traefik.io/][Traefik]] - Local HTTPS reverse proxy for development (devenv and Docker)
+- [[https://thekelleys.org.uk/dnsmasq/doc.html][dnsmasq]] - Wildcard =*.test= / =*.loc= → 127.0.0.1 for Traefik, reached only through a systemd-resolved DNS delegate
+- [[https://github.com/StevenBlack/hosts][StevenBlack hosts]] - Ad/tracker blocklist in =/etc/hosts=
+
+*** DNS
+All hosts use [[https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html][systemd-resolved]]: NetworkManager hands it each connection's DHCP/VPN servers, and Tailscale registers MagicDNS as a split-DNS route for the tailnet only (short names like =homerpilab= work). mDNS (=*.local=, Samba discovery) stays with Avahi; resolved's own mDNS and LLMNR are off. The thinkpad publishes =thinkpad-x1-g3.local= on Wi-Fi, which the Pis use for their remote builder.
 - [[https://github.com/nix-community/disko][Disko]] - Declarative disk partitioning (btrfs, adoption mode)
 - YubiKey PAM authentication (challenge-response)
 - NVIDIA PRIME offload (Intel iGPU primary, NVIDIA dGPU on demand)
