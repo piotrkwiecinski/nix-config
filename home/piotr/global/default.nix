@@ -20,7 +20,7 @@
 
       # Must be extra-*: a plain `substituters` here overrides the system list
       # in /etc/nix/nix.conf for trusted users, silently dropping the per-host
-      # caches (cache.nixos-cuda.org, homeserver:5000, emacs-ci, devenv).
+      # caches (cache.nixos-cuda.org, homerpilab:5000, emacs-ci, devenv).
       extra-substituters = [
         "https://cache.nixos.org"
         "https://nix-community.cachix.org"

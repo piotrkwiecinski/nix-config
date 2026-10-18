@@ -13,6 +13,7 @@
     inputs.hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen3
     ./hardware-configuration.nix
     outputs.nixosModules.desktop
+    outputs.nixosModules.home-cache
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3-secrets
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3
   ];
@@ -140,14 +141,11 @@
       download-attempts = 3;
       narinfo-cache-negative-ttl = 300;
       extra-substituters = [
-        # Disabled for now: homeserver:5000 is unreachable and stalls builds.
-        # "http://homeserver:5000?priority=40"
         "https://emacs-ci.cachix.org?priority=42"
         "https://devenv.cachix.org?priority=43"
         "https://cache.nixos-cuda.org?priority=44"
       ];
       extra-trusted-public-keys = [
-        "homeserver-cache:GnyJnLGzLHN2pdm9D6kzkSd3s3IHMb6SNDh0y9Akoz4="
         "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw="
         "emacs-ci.cachix.org-1:B5FVOrxhXXrOL0S+tQ7USrhjMT5iOPH+QN9q0NItom4="
         "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="

@@ -18,6 +18,7 @@ in
   imports = [
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
+    outputs.nixosModules.home-cache
     ./hardware-configuration.nix
     ./backup.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
@@ -28,24 +29,12 @@ in
   networking.hostName = "homeserver";
 
   # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
-  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447,
-  # Harmonia 5000) is reached over tailscale0, which is a trusted interface.
+  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447) is
+  # reached over tailscale0, which is a trusted interface.
   networking.firewall.allowedTCPPorts = [
     80 # HTTP (redirect to HTTPS)
     443 # HTTPS (LAN subdomains)
   ];
-
-  # Binary cache over Tailscale (thinkpad fetches pre-built aarch64 paths)
-  users.users.harmonia = {
-    isSystemUser = true;
-    group = "harmonia";
-  };
-  users.groups.harmonia = { };
-  services.harmonia.cache = {
-    enable = true;
-    signKeyPaths = [ config.sops.secrets."harmonia-signing-key".path ];
-    settings.bind = "[::]:5000";
-  };
 
   # Tailscale VPN
   services.tailscale = {

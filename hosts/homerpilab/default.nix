@@ -8,6 +8,7 @@
   imports = [
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
+    outputs.nixosModules.home-cache
     ./hardware-configuration.nix
     # sops secrets and the home Wi-Fi profile
     inputs.private-nix-config.nixosModules.homerpilab-secrets
@@ -45,6 +46,8 @@
       Persistent = true;
     };
   };
+
+  # Harmonia binary cache for the other hosts: see the home-cache module
 
   # Samba shares, their directories and users come from
   # private-nix-config.homerpilab-shares. Passwords are not declarative:
