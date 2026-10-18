@@ -67,11 +67,9 @@ let
   #     a SIGTERM is not, so a killed run orphaned flake.lock.bak and left the
   #     lock dirty rather than restoring it.
   #
-  # Evaluation and build run as this user, never as root: private sources are
-  # fetched over SSH through the user's ~/.ssh/config host aliases, which root
-  # lacks (`sudo nixos-rebuild build` failed every run from 2026-10-03 on).
-  # Root only activates the finished store path; sudoers already allows
-  # nixos-rebuild without a password.
+  # Evaluation and build run as this user, so the commit and push use the
+  # user's git identity and keys. Root only activates the finished store path;
+  # sudoers already allows nixos-rebuild without a password.
   mkAutoUpdateScript =
     {
       name,
