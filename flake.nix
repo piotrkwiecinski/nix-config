@@ -41,7 +41,6 @@
     private-nix-config = {
       url = "github:piotrkwiecinski/nix-config-private";
       inputs.sops-nix.follows = "sops-nix";
-      inputs.nixpkgs-unstable.follows = "nixpkgs-unstable";
     };
 
     claude-code-overlay.url = "github:sadjow/claude-code-nix";

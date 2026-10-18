@@ -392,19 +392,16 @@
         "calstart": "calstart",
         "flake-parts": "flake-parts_3",
         "nixpkgs": "nixpkgs_6",
-        "nixpkgs-unstable": [
-          "nixpkgs-unstable"
-        ],
         "sops-nix": [
           "sops-nix"
         ]
       },
       "locked": {
-        "lastModified": 1792343304,
-        "narHash": "sha256-5sTvf6W8Z/HNpNRxyKLa4acyLjnsifMs3qFqgD04ZQA=",
+        "lastModified": 1792346304,
+        "narHash": "sha256-j+S+VTYScaBOM/WMrEj+7/oi8xK6904+XAc5N1tBGNo=",
         "owner": "piotrkwiecinski",
         "repo": "nix-config-private",
-        "rev": "7483a8353ed08dbb6ce0afe5ec051ce672dba1dd",
+        "rev": "4682fe552a73763783deb6655e708dd633ab716f",
         "type": "github"
       },
       "original": {
