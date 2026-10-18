@@ -72,6 +72,18 @@
     ExecStartPre = "-+${pkgs.coreutils}/bin/rm -f /run/avahi-daemon/pid";
   };
 
+  # resolved is the system resolver; tailscale adds MagicDNS as a split-DNS
+  # route for the tailnet. mDNS stays with avahi. This also drops openresolv,
+  # whose avahi hook SIGHUPs the daemon while it is still starting at boot.
+  services.resolved = {
+    enable = true;
+    settings.Resolve = {
+      MulticastDNS = false;
+      LLMNR = false;
+      DNSSEC = false;
+    };
+  };
+
   # Samba file sharing; shares, their directories and users
   # come from private-nix-config.homerpilab-shares. Passwords are not
   # declarative: `sudo smbpasswd -a <user>`.
