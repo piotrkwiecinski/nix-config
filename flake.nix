@@ -59,6 +59,7 @@
         ./parts/packages.nix
         ./parts/nixos.nix
         ./parts/modules.nix
+        ./parts/checks.nix
         ./parts/iso.nix
         ./parts/templates.nix
       ];

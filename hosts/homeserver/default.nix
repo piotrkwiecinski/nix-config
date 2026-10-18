@@ -19,7 +19,7 @@ in
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
     ./hardware-configuration.nix
-    ./restore.nix
+    ./backup.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
     # Samba shares and users, Paperless tailnet hostnames
     inputs.private-nix-config.nixosModules.homeserver
@@ -303,44 +303,12 @@ in
     environmentFile = config.sops.secrets."paperless-gmail-oauth-secret".path;
   };
 
-  # Encrypted backups with restic to the append-only rest-server on
-  # homerpilab (over Tailscale). This host can add snapshots but not delete
-  # them; retention and checks run on homerpilab.
-  services.restic.backups =
-    let
-      repo = {
-        repositoryFile = config.sops.secrets."restic-repository".path;
-        passwordFile = config.sops.secrets."restic-password".path;
-        initialize = true;
-      };
-    in
-    {
-      # Stop HA for a consistent SQLite snapshot; the cleanup command runs
-      # even when the backup fails.
-      hass = repo // {
-        paths = [ "/var/lib/hass" ];
-        exclude = [
-          "/var/lib/hass/home-assistant.log*"
-          "/var/lib/hass/OZW_Log.txt*"
-          "/var/lib/hass/tmp"
-          "/var/lib/hass/deps"
-          "/var/lib/hass/.cache"
-        ];
-        backupPrepareCommand = "${pkgs.systemd}/bin/systemctl stop home-assistant.service";
-        backupCleanupCommand = "${pkgs.systemd}/bin/systemctl start home-assistant.service";
-        timerConfig = {
-          OnCalendar = "*-*-* 12:00:00";
-          Persistent = true;
-        };
-      };
-
-      # Started by the nightly paperless-exporter run, not by its own timer
-      paperless = repo // {
-        paths = [ "/var/lib/paperless/export" ];
-        timerConfig = null;
-      };
-    };
-  systemd.services.paperless-exporter.onSuccess = [ "restic-backups-paperless.service" ];
+  # restic backups (and homeserver-restore) to the append-only rest-server
+  # on homerpilab, over Tailscale; see backup.nix
+  homeserver.backup = {
+    repositoryFile = config.sops.secrets."restic-repository".path;
+    passwordFile = config.sops.secrets."restic-password".path;
+  };
 
   # Tailscale HTTPS certificate provisioning. nginx must not wait on this: it
   # needs the network up, and during a switch NetworkManager only starts after

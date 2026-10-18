@@ -115,7 +115,7 @@ RPi hosts (aarch64) delegate builds to thinkpad-x1-g3 (x86_64), which runs aarch
 
 homeserver backs up Home Assistant and Paperless with restic to an append-only =rest-server= on homerpilab, over Tailscale. homeserver can add snapshots but never delete them; retention runs on homerpilab.
 
-Listing, verifying, restoring and rolling back are all scripted (=homeserver-restore= on homeserver). The step-by-step procedures, including rebuilding homeserver from scratch, are in [[file:docs/backup-restore.org][docs/backup-restore.org]].
+Listing, verifying, restoring and rolling back are all scripted (=homeserver-restore= on homeserver). A VM test (=nix build .#checks.x86_64-linux.backup-restore=, also part of =nix flake check=) runs the whole cycle against real Paperless and PostgreSQL: back up, check append-only, verify, wipe, restore and roll back. The step-by-step procedures, including rebuilding homeserver from scratch, are in [[file:docs/backup-restore.org][docs/backup-restore.org]].
 
 ** Secrets Management
 
@@ -158,7 +158,9 @@ hosts/                     # Per-host NixOS configurations
     default.nix            # Host-specific system config
     disk-config.nix        # Disko declarative disk layout (optional)
     hardware-configuration.nix
-  homeserver/restore.*     # homeserver-restore backup tool
+  homeserver/backup.nix    # restic backups + homeserver-restore (restore.sh)
+
+checks/                    # VM tests, run by `nix flake check` (x86_64)
 
 home/piotr/                # Home-manager configurations
   global/                  # Shared across all hosts (git, nix settings, CLI basics)
@@ -171,7 +173,7 @@ modules/nixos/             # Shared NixOS modules, exported as nixosModules.*
   profiles/                # server, desktop, rpi4
   features/                # user-piotr, samba, wifi-watchdog
 
-parts/                     # Flake-parts modules (nixos, modules, iso, overlays, dev-shell, formatter, packages, templates)
+parts/                     # Flake-parts modules (nixos, modules, checks, iso, overlays, dev-shell, formatter, packages, templates)
 
 overlays/modifications/    # Package overlays (auto-loaded, no registration needed)
 

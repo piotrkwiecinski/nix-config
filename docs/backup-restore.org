@@ -20,7 +20,8 @@ There is no off-site copy yet (tracked in the private repo's issue #2).
 
 Everything below is scripted. Run the steps as written rather than improvising with raw =restic= or =mv= commands.
 
-- =homeserver-restore= (on homeserver, from =hosts/homeserver/restore.sh=):
+- =homeserver-restore= (on homeserver; =hosts/homeserver/backup.nix= and =restore.sh=). The VM test =checks/backup-restore.nix= exercises every action below against real Paperless and PostgreSQL. Run it after changing the backup or restore code: =nix build -L .#checks.x86_64-linux.backup-restore= (about 6 minutes).
+
   #+begin_src
   sudo homeserver-restore <hass|paperless> list
   sudo homeserver-restore <hass|paperless> verify   [SNAPSHOT]

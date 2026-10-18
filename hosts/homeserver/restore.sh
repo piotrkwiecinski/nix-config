@@ -1,5 +1,5 @@
 # homeserver-restore: list, verify and restore the restic snapshots of Home
-# Assistant and Paperless taken by services.restic.backups (see
+# Assistant and Paperless taken by backup.nix (see
 # docs/backup-restore.org). RESTIC_REPOSITORY_FILE and RESTIC_PASSWORD_FILE
 # are set by the Nix wrapper.
 
