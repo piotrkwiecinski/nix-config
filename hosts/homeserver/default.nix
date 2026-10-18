@@ -13,38 +13,6 @@ let
   '';
   bluetti-bt = import ./bluetti-bt.nix { inherit pkgs; };
   solarman = import ./solarman.nix { inherit pkgs; };
-
-  # Backups go to the thinkpad's `backup` account, which only runs rrsync
-  # write-only into /data/backups (see hosts/thinkpad-x1-g3): this host can
-  # add archives but neither list nor delete them. Retention there is the
-  # thinkpad's job; here only the newest 3 archives are kept. Every run sends
-  # whatever the thinkpad is still missing, over Tailscale, so a laptop that
-  # was away just catches up on the next attempt.
-  pushBackups =
-    {
-      prefix,
-      localDir,
-      remoteDir,
-    }:
-    ''
-      rsync --times --ignore-existing \
-        -e "ssh -i ${config.sops.secrets."backup-key".path} -o BatchMode=yes" \
-        "${localDir}"/${prefix}-*.tar.zst backup@thinkpad-x1-g3:${remoteDir}/
-      ls -t "${localDir}"/${prefix}-*.tar.zst | tail -n +4 | xargs -r rm -f
-    '';
-  backupPath = with pkgs; [
-    gnutar
-    zstd
-    openssh
-    rsync
-    coreutils
-  ];
-  backupServiceConfig = {
-    Type = "oneshot";
-    # The thinkpad may be offline or asleep; retry the send until it is back
-    Restart = "on-failure";
-    RestartSec = "30min";
-  };
 in
 {
   imports = [
@@ -334,81 +302,44 @@ in
     environmentFile = config.sops.secrets."paperless-gmail-oauth-secret".path;
   };
 
-  # Paperless backup: compress export and send to thinkpad after successful export
-  systemd.services.paperless-exporter.onSuccess = [ "paperless-backup-sync.service" ];
+  # Encrypted backups with restic to the append-only rest-server on
+  # homerpilab (over Tailscale). This host can add snapshots but not delete
+  # them; retention and checks run on homerpilab.
+  services.restic.backups =
+    let
+      repo = {
+        repositoryFile = config.sops.secrets."restic-repository".path;
+        passwordFile = config.sops.secrets."restic-password".path;
+        initialize = true;
+      };
+    in
+    {
+      # Stop HA for a consistent SQLite snapshot; the cleanup command runs
+      # even when the backup fails.
+      hass = repo // {
+        paths = [ "/var/lib/hass" ];
+        exclude = [
+          "/var/lib/hass/home-assistant.log*"
+          "/var/lib/hass/OZW_Log.txt*"
+          "/var/lib/hass/tmp"
+          "/var/lib/hass/deps"
+          "/var/lib/hass/.cache"
+        ];
+        backupPrepareCommand = "${pkgs.systemd}/bin/systemctl stop home-assistant.service";
+        backupCleanupCommand = "${pkgs.systemd}/bin/systemctl start home-assistant.service";
+        timerConfig = {
+          OnCalendar = "*-*-* 12:00:00";
+          Persistent = true;
+        };
+      };
 
-  systemd.services.paperless-backup-sync = {
-    description = "Compress and send Paperless export to thinkpad";
-    path = backupPath;
-    script = ''
-      set -euo pipefail
-      EXPORT_DIR="/var/lib/paperless/export"
-      BACKUP_DIR="/var/lib/paperless/backup"
-      ARCHIVE="$BACKUP_DIR/paperless-$(date +%Y%m%d).tar.zst"
-
-      # A retry after a failed send reuses the archive already made today
-      if [ ! -s "$ARCHIVE" ]; then
-        mkdir -p "$BACKUP_DIR"
-        tar -C "$EXPORT_DIR" -cf - . | zstd -f -o "$ARCHIVE"
-      fi
-
-      ${pushBackups {
-        prefix = "paperless";
-        localDir = "$BACKUP_DIR";
-        remoteDir = "paperless";
-      }}
-    '';
-    serviceConfig = backupServiceConfig;
-  };
-
-  # Home Assistant backup: stop HA briefly, compress /var/lib/hass, send to thinkpad
-  systemd.timers.hass-backup-sync = {
-    description = "Daily Home Assistant backup to thinkpad";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "*-*-* 12:00:00";
-      Persistent = true;
+      # Started by the nightly paperless-exporter run, not by its own timer
+      paperless = repo // {
+        paths = [ "/var/lib/paperless/export" ];
+        timerConfig = null;
+      };
     };
-  };
-
-  systemd.services.hass-backup-sync = {
-    description = "Snapshot Home Assistant state and send to thinkpad";
-    path = backupPath ++ [ pkgs.systemd ];
-    script = ''
-      set -euo pipefail
-      HASS_DIR="/var/lib/hass"
-      BACKUP_DIR="/var/lib/hass-backup"
-      ARCHIVE="$BACKUP_DIR/hass-$(date +%Y%m%d).tar.zst"
-
-      # A retry after a failed send reuses today's snapshot instead of
-      # stopping Home Assistant again
-      if [ ! -s "$ARCHIVE" ]; then
-        mkdir -p "$BACKUP_DIR"
-
-        # Stop HA for a consistent SQLite snapshot, always restart on exit
-        trap 'systemctl start home-assistant.service' EXIT
-        systemctl stop home-assistant.service
-
-        tar -C "$HASS_DIR" \
-          --exclude='./home-assistant.log*' \
-          --exclude='./OZW_Log.txt*' \
-          --exclude='./tmp' \
-          --exclude='./deps' \
-          --exclude='./.cache' \
-          -cf - . | zstd -f -o "$ARCHIVE"
-
-        systemctl start home-assistant.service
-        trap - EXIT
-      fi
-
-      ${pushBackups {
-        prefix = "hass";
-        localDir = "$BACKUP_DIR";
-        remoteDir = "home-assistant";
-      }}
-    '';
-    serviceConfig = backupServiceConfig;
-  };
+  systemd.services.paperless-exporter.onSuccess = [ "restic-backups-paperless.service" ];
 
   # Tailscale HTTPS certificate provisioning. nginx must not wait on this: it
   # needs the network up, and during a switch NetworkManager only starts after

@@ -513,34 +513,6 @@
 
   nix.settings.trusted-users = [ "builder" ];
 
-  # Backup drop for homeserver: its key only runs rrsync, append-only into
-  # /data/backups (no reads, deletes or overwrites), so a compromised Pi
-  # cannot touch existing archives. Retention is backup-prune below.
-  users.users.backup = {
-    isSystemUser = true;
-    group = "backup";
-    description = "Backup drop for homeserver";
-    # sshd runs the forced command through the login shell
-    useDefaultShell = true;
-    openssh.authorizedKeys.keys = [
-      ''restrict,command="${pkgs.rrsync}/bin/rrsync -wo -no-del -no-overwrite /data/backups" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO2USrwL2KI3uzWgyFchm5YbzTrXTaZ4ydBlkenYyWtd homeserver-backup''
-    ];
-  };
-  users.groups.backup = { };
-
-  # Keep the newest 3 archives per service
-  systemd.services.backup-prune = {
-    description = "Prune old homeserver backup archives";
-    startAt = "daily";
-    path = [ pkgs.coreutils ];
-    script = ''
-      for dir in /data/backups/paperless /data/backups/home-assistant; do
-        ls -t "$dir"/*.tar.zst 2>/dev/null | tail -n +4 | xargs -r rm -f --
-      done
-    '';
-    serviceConfig.Type = "oneshot";
-  };
-
   security.sudo.extraRules = [
     {
       users = [ "piotr" ];
@@ -566,11 +538,6 @@
       '';
     in
     [
-      # Written by `backup`, readable by piotr through the users group
-      "d /data/backups/paperless 0750 backup users -"
-      "d /data/backups/home-assistant 0750 backup users -"
-      "z /data/backups/paperless/*.tar.zst 0640 backup users -"
-      "z /data/backups/home-assistant/*.tar.zst 0640 backup users -"
       "d /home/piotr/.config/traefik 0755 piotr users -"
       "d /home/piotr/.config/traefik/dynamic 0755 piotr users -"
       "L+ /home/piotr/.config/traefik/dynamic/tls.toml - - - - ${traefikTlsConfig}"

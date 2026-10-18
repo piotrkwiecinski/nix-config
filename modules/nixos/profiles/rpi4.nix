@@ -57,8 +57,8 @@
     ];
   };
 
-  # The thinkpad is the remote builder (over mDNS) and homeserver's backup
-  # target (over Tailscale); pin its host key instead of trusting on first use.
+  # The thinkpad is the remote builder; pin its host key instead of trusting
+  # on first use.
   programs.ssh.knownHosts.thinkpad-x1-g3 = {
     hostNames = [
       "thinkpad-x1-g3"
