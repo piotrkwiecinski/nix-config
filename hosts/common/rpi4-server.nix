@@ -46,8 +46,6 @@
   # blanks the console. U-Boot's simple-framebuffer still gives a text console.
   boot.blacklistedKernelModules = [ "vc4" ];
 
-  networking.hosts."192.168.68.103" = [ "thinkpad-x1-g3.local" ];
-
   nix = {
     settings = {
       auto-optimise-store = true;

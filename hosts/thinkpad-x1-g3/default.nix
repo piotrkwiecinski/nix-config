@@ -255,8 +255,17 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
-  # Resolve *.local (homeserver.local, homerpilab.local) outside of gvfs too
-  services.avahi.nssmdns4 = true;
+  # Resolve *.local (homeserver.local, homerpilab.local) outside of gvfs too,
+  # and publish thinkpad-x1-g3.local for the Pis' remote builder. Only on
+  # Wi-Fi, so docker bridge and tailscale addresses are not advertised.
+  services.avahi = {
+    nssmdns4 = true;
+    allowInterfaces = [ "wlp0s20f3" ];
+    publish = {
+      enable = true;
+      addresses = true;
+    };
+  };
   environment.gnome.excludePackages = builtins.attrValues {
     inherit (pkgs)
       epiphany
