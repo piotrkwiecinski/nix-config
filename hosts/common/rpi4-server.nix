@@ -132,9 +132,13 @@
   };
 
   # Tailscale VPN
+  # The auth key is an OAuth client secret: it never expires, but the nodes it
+  # registers must carry a tag the client is allowed to assign.
   services.tailscale = {
     enable = true;
     authKeyFile = config.sops.secrets."tailscale-auth-key".path;
+    authKeyParameters.preauthorized = true;
+    extraUpFlags = [ "--advertise-tags=tag:server" ];
   };
 
   # Fail2ban for SSH protection
