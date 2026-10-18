@@ -2,8 +2,8 @@
 # other host importing this module substitutes from it over Tailscale (port
 # 5000 stays closed on the LAN: tailscale0 is a trusted interface).
 #
-# The signing key keeps its original `homeserver-cache` name: it was moved
-# here from homeserver, so already-signed paths stay valid.
+# The signing key keeps the name `homeserver-cache` so paths already signed
+# with it stay valid.
 { config, lib, ... }:
 let
   server = "homerpilab";

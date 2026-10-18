@@ -1,6 +1,5 @@
-# Shared base for the headless Raspberry Pi 4B servers (homeserver,
-# homerpilab): USB-disk boot via U-Boot, mainline kernel, remote builds on the
-# thinkpad, Wi-Fi recovery. Host-specific services stay in hosts/<name>.
+# Shared base for the headless Raspberry Pi 4B servers. Host-specific services
+# stay in hosts/<name>.
 {
   config,
   pkgs,
@@ -15,7 +14,6 @@
     ../features/wifi-watchdog.nix
   ];
 
-  # Boot loader for Raspberry Pi
   boot.loader.grub.enable = false;
   boot.loader.generic-extlinux-compatible.enable = true;
 
@@ -80,6 +78,5 @@
     "216.239.35.4" # time.google.com
   ];
 
-  # Passwordless sudo for wheel group
   security.sudo.wheelNeedsPassword = false;
 }

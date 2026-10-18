@@ -52,20 +52,16 @@ let
   # `nixos-rebuild switch` activates home-manager, which restarts every user
   # unit whose definition changed -- and since flake.lock has just moved, that
   # includes the very unit running this script. systemd tears the old cgroup
-  # down with SIGTERM, so nothing sequenced after the switch ever runs.
+  # down with SIGTERM, so nothing sequenced after the switch ever runs. Killed
+  # before `git commit`, the run would leave flake.lock dirty and the dirty-tree
+  # preflight would then skip every later firing, each exiting 0. Hence:
   #
-  # That is exactly how the automation wedged itself on 2026-08-21: the switch
-  # killed the run before `git commit`, flake.lock was left modified, and the
-  # dirty-tree preflight then skipped every firing after it -- about fifty
-  # consecutive no-ops, each exiting 0. Two properties keep it from recurring:
-  #
-  #   * commit and push as soon as `nixos-rebuild build` proves the new lock
+  #   * commit and push as soon as the build proves the new lock
   #     good, before switching. The build is the real gate; committing ahead of
   #     activation means being killed during it costs nothing, because the tree
   #     is already clean for the next run.
-  #   * trap INT and TERM alongside ERR. The old trap fired only on ERR, which
-  #     a SIGTERM is not, so a killed run orphaned flake.lock.bak and left the
-  #     lock dirty rather than restoring it.
+  #   * trap INT and TERM alongside ERR: a SIGTERM is not an ERR, so otherwise a
+  #     killed run orphans flake.lock.bak and leaves the lock dirty.
   #
   # Evaluation and build run as this user, so the commit and push use the
   # user's git identity and keys. Root only activates the finished store path;
@@ -398,10 +394,8 @@ in
     enable = true;
     enableDefaultConfig = false;
 
-    # `settings` replaces the deprecated `matchBlocks` and takes upstream
-    # ssh_config(5) directive names rather than camelCase aliases. The "*"
-    # entry keeps its special meaning: home-manager always emits it last, so
-    # first-match-wins still resolves per-host blocks before these defaults.
+    # home-manager always emits the "*" entry last, so first-match-wins still
+    # resolves per-host blocks before these defaults.
     settings = {
       "*" = {
         ServerAliveInterval = 300;
@@ -502,7 +496,6 @@ in
     Install.WantedBy = [ "timers.target" ];
   };
 
-  # Italian vocabulary learning system
   systemd.user.services.learning-italian = {
     Unit = {
       Description = "Italian vocabulary learning server";

@@ -1,6 +1,5 @@
-# Shared by every host (injected by mkHost in parts/nixos.nix): nixpkgs and
-# home-manager wiring, nix daemon settings, the piotr user, locale, SSH,
-# resolved and Tailscale. Profiles and hosts only add on top of this.
+# Shared by every host (injected by mkHost in parts/nixos.nix). Profiles and
+# hosts only add on top of this.
 {
   config,
   lib,

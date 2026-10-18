@@ -61,7 +61,6 @@
 
   boot.consoleLogLevel = 0;
 
-  # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 3;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -74,9 +73,9 @@
   };
 
   # zram lives in RAM, so a full zram swap means the kernel OOM killer never
-  # fires — the box just thrashes until it's unusable (2026-10-05 freeze).
+  # fires — the box just thrashes until it's unusable.
   # Let systemd-oomd kill the worst offender on sustained memory pressure in
-  # system/user slices, or on swap usage above SwapUsedLimit (90%).
+  # system/user slices, or on swap usage above SwapUsedLimit.
   systemd.oomd = {
     enableSystemSlice = true;
     enableUserSlices = true;
@@ -376,7 +375,6 @@
   };
   users.extraGroups.docker.members = [ "piotr" ];
 
-  # Local LLM inference via Ollama with NVIDIA CUDA acceleration.
   # PRIME offload env vars are required because the Ollama systemd service
   # doesn't automatically use the dGPU (unlike user-session apps).
   # OLLAMA_API_KEY is injected via a sops-rendered EnvironmentFile so the
@@ -386,7 +384,7 @@
     package = pkgs.unstable-cuda.ollama-cuda;
     loadModels = [
       "qwen3:4b" # 2.5 GB — fits in 4 GB VRAM; base model for qwen3:4b-32k custom variant
-      "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; EN/IT/PL/JA + 52 other languages
+      "translategemma:4b" # 3.3 GB — fits in 4 GB VRAM; translation (EN/IT/PL/JA)
       "deepseek-r1:7b" # 4.7 GB — CPU+RAM; reasoning and research tasks
     ];
     environmentVariables = {
@@ -394,10 +392,9 @@
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       CUDA_VISIBLE_DEVICES = "0";
       OLLAMA_CONTEXT_LENGTH = "32768";
-      # llama.cpp's layer fitter keeps a free-VRAM margin per device, defaulting
-      # to ~1 GiB — sized for a GPU that also drives a display. This panel runs
-      # on the iGPU (~36 MiB of the 4 GB card in use), so that margin was dead
-      # space: it cost granite4.2:3b @8k two layers and a 10% CPU spill.
+      # llama.cpp's layer fitter keeps ~1 GiB of free VRAM per device, sized for
+      # a GPU that also drives a display. The panel runs on the iGPU, so that
+      # margin is dead space that pushes layers onto the CPU.
       # See docs/local-llm-benchmarks.md.
       LLAMA_ARG_FIT_TARGET = "256";
     };
@@ -407,8 +404,8 @@
     EnvironmentFile = config.sops.templates."ollama-env".path;
     # llama-server keeps an in-RAM prompt cache of up to 8 GiB (~380 MiB per
     # cached prompt) on top of CPU-side weights and KV cache. Long eval runs
-    # fill it completely; on 2026-10-05 that tipped an already loaded system
-    # into a freeze. Cap the service so it gets reclaimed/killed, not the desktop.
+    # fill it completely and can freeze an already loaded system. Cap the
+    # service so it gets reclaimed/killed, not the desktop.
     MemoryHigh = "10G";
     MemoryMax = "12G";
     MemorySwapMax = "2G";
@@ -543,12 +540,7 @@
       "f /var/lib/systemd/linger/piotr 0644 root root -"
     ];
 
-  # This value determines the NixOS release from which the default
-  # settings for stateful data, like file locations and database versions
-  # on your system were taken. It’s perfectly fine and recommended to leave
-  # this value at the release version of the first install of this system.
-  # Before changing this value read the documentation for this option
-  # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "26.05"; # Did you read the comment?
+  # Release of the first install; do not bump (see the option docs).
+  system.stateVersion = "26.05";
 
 }

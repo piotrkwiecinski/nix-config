@@ -51,12 +51,10 @@
   :init
   (global-auto-revert-mode 1))
 
-;; Use spaces instead of tabs
 (setq-default indent-tabs-mode nil)
 
 (setq ring-bell-function 'ignore)
 
-;; Make shebang (#!) file executable when saved
 (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 
 (use-package savehist

@@ -1,4 +1,4 @@
-# GNOME workstation: display manager, audio, printing, keyboard layout.
+# GNOME workstation.
 {
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;

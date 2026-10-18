@@ -26,9 +26,8 @@
       Certificates.ImportEnterpriseRoots = true;
       DontCheckDefaultBrowser = true;
       ExtensionSettings = {
-        # Uninstalls the previously force-installed ActivityWatch watcher
+        # Blocked so Firefox uninstalls the formerly force-installed ActivityWatch watcher
         "aw-watcher-web@activitywatch.net".installation_mode = "blocked";
-        # LeechBlock NG — distraction enforcement
         "leechblockng@proginosko.com" = {
           installation_mode = "force_installed";
           install_url = "https://addons.mozilla.org/firefox/downloads/latest/leechblockng/latest.xpi";

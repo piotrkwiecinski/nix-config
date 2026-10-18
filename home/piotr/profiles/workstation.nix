@@ -1,4 +1,4 @@
-# Interactive machines with a desktop session (thinkpad, homelab).
+# Interactive machines with a desktop session.
 { pkgs, ... }:
 {
   imports = [

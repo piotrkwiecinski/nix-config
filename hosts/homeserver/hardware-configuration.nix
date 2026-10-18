@@ -23,7 +23,6 @@
     fsType = "ext4";
   };
 
-  # Boot partition
   fileSystems."/boot/firmware" = {
     device = "/dev/disk/by-label/FIRMWARE";
     fsType = "vfat";
@@ -33,7 +32,6 @@
     ];
   };
 
-  # 4GB swap file
   swapDevices = [
     {
       device = "/swapfile";

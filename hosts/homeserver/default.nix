@@ -22,21 +22,19 @@ in
     ./hardware-configuration.nix
     ./backup.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
-    # Samba shares and users, Paperless tailnet hostnames
     inputs.private-nix-config.nixosModules.homeserver
   ];
 
   networking.hostName = "homeserver";
 
   # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
-  # their modules). Everything else (Tailscale HTTPS on 8443/8444/8447) is
-  # reached over tailscale0, which is a trusted interface.
+  # their modules). The Tailscale HTTPS vhosts are reached over tailscale0,
+  # which is a trusted interface.
   networking.firewall.allowedTCPPorts = [
     80 # HTTP (redirect to HTTPS)
     443 # HTTPS (LAN subdomains)
   ];
 
-  # Tailscale VPN
   services.tailscale = {
     extraSetFlags = [ "--accept-dns=true" ];
   };
@@ -47,7 +45,6 @@ in
     recommendedProxySettings = true;
     recommendedGzipSettings = true;
 
-    # HTTP -> HTTPS redirect (catch-all)
     virtualHosts."_redirect" = {
       serverName = "_";
       listen = [
@@ -61,7 +58,6 @@ in
       '';
     };
 
-    # Home Assistant LAN HTTPS
     virtualHosts."hass.homeserver.local" = {
       listen = [
         {
@@ -77,7 +73,6 @@ in
       };
     };
 
-    # Paperless LAN HTTPS
     virtualHosts."paperless.homeserver.local" = {
       listen = [
         {
@@ -99,7 +94,6 @@ in
       };
     };
 
-    # Forgejo LAN HTTPS
     virtualHosts."forgejo.homeserver.local" = {
       listen = [
         {
@@ -118,7 +112,6 @@ in
       };
     };
 
-    # Home Assistant via Tailscale HTTPS (port 8443)
     virtualHosts."hass-tailscale" = {
       listen = [
         {
@@ -137,7 +130,6 @@ in
       };
     };
 
-    # Paperless via Tailscale HTTPS (port 8444)
     virtualHosts."paperless-tailscale" = {
       listen = [
         {
@@ -162,7 +154,6 @@ in
       };
     };
 
-    # Forgejo via Tailscale HTTPS (port 8447)
     virtualHosts."forgejo-tailscale" = {
       listen = [
         {
@@ -202,7 +193,6 @@ in
     "loglevel=7"
   ];
 
-  # Home Assistant
   services.home-assistant = {
     enable = true;
     extraComponents = [
@@ -247,7 +237,6 @@ in
     lib.attrNames config.services.nginx.virtualHosts
   );
 
-  # Forgejo git forge
   services.forgejo = {
     enable = true;
     database.type = "sqlite3";
@@ -268,8 +257,8 @@ in
   # Samba shares and their users come from private-nix-config.homeserver;
   # server, wsdd and mDNS from the samba module.
 
-  # Paperless-ngx document management. Allowed hosts, CSRF origins and the
-  # Gmail OAuth client come from private-nix-config.homeserver.
+  # Allowed hosts, CSRF origins and the Gmail OAuth client come from
+  # private-nix-config.homeserver.
   services.paperless = {
     enable = true;
     # nginx proxies to it; nothing else needs to reach it
@@ -315,23 +304,19 @@ in
       pkgs.jq
     ];
     script = ''
-      # Wait for Tailscale to be connected
       until tailscale status --json | jq -e '.Self.Online' > /dev/null 2>&1; do
         sleep 2
       done
 
       mkdir -p /var/lib/tailscale-certs
 
-      # Get the Tailscale hostname
       TAILSCALE_HOSTNAME=$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')
 
-      # Fetch certificate from Tailscale (Let's Encrypt)
       tailscale cert \
         --cert-file /var/lib/tailscale-certs/homeserver.crt \
         --key-file /var/lib/tailscale-certs/homeserver.key \
         "$TAILSCALE_HOSTNAME"
 
-      # Set permissions for nginx
       chmod 644 /var/lib/tailscale-certs/homeserver.crt
       chmod 600 /var/lib/tailscale-certs/homeserver.key
       chown nginx:nginx /var/lib/tailscale-certs/*

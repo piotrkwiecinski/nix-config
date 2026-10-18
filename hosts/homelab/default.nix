@@ -8,7 +8,6 @@
 
   networking.hostName = "homelab";
 
-  # Stable (LTS) kernel, as on the Pis
   boot.kernelPackages = pkgs.linuxPackages;
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";

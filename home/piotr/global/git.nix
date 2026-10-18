@@ -33,7 +33,7 @@
         hasSopsTemplate =
           name: (config ? sops) && (config.sops ? templates) && (config.sops.templates ? ${name});
       in
-      # Fallback for hosts without sops (homelab, homeserver)
+      # Fallback for hosts without sops
       lib.optionals (!(hasSopsTemplate "git-personal-github.inc")) [
         {
           condition = "hasconfig:remote.*.url:git@github.com:*/**";
@@ -53,7 +53,6 @@
           };
         }
       ]
-      # Use sops template when available
       ++ lib.optionals (hasSopsTemplate "git-personal-github.inc") [
         {
           condition = "hasconfig:remote.*.url:git@github.com:*/**";
@@ -75,7 +74,6 @@
           };
         }
       ]
-      # Use sops template when available
       ++ lib.optionals (hasSopsTemplate "git-forgejo-homeserver.inc") [
         {
           condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";

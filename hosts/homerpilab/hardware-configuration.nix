@@ -8,7 +8,7 @@
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
 
-  # Raspberry Pi 4B booting from a 1TB USB hard drive
+  # Raspberry Pi 4B booting from a USB hard drive
   # Use mkForce to override SD image module defaults that include unavailable modules
   boot.initrd.availableKernelModules = lib.mkForce [
     "usbhid"
@@ -25,7 +25,6 @@
     fsType = "ext4";
   };
 
-  # Boot partition
   fileSystems."/boot/firmware" = {
     device = "/dev/disk/by-label/FIRMWARE";
     fsType = "vfat";
@@ -35,7 +34,6 @@
     ];
   };
 
-  # 4GB swap file
   swapDevices = [
     {
       device = "/swapfile";

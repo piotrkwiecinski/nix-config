@@ -47,8 +47,6 @@
     };
   };
 
-  # Harmonia binary cache for the other hosts: see the home-cache module
-
   # Samba shares, their directories and users come from
   # private-nix-config.homerpilab-shares. Passwords are not declarative:
   # `sudo smbpasswd -a <user>`.

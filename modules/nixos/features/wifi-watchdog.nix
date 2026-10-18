@@ -3,8 +3,8 @@
 # backplane access over SDIO, halting operation"). The driver never recovers on
 # its own, and with no ethernet cable the box is unreachable until power-cycled.
 #
-# Every minute, ping the default gateway. After 3 consecutive failures reload
-# brcmfmac; after 10, reboot — but only if the kernel logged brcmfmac SDIO
+# Every minute, ping the default gateway. After repeated failures reload
+# brcmfmac, then reboot — but only if the kernel logged brcmfmac SDIO
 # errors recently, so a router outage doesn't cause a reboot loop.
 { pkgs, ... }:
 {
