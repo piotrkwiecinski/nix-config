@@ -23,18 +23,20 @@ in
 
   networking.hostName = "homeserver";
 
-  # Don't let NM overwrite resolv.conf; managed via networking.nameservers
-  networking.networkmanager.dns = "none";
-
-  # Point resolv.conf at Blocky (127.0.0.1) instead of Tailscale MagicDNS.
-  # Blocky forwards *.tailfbbc95.ts.net to MagicDNS via customDNS, so peer
-  # name resolution still works.
-  networking.nameservers = [ "127.0.0.1" ];
+  # resolved is the system resolver; tailscale adds MagicDNS as a split-DNS
+  # route for the tailnet. mDNS stays with avahi.
+  services.resolved = {
+    enable = true;
+    settings.Resolve = {
+      MulticastDNS = false;
+      LLMNR = false;
+      DNSSEC = false;
+    };
+  };
 
   # Firewall (SSH and Tailscale opened in common/rpi4-server.nix)
   networking.firewall = {
     allowedTCPPorts = [
-      53 # DNS (Blocky)
       80 # HTTP (redirect to HTTPS)
       443 # HTTPS (LAN subdomains)
       6600 # MPD
@@ -44,9 +46,6 @@ in
       8600 # MPD HTTP stream
       5000 # Harmonia binary cache (LAN)
       5600 # ActivityWatch aggregator (LAN + Tailscale)
-    ];
-    allowedUDPPorts = [
-      53 # DNS (Blocky)
     ];
   };
 
@@ -64,9 +63,7 @@ in
 
   # Tailscale VPN
   services.tailscale = {
-    # Don't let Tailscale overwrite resolv.conf with MagicDNS (100.100.100.100).
-    # resolv.conf is managed via networking.nameservers pointing to Blocky instead.
-    extraUpFlags = [ "--accept-dns=false" ];
+    extraSetFlags = [ "--accept-dns=true" ];
   };
 
   services.nginx = {
@@ -143,21 +140,6 @@ in
         extraConfig = ''
           client_max_body_size 512M;
         '';
-      };
-    };
-
-    # Blocky LAN HTTPS
-    virtualHosts."blocky.homeserver.local" = {
-      listen = [
-        {
-          addr = "0.0.0.0";
-          port = 443;
-          ssl = true;
-        }
-      ];
-      extraConfig = lanSslConfig;
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:4000";
       };
     };
 
@@ -284,66 +266,11 @@ in
   # ConBee 2 Zigbee stick — grant HA service access to /dev/ttyACM*
   users.users.hass.extraGroups = [ "dialout" ];
 
-  # Blocky DNS ad-blocker (Pi-hole alternative)
-  services.blocky = {
-    enable = true;
-    settings = {
-      ports = {
-        dns = 53;
-        http = 4000;
-      };
-      upstreams = {
-        groups = {
-          default = [
-            "https://dns.cloudflare.com/dns-query"
-            "https://dns.google/dns-query"
-          ];
-        };
-      };
-      bootstrapDns = [
-        {
-          upstream = "https://dns.cloudflare.com/dns-query";
-          ips = [
-            "1.1.1.1"
-            "1.0.0.1"
-          ];
-        }
-      ];
-      blocking = {
-        denylists = {
-          ads = [
-            "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-            "https://adaway.org/hosts.txt"
-          ];
-          tracking = [
-            "https://v.firebog.net/hosts/Easyprivacy.txt"
-          ];
-        };
-        clientGroupsBlock = {
-          default = [
-            "ads"
-            "tracking"
-          ];
-        };
-      };
-      caching = {
-        minTime = "5m";
-        maxTime = "30m";
-        prefetching = true;
-      };
-      # Forward Tailscale peer names to MagicDNS so *.tailfbbc95.ts.net resolves
-      # even though Tailscale no longer manages resolv.conf. This must be a
-      # conditional upstream: a customDNS mapping would answer every peer name
-      # with 100.100.100.100 itself.
-      conditional.mapping."tailfbbc95.ts.net" = "100.100.100.100";
-      customDNS = {
-        customTTL = "1h";
-        mapping = {
-          "homeserver.local" = "192.168.68.105";
-        };
-      };
-    };
-  };
+  # The LAN vhosts have no DNS records and mdns4_minimal skips multi-label
+  # names, so resolve them locally for services on this host.
+  networking.hosts."192.168.68.105" = lib.filter (lib.hasSuffix ".homeserver.local") (
+    lib.attrNames config.services.nginx.virtualHosts
+  );
 
   # Forgejo git forge
   services.forgejo = {

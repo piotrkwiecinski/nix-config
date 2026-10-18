@@ -218,13 +218,13 @@
     ];
   };
 
-  # dnsmasq owns resolv.conf (dev domains); keep tailscale from rewriting it
-  # and forward MagicDNS names through dnsmasq instead. Subnet routes stay off
-  # so they cannot shadow OpenVPN or docker networks.
+  # With resolved, tailscale registers MagicDNS as a split-DNS route for the
+  # tailnet only. Subnet routes stay off so they cannot shadow OpenVPN or
+  # docker networks.
   services.tailscale = {
     enable = true;
     extraSetFlags = [
-      "--accept-dns=false"
+      "--accept-dns=true"
       "--accept-routes=false"
     ];
   };
@@ -292,23 +292,48 @@
   services.printing.enable = true;
   services.printing.browsed.enable = false;
 
+  # resolved is the system resolver: per-link DHCP/VPN DNS with ordered
+  # failover, plus tailscale split DNS. mDNS stays with avahi.
+  services.resolved = {
+    enable = true;
+    settings.Resolve = {
+      MulticastDNS = false;
+      LLMNR = false;
+      DNSSEC = false;
+    };
+    # resolved has no wildcard records, so these zones go to dnsmasq
+    dnsDelegates.dev.Delegate = {
+      DNS = "127.0.0.1:5300";
+      # "~" makes them routing-only, not search domains
+      Domains = [
+        "~test"
+        "~loc"
+        "~homeserver.local"
+      ];
+    };
+  };
+
+  # Wildcard dev domains (*.test → traefik) and *.homeserver.local vhosts,
+  # which mdns4_minimal skips; only reached through the delegate above.
   services.dnsmasq = {
     enable = true;
     alwaysKeepRunning = true;
+    resolveLocalQueries = false;
     settings = {
-      interface = [
-        "wlp0s20f3"
-        "docker0"
-      ];
-      bind-dynamic = true;
+      listen-address = "127.0.0.1";
+      port = 5300;
+      bind-interfaces = true;
+      no-resolv = true;
       address = [
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
         "/homeserver.local/192.168.68.105"
       ];
-      server = [ "/ts.net/100.100.100.100" ];
     };
   };
+
+  # Ad/tracker blocking via /etc/hosts, which resolved answers from
+  networking.stevenblack.enable = true;
 
   # Enable sound with pipewire.
   services.pulseaudio.enable = false;
