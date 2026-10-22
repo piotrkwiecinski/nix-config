@@ -33,8 +33,30 @@
         hasSopsTemplate =
           name: (config ? sops) && (config.sops ? templates) && (config.sops.templates ? ${name});
       in
-      # Fallback for hosts without sops
-      lib.optionals (!(hasSopsTemplate "git-personal-github.inc")) [
+      # Forgejo homeserver - fallback for hosts without sops
+      lib.optionals (!(hasSopsTemplate "git-forgejo-homeserver.inc")) [
+        {
+          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
+          contents = {
+            user = {
+              email = "piotr@noreply.forgejo.homeserver.local";
+              signingKey = "EC0DE1CB9D5258B4";
+            };
+            commit.gpgSign = true;
+            tag.gpgSign = true;
+            core.sshCommand = "ssh -i ~/.ssh/forgejo_homeserver";
+          };
+        }
+      ]
+      ++ lib.optionals (hasSopsTemplate "git-forgejo-homeserver.inc") [
+        {
+          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
+          path = config.sops.templates."git-forgejo-homeserver.inc".path;
+        }
+      ]
+      # GitHub - fallback for hosts without sops. Listed after Forgejo so the
+      # GitHub identity wins in repos that mirror to both.
+      ++ lib.optionals (!(hasSopsTemplate "git-personal-github.inc")) [
         {
           condition = "hasconfig:remote.*.url:git@github.com:*/**";
           contents = {
@@ -57,27 +79,6 @@
         {
           condition = "hasconfig:remote.*.url:git@github.com:*/**";
           path = config.sops.templates."git-personal-github.inc".path;
-        }
-      ]
-      # Forgejo homeserver - fallback for hosts without sops
-      ++ lib.optionals (!(hasSopsTemplate "git-forgejo-homeserver.inc")) [
-        {
-          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
-          contents = {
-            user = {
-              email = "piotr@noreply.forgejo.homeserver.local";
-              signingKey = "EC0DE1CB9D5258B4";
-            };
-            commit.gpgSign = true;
-            tag.gpgSign = true;
-            core.sshCommand = "ssh -i ~/.ssh/forgejo_homeserver";
-          };
-        }
-      ]
-      ++ lib.optionals (hasSopsTemplate "git-forgejo-homeserver.inc") [
-        {
-          condition = "hasconfig:remote.*.url:forgejo@forgejo.homeserver.local:*/**";
-          path = config.sops.templates."git-forgejo-homeserver.inc".path;
         }
       ];
 
@@ -102,12 +103,6 @@
 
   programs.ssh = {
     settings = {
-      "pkgithub" = {
-        User = "git";
-        HostName = "github.com";
-        IdentityFile = "~/.ssh/gh_rsa";
-        IdentitiesOnly = true;
-      };
       "forgejo.homeserver.local" = {
         User = "forgejo";
         HostName = "forgejo.homeserver.local";
