@@ -4,7 +4,12 @@
 #
 # The signing key keeps the name `homeserver-cache` so paths already signed
 # with it stay valid.
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   server = "homerpilab";
   isServer = config.networking.hostName == server;
@@ -17,6 +22,10 @@ lib.mkMerge [
       group = "harmonia";
     };
     users.groups.harmonia = { };
+    # 26.05 ships 3.1.0, which warns that the 0440 systemd credential holding
+    # the signing key is insecure; 3.2.0+ exempts $CREDENTIALS_DIRECTORY
+    # (nix-community/harmonia#1074). Drop once stable has >= 3.2.0.
+    services.harmonia.package = pkgs.unstable.harmonia;
     services.harmonia.cache = {
       enable = true;
       signKeyPaths = [ config.sops.secrets."harmonia-signing-key".path ];
