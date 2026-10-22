@@ -37,6 +37,9 @@
           craneLib = crane.mkLib pkgs;
 
           rust-cli-template = pkgs.callPackage ./nix/package.nix { inherit craneLib; };
+
+          # nixpkgs' cargo-llvm-cov 0.9.0 fails its own check phase; skip it.
+          cargo-llvm-cov = pkgs.cargo-llvm-cov.overrideAttrs { doCheck = false; };
         in
         {
           packages.default = rust-cli-template;
@@ -54,7 +57,7 @@
               pkgs.rustfmt
               pkgs.rust-analyzer
               pkgs.cargo-nextest
-              pkgs.cargo-llvm-cov
+              cargo-llvm-cov
               pkgs.cargo-audit
             ];
             RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
