@@ -13,6 +13,8 @@
     # sops secrets and the home Wi-Fi profile
     inputs.private-nix-config.nixosModules.homerpilab-secrets
     inputs.private-nix-config.nixosModules.homerpilab-shares
+    # buildbot-nix master and worker (CI for Forgejo repos)
+    inputs.private-nix-config.nixosModules.homerpilab-ci
   ];
 
   networking.hostName = "homerpilab";
