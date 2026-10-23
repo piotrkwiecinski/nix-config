@@ -27,11 +27,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1792645311,
-        "narHash": "sha256-yZmgxDGUbDySY/J4/4yl+eQ7PcnIOuvqDvVD4yVffcs=",
+        "lastModified": 1792710089,
+        "narHash": "sha256-Ig43Vl9+aB0gnktIm/1EM6+9w9S8TcvBjyt2HrgR8FY=",
         "owner": "sadjow",
         "repo": "claude-code-nix",
-        "rev": "75964e6dac38d737da37c96ba87bca751f935f7d",
+        "rev": "8cd20882e5ad8e15d7c10a6752a1a691460cff52",
         "type": "github"
       },
       "original": {
@@ -203,11 +203,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1792145604,
-        "narHash": "sha256-9OYQdf2RiEBD3VH4NRCtdKNV5HT2lUY67IFlE6/wVes=",
+        "lastModified": 1792697756,
+        "narHash": "sha256-DDEBCRZaVYktGlCdR7akjKbbWwRvuehS4K3AVaTSNJU=",
         "owner": "codemanufacture",
         "repo": "magento-package-overlay",
-        "rev": "f76c23eaef915e2b4c4f3182d29b2c1f0282f6ca",
+        "rev": "9215087f340da0cf3b0df051c51c3fe3b05cdee9",
         "type": "github"
       },
       "original": {
