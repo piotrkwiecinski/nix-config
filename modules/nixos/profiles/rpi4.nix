@@ -42,7 +42,10 @@
         hostName = "thinkpad-x1-g3.local";
         sshUser = "builder";
         sshKey = config.sops.secrets."builder-key".path;
-        system = "aarch64-linux";
+        systems = [
+          "aarch64-linux"
+          "x86_64-linux"
+        ];
         protocol = "ssh-ng";
         maxJobs = 8;
         speedFactor = 10;
