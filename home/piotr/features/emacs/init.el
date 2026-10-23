@@ -1006,6 +1006,27 @@ document.addEventListener('DOMContentLoaded', () => {
                      (window-parameters . ((no-other-window . t)
                                            (no-delete-other-windows . t))))))
 
+;; Task dependencies (:BLOCKER:/:TRIGGER:), also used by org-agent-loop.
+(use-package org-edna
+  :after org
+  :demand t
+  :config
+  (org-edna-mode 1))
+
+;; Project todo.org files as an agent work queue; the work-org-todo loop
+;; scripts call it through emacsclient. Loaded from its checkout.
+(use-package org-agent-loop
+  :if (file-directory-p "~/projects/opensource/org-agent-loop.el/")
+  :load-path "~/projects/opensource/org-agent-loop.el/"
+  :ensure nil
+  :after (org org-edna)
+  :demand t
+  :bind (("C-c o t" . org-agent-loop-project-todo))
+  :config
+  (org-agent-loop-agenda-mode 1)
+  (org-agent-loop-epic-sync-mode 1)
+  (org-agent-loop-capture-setup))
+
 (use-package org-modern
   :hook (org-mode . org-modern-mode)
   :hook (org-agenda-finalize . org-modern-agenda))
