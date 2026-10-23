@@ -248,11 +248,13 @@
       "~test"
       "~loc"
       "~homeserver.local"
+      "~homerpilab.local"
     ];
   };
 
-  # Wildcard dev domains (*.test → traefik) and *.homeserver.local vhosts,
-  # which mdns4_minimal skips; only reached through the delegate above.
+  # Wildcard dev domains (*.test → traefik) and *.homeserver.local and
+  # *.homerpilab.local vhosts, which mdns4_minimal skips; only reached through
+  # the delegate above.
   services.dnsmasq = {
     enable = true;
     alwaysKeepRunning = true;
@@ -266,6 +268,7 @@
         "/test/127.0.0.1"
         "/loc/127.0.0.1"
         "/homeserver.local/192.168.68.105"
+        "/homerpilab.local/192.168.68.109"
       ];
     };
   };
