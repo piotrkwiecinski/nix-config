@@ -42,10 +42,9 @@
         hostName = "thinkpad-x1-g3.local";
         sshUser = "builder";
         sshKey = config.sops.secrets."builder-key".path;
-        systems = [
-          "aarch64-linux"
-          "x86_64-linux"
-        ];
+        # x86_64 only: aarch64 under binfmt emulation is slower than the Pi
+        # building natively (rustc, twisted's test suite)
+        system = "x86_64-linux";
         protocol = "ssh-ng";
         maxJobs = 8;
         speedFactor = 10;
