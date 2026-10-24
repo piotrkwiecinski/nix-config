@@ -495,44 +495,4 @@ in
     };
     Install.WantedBy = [ "timers.target" ];
   };
-
-  systemd.user.services.learning-italian = {
-    Unit = {
-      Description = "Italian vocabulary learning server";
-    };
-    Service = {
-      Type = "simple";
-      WorkingDirectory = "/home/piotr/projects/personal/learning-italian";
-      ExecStart = "${pkgs.bun}/bin/bun run src/server.ts";
-      Restart = "on-failure";
-      RestartSec = 5;
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
-
-  systemd.user.services.italian-notify = {
-    Unit = {
-      Description = "Check for due Italian vocabulary reviews";
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = "/home/piotr/projects/personal/learning-italian/scripts/notify-due.sh";
-      Environment = "PATH=${
-        lib.makeBinPath [
-          pkgs.curl
-          pkgs.jq
-          pkgs.libnotify
-        ]
-      }:/run/wrappers/bin:/run/current-system/sw/bin";
-    };
-  };
-
-  systemd.user.timers.italian-notify = {
-    Unit.Description = "Timer for Italian vocabulary review notifications";
-    Timer = {
-      OnCalendar = "*:0/15";
-      Persistent = false;
-    };
-    Install.WantedBy = [ "timers.target" ];
-  };
 }
