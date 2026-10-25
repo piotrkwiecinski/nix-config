@@ -156,7 +156,29 @@
 
 (use-package which-key
   :ensure nil
-  :hook (after-init . which-key-mode))
+  :hook (after-init . which-key-mode)
+  :custom
+  ;; The imprecise fit sizes the window in lines of `frame-char-height',
+  ;; ignoring the global `line-spacing', which clips the popup's last row.
+  (which-key-allow-imprecise-window-fit nil)
+  :config
+  ;; 15px padding above and below the popup: a taller first row for the
+  ;; top, and the window grown past its text for the bottom (a trailing
+  ;; `line-spacing' would need a newline, which adds an empty row).
+  (defun pk--which-key-pad (show &rest args)
+    (with-current-buffer which-key--buffer
+      (save-excursion
+        (goto-char (point-min))
+        (put-text-property (line-end-position)
+                           (min (1+ (line-end-position)) (point-max))
+                           'line-height (+ (frame-char-height) 15))))
+    (apply show args)
+    (when-let ((w (get-buffer-window which-key--buffer)))
+      (let ((window-resize-pixelwise t))
+        (window-resize w (- (+ (cdr (window-text-pixel-size w)) 15)
+                            (window-body-height w t))
+                       nil t t))))
+  (advice-add 'which-key--show-popup :around #'pk--which-key-pad))
 
 (use-package corfu
   :bind (:map corfu-map
