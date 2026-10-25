@@ -407,38 +407,24 @@
         "type": "github"
       }
     },
-    "nixpkgs_7": {
-      "locked": {
-        "lastModified": 1769741972,
-        "narHash": "sha256-RxSg1EioTWNpoLaykiT1UQKTo/K0PPdLqCyQgNjNqWs=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "63590ac958a8af30ebd52c7a0309d8c52a94dd77",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-25.11",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "private-nix-config": {
       "inputs": {
         "buildbot-nix": "buildbot-nix",
         "calstart": "calstart",
         "flake-parts": "flake-parts_3",
-        "nixpkgs": "nixpkgs_7",
+        "nixpkgs": [
+          "nixpkgs"
+        ],
         "sops-nix": [
           "sops-nix"
         ]
       },
       "locked": {
-        "lastModified": 1792936878,
-        "narHash": "sha256-PHzeBL06GmhKZQWiBrAqM++rtHZ2Ui2SilvWHm1Skto=",
+        "lastModified": 1792938051,
+        "narHash": "sha256-tfN8oTvOesn4Z6zhqtR+O4GBoXpqzM0w2eG925v8RIM=",
         "owner": "piotrkwiecinski",
         "repo": "nix-config-private",
-        "rev": "02155a48174dd4e05972504eb184af3dc8978346",
+        "rev": "4e4ed22767053d41fac57ec6e4f263c7dbd33151",
         "type": "github"
       },
       "original": {

@@ -40,6 +40,7 @@
 
     private-nix-config = {
       url = "github:piotrkwiecinski/nix-config-private";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.sops-nix.follows = "sops-nix";
     };
 
