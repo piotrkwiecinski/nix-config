@@ -12,6 +12,7 @@
   gnome-keyring,
   polkit,
   polkit_gnome,
+  zenity,
 }:
 
 let
@@ -88,10 +89,19 @@ buildFHSEnv {
     gnome-keyring
     polkit
     polkit_gnome
+    # byndid asks for login approval via zenity, else a [y/n] on stdin
+    zenity
   ];
 
+  # The URL handler is launched from the browser, outside the FHS env, so it
+  # must go through the wrapper or byndid fails to start (stub-ld).
   extraInstallCommands = ''
-    ln -s ${beyond-identity}/share $out
+    mkdir -p $out/share
+    cp -r ${beyond-identity}/share/. $out/share
+    chmod -R u+w $out/share
+    substituteInPlace \
+      $out/share/applications/com.beyondidentity.endpoint.BeyondIdentity.desktop \
+      --replace-fail ${beyond-identity}/bin/beyond-identity $out/bin/beyond-identity
   '';
 
   runScript = "beyond-identity";

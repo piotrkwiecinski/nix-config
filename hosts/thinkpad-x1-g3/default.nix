@@ -365,7 +365,12 @@
   environment.systemPackages = builtins.attrValues {
     # keepassxc is installed by home-manager; listed here too so polkit
     # sees its quick-unlock action (share/polkit-1/actions).
-    inherit (pkgs) beyond-identity gnome-tweaks keepassxc tmux;
+    inherit (pkgs)
+      beyond-identity
+      gnome-tweaks
+      keepassxc
+      tmux
+      ;
     inherit (pkgs.unstable)
       libnotify
       yubioath-flutter
