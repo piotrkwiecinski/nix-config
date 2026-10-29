@@ -13,6 +13,8 @@ let
   '';
   bluetti-bt = import ./bluetti-bt.nix { inherit pkgs; };
   solarman = import ./solarman.nix { inherit pkgs; };
+  # food-planner (private homeserver-food-planner module) listens on loopback
+  foodPlannerUrl = "http://127.0.0.1:${toString config.services.food-planner.port}";
 in
 {
   imports = [
@@ -23,6 +25,7 @@ in
     ./backup.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
     inputs.private-nix-config.nixosModules.homeserver
+    inputs.private-nix-config.nixosModules.homeserver-food-planner
   ];
 
   networking.hostName = "homeserver";
@@ -112,6 +115,18 @@ in
       };
     };
 
+    virtualHosts."foodplanner.homeserver.local" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 443;
+          ssl = true;
+        }
+      ];
+      extraConfig = lanSslConfig;
+      locations."/".proxyPass = foodPlannerUrl;
+    };
+
     virtualHosts."hass-tailscale" = {
       listen = [
         {
@@ -173,6 +188,21 @@ in
           client_max_body_size 512M;
         '';
       };
+    };
+
+    virtualHosts."foodplanner-tailscale" = {
+      listen = [
+        {
+          addr = "0.0.0.0";
+          port = 8445;
+          ssl = true;
+        }
+      ];
+      extraConfig = ''
+        ssl_certificate /var/lib/tailscale-certs/homeserver.crt;
+        ssl_certificate_key /var/lib/tailscale-certs/homeserver.key;
+      '';
+      locations."/".proxyPass = foodPlannerUrl;
     };
 
   };

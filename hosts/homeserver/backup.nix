@@ -1,4 +1,4 @@
-# Encrypted restic backups of Home Assistant and Paperless, and the
+# Encrypted restic backups of Home Assistant, Paperless and food-planner, and the
 # `homeserver-restore` tool (docs/backup-restore.org). The repository and
 # password files are options so that checks/backup-restore.nix can run this
 # exact module in a VM against a local rest-server.
@@ -46,6 +46,21 @@ in
         backupCleanupCommand = "${pkgs.systemd}/bin/systemctl start home-assistant.service";
         timerConfig = {
           OnCalendar = "*-*-* 12:00:00";
+          Persistent = true;
+        };
+      };
+
+      # food-planner's scheduled meals: a consistent copy through SQLite's
+      # online backup, so the app keeps running.
+      food-planner = repo // {
+        paths = [ "/var/lib/food-planner/backup" ];
+        backupPrepareCommand = ''
+          ${pkgs.coreutils}/bin/mkdir -p /var/lib/food-planner/backup
+          ${pkgs.sqlite}/bin/sqlite3 /var/lib/food-planner/food-planner.db \
+            ".backup /var/lib/food-planner/backup/food-planner.db"
+        '';
+        timerConfig = {
+          OnCalendar = "*-*-* 12:30:00";
           Persistent = true;
         };
       };
