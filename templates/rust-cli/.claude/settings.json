@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.rs) command -v cargo >/dev/null || exit 0; out=$(cargo -q gate 2>&1) || { echo \"$out\" | tail -40 >&2; exit 2; } ;; esac"
+          }
+        ]
+      }
+    ]
+  }
+}
