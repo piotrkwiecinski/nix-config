@@ -363,19 +363,20 @@
   (defun pk--apply-ui-padding ()
     "Apply padding to mode-line and tab-bar faces based on current theme colors."
     (let ((ml-active-bg (face-attribute 'mode-line :background nil t))
-          (ml-inactive-bg (face-attribute 'mode-line-inactive :background nil t))
-          (bar-bg (face-attribute 'tab-bar :background (selected-frame)))
-          (tab-active-bg (face-attribute 'tab-bar-tab :background (selected-frame)))
-          (tab-inactive-bg (face-attribute 'tab-bar-tab-inactive :background (selected-frame))))
+          (ml-inactive-bg (face-attribute 'mode-line-inactive :background nil t)))
       (set-face-attribute 'mode-line-active nil
                           :box (list :line-width '(5 . 7) :color ml-active-bg)
                           :height 1.0)
       (set-face-attribute 'mode-line-inactive nil
                           :box (list :line-width '(5 . 7) :color ml-inactive-bg)
                           :height 1.0)
-      (set-face-attribute 'tab-bar nil :box (list :line-width '(5 . 5) :color bar-bg))
-      (set-face-attribute 'tab-bar-tab nil :box (list :line-width '(10 . 5) :color tab-active-bg))
-      (set-face-attribute 'tab-bar-tab-inactive nil :box (list :line-width '(10 . 5) :color tab-inactive-bg))))
+      ;; Tabs are SVG images (see `pk-tab-bar--format') that carry
+      ;; their own padding, so no face gets a box: a box on the bar
+      ;; would leave a strip under the tabs, where the current tab
+      ;; should run straight into the buffer below.
+      (set-face-attribute 'tab-bar nil :box nil)
+      (set-face-attribute 'tab-bar-tab nil :box nil)
+      (set-face-attribute 'tab-bar-tab-inactive nil :box nil)))
   (add-hook 'server-after-make-frame-hook #'pk--apply-ui-padding)
   (add-hook 'enable-theme-functions (lambda (_) (pk--apply-ui-padding)))
   (unless (daemonp) (pk--apply-ui-padding)))
@@ -396,18 +397,81 @@
     (add-to-list 'project-switch-commands '(ghostel-project "Terminal" "t") t)
     (keymap-set project-prefix-map "t" #'ghostel-project)))
 
+;;;; Tab bar
+;; Emacs faces cannot round corners (`:box' has no radius), so each tab
+;; is drawn as an SVG image: a rounded rectangle taller than the image,
+;; whose bottom corners fall outside it, leaving only the top ones round.
+(defvar pk-tab-bar-radius 7
+  "Corner radius of tab-bar tabs, in pixels.")
+(defvar pk-tab-bar-padding '(12 . 5)
+  "Padding inside a tab-bar tab, as (HORIZONTAL . VERTICAL) pixels.")
+(defvar pk-tab-bar-top-margin 6
+  "Gap above the tabs, in pixels, filled with the tab bar's background.")
+(defvar pk-tab-bar--cache (make-hash-table :test #'equal)
+  "Tab images already drawn, keyed by everything that shapes them.")
+
+(defun pk-tab-bar--image (name face frame)
+  "Return an SVG image of a tab labelled NAME in FACE on FRAME."
+  (let* ((font (face-font face frame))
+         ;; modus-themes leaves the tab foregrounds unspecified.
+         (fg (face-foreground face frame 'default))
+         (bg (face-background face frame 'default))
+         (bar-bg (face-background 'tab-bar frame 'default))
+         (key (list name font fg bg bar-bg)))
+    (with-memoization (gethash key pk-tab-bar--cache)
+      (let* ((info (font-info font frame))
+             (px (aref info 2))
+             (ascent (aref info 8))
+             (descent (aref info 9))
+             (family (car (split-string (aref info 1) ":")))
+             (padx (car pk-tab-bar-padding))
+             (top pk-tab-bar-top-margin)
+             (text-w (string-pixel-width (propertize name 'face face)))
+             (w (+ text-w (* 2 padx)))
+             (tab-h (+ ascent descent (* 2 (cdr pk-tab-bar-padding))))
+             (h (+ top tab-h))
+             (svg (svg-create w h)))
+        (svg-rectangle svg 0 0 w h :fill bar-bg)
+        (svg-rectangle svg 0 top w (+ tab-h pk-tab-bar-radius)
+                       :rx pk-tab-bar-radius :fill bg)
+        (svg-text svg name
+                  :x padx :y (+ top (/ (- tab-h ascent descent) 2) ascent)
+                  :fill fg :font-family family :font-size px)
+        ;; Sink the image by the font's descent, so its bottom lines
+        ;; up with the text separators' instead of leaving a strip.
+        (svg-image svg :ascent (round (* 100.0 (- h descent)) h))))))
+
+(defface pk-tab-bar-hover '((t :inherit tab-bar))
+  "Mouse face of image tabs, which should look like no highlight.
+Hovering the last tab paints this face's background up to the end
+of the bar, so it has to be the bar's own.")
+
+(defun pk-tab-bar--format (tab _i)
+  "Format TAB for the tab bar: an SVG image on graphical frames."
+  (let ((name (alist-get 'name tab))
+        (face (if (eq (car tab) 'current-tab) 'tab-bar-tab 'tab-bar-tab-inactive)))
+    (if (and (display-graphic-p) (image-type-available-p 'svg))
+        ;; Without a `mouse-face', the tab bar draws a button relief
+        ;; round an image item under the mouse (raised on hover, sunken
+        ;; while pressed); an empty one replaces that with nothing.
+        (propertize name
+                    'display (pk-tab-bar--image name face (selected-frame))
+                    'mouse-face 'pk-tab-bar-hover)
+      (propertize (concat " " name " ") 'face face))))
+
 (use-package tab-bar
   :ensure nil
   :custom
   (tab-bar-close-button-show nil)
+  ;; Auto width pads names with spaces to equalise tabs, which the
+  ;; images ignore; it is reported to hang Emacs with image tabs.
+  (tab-bar-auto-width nil)
   (tab-bar-separator " ")
   (tab-bar-format '(tab-bar-format-history tab-bar-separator tab-bar-format-tabs))
-  (tab-bar-tab-name-format-function
-   (lambda (tab _i)
-     (propertize (concat " " (alist-get 'name tab))
-                 'face (if (eq (car tab) 'current-tab)
-                           'tab-bar-tab
-                         'tab-bar-tab-inactive)))))
+  (tab-bar-tab-name-format-function #'pk-tab-bar--format)
+  :config
+  (require 'svg)
+  (add-hook 'enable-theme-functions (lambda (_) (clrhash pk-tab-bar--cache))))
 
 (use-package nerd-icons
   :demand t
