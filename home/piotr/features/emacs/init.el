@@ -368,15 +368,16 @@
           (tab-active-bg (face-attribute 'tab-bar-tab :background (selected-frame)))
           (tab-inactive-bg (face-attribute 'tab-bar-tab-inactive :background (selected-frame))))
       (set-face-attribute 'mode-line-active nil
-                          :box (list :line-width '(5 . 5) :color ml-active-bg)
+                          :box (list :line-width '(5 . 7) :color ml-active-bg)
                           :height 1.0)
       (set-face-attribute 'mode-line-inactive nil
-                          :box (list :line-width '(5 . 5) :color ml-inactive-bg)
+                          :box (list :line-width '(5 . 7) :color ml-inactive-bg)
                           :height 1.0)
       (set-face-attribute 'tab-bar nil :box (list :line-width '(5 . 5) :color bar-bg))
       (set-face-attribute 'tab-bar-tab nil :box (list :line-width '(10 . 5) :color tab-active-bg))
       (set-face-attribute 'tab-bar-tab-inactive nil :box (list :line-width '(10 . 5) :color tab-inactive-bg))))
   (add-hook 'server-after-make-frame-hook #'pk--apply-ui-padding)
+  (add-hook 'enable-theme-functions (lambda (_) (pk--apply-ui-padding)))
   (unless (daemonp) (pk--apply-ui-padding)))
 
 (setq-default line-prefix (propertize " " 'display '(space :width (15))))
