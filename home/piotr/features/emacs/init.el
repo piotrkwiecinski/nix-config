@@ -14,6 +14,10 @@
   (use-file-dialog nil)
   (use-dialog-box nil)
   (tab-always-indent 'complete)
+  ;; Wheel-style scroll events make `pixel-scroll-precision-interpolate' force a
+  ;; redisplay per animation step; on a large window this hung Emacs in
+  ;; update_window.  Keep precise (touchpad) scrolling, drop the animation.
+  (pixel-scroll-precision-interpolate-mice nil)
   :init
   (delete-selection-mode 1)
   (electric-pair-mode 1)
@@ -373,13 +377,17 @@
   (unless (daemonp) (pk--apply-ui-padding)))
 
 (setq-default line-prefix (propertize " " 'display '(space :width (15))))
+(defun pk--disable-line-prefix ()
+  "Disable `line-prefix' in the current buffer."
+  (setq-local line-prefix nil))
+;; Tabulated lists pad cells with `:align-to', counted from the text
+;; area and blind to the prefix, but put a plain space after a truncated
+;; cell's ellipsis, so those rows (and the header) would shift by it.
+(add-hook 'tabulated-list-mode-hook #'pk--disable-line-prefix)
 (use-package ghostel
   :commands (ghostel ghostel-project)
   :hook (ghostel-mode . pk--disable-line-prefix)
   :init
-  (defun pk--disable-line-prefix ()
-    "Disable line-prefix in terminal buffers."
-    (setq-local line-prefix nil))
   (with-eval-after-load 'project
     (add-to-list 'project-switch-commands '(ghostel-project "Terminal" "t") t)
     (keymap-set project-prefix-map "t" #'ghostel-project)))
