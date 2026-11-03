@@ -242,6 +242,9 @@
                     :height 120)
 
 (set-face-attribute 'variable-pitch nil :font "DejaVu Sans")
+;; Fira Code lacks the music signs (♭ in "Saekano ♭"); the fallback
+;; Emacs finds is narrower than a column and breaks table alignment.
+(set-fontset-font t '(#x2669 . #x266F) "DejaVu Sans Mono")
 
 (add-to-list 'display-buffer-alist
              '("\\*Help\\*"
