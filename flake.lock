@@ -420,11 +420,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793718126,
-        "narHash": "sha256-B/llLpYf12t8Ffhsul9EbJ/lsfH7fM8BosFzruavgTs=",
+        "lastModified": 1793718303,
+        "narHash": "sha256-22dg+NdCIzFgqGeahAGSmUofGH21OLZHE6qMyd3mae4=",
         "owner": "piotrkwiecinski",
         "repo": "nix-config-private",
-        "rev": "24398073fa1aa6025f31f5eb4147753130d7f78e",
+        "rev": "2819de201921d2b7b5950a1c3179ad8445681cbc",
         "type": "github"
       },
       "original": {
