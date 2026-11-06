@@ -103,6 +103,14 @@ let
         exit 1
       fi
 
+      # A commit that bypassed the lock above took our update with it. Restoring
+      # the backup now would put an older lock in the tree and park later runs.
+      if git diff --quiet HEAD -- flake.lock; then
+        rm -f flake.lock.bak
+        echo "<4>flake.lock was committed by something else during this run; not switching."
+        exit 0
+      fi
+
       git commit -m ${lib.escapeShellArg commitMessage} -- flake.lock
       git push
       rm -f flake.lock.bak
