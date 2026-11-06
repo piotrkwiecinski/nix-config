@@ -12,7 +12,7 @@
 - *Encryption*: restic encrypts on homeserver before anything is sent. The repository password is =restic-password= in the private repo's =secrets/homeserver.yaml= (and =secrets/homerpilab.yaml= for the prune job). Without it the backups cannot be read. The sops admin key decrypts both files, so keep that key backed up outside these machines.
 - *Append-only*: homeserver can add snapshots but not delete or change them, so a compromised homeserver cannot destroy its own backups.
 - *Retention*: =restic-backups-homeserver-prune= on homerpilab runs Sundays at 04:00. It keeps 7 daily, 4 weekly and 6 monthly snapshots per path, then reads back 5% of the data to check it.
-- *Consistency*: Home Assistant is stopped while its snapshot is taken (about a minute) and started again even if the backup fails. Paperless is backed up from =document_exporter= output (documents, thumbnails, =manifest.json= with the whole database), never from the live PostgreSQL files.
+- *Consistency*: Home Assistant is stopped while its snapshot is taken (about a minute) and started again even if the backup fails. Paperless is backed up from =document_exporter= output (documents, thumbnails, =manifest.json= with the whole database), never from the live PostgreSQL files. The pantry database is copied with SQLite's online backup while =pantry-server= keeps running; =homeserver-restore= does not cover it, so restore =/var/lib/pantry-server/backup/household.db= with =restic restore= and copy it over =household.db= with the service stopped.
 
 There is no off-site copy yet (tracked in the private repo's issue #2).
 
