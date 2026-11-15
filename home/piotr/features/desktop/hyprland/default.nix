@@ -15,6 +15,10 @@ in
     enable = true;
     package = null;
     portalPackage = null;
+    # stateVersion 26.05 defaults to Lua, but `settings` below is written in
+    # hyprlang style ($mod, "mod, key, dispatcher" binds); rendered as Lua it
+    # does not parse and Hyprland starts with none of it.
+    configType = "hyprlang";
     # UWSM owns the session and environment import.
     systemd.enable = false;
 
@@ -65,7 +69,7 @@ in
         "$mod, F, fullscreen"
         "$mod, V, togglefloating"
         "$mod, P, pseudo"
-        "$mod, J, togglesplit"
+        "$mod, J, layoutmsg, togglesplit"
 
         "$mod, left, movefocus, l"
         "$mod, right, movefocus, r"
