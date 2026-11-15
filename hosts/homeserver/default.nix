@@ -59,6 +59,12 @@ in
         pkgs.tailscale;
   };
 
+  # `serve set-config --all` refuses to change an endpoint's type in place
+  # ("want to serve tls-terminated-tcp, but port 443 is already serving
+  # http"), so start from an empty serve config. This unit owns all of it.
+  systemd.services.tailscale-serve.serviceConfig.ExecStartPre =
+    "${lib.getExe config.services.tailscale.package} serve reset";
+
   services.nginx = {
     enable = true;
     recommendedTlsSettings = true;
