@@ -1049,7 +1049,9 @@ document.addEventListener('DOMContentLoaded', () => {
   (org-src-preserve-indentation t)
   (org-confirm-babel-evaluate nil)
   (org-src-strip-leading-add-trailing-blank-lines t)
-  (org-agenda-files (list "~/projects/personal/second-brain/"))
+  (org-agenda-files (list "~/projects/personal/second-brain/"
+                          "~/org/inbox.org"))
+  (org-default-notes-file "~/org/inbox.org")
   (org-agenda-include-diary t)
   (org-log-done t)
   (org-support-shift-select t)
@@ -1059,6 +1061,9 @@ document.addEventListener('DOMContentLoaded', () => {
   (require 'ob-js)
   (require 'ob-php)
   (require 'org-tempo)
+  ;; (file "") targets `org-default-notes-file', i.e. the inbox.
+  (add-to-list 'org-capture-templates
+               '("i" "Inbox" entry (file "") "* TODO %?\n%U"))
   (mapc (lambda (template)
         (add-to-list 'org-structure-template-alist template))
         '(("el" . "src emacs-lisp")
