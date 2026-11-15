@@ -184,6 +184,10 @@ in
       bindl = [
         ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
         ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+        ", XF86AudioPlay, exec, playerctl play-pause"
+        ", XF86AudioPause, exec, playerctl pause"
+        ", XF86AudioNext, exec, playerctl next"
+        ", XF86AudioPrev, exec, playerctl previous"
       ];
     };
   };
@@ -225,9 +229,11 @@ in
       modules-left = [ "hyprland/workspaces" ];
       modules-center = [ "clock" ];
       modules-right = [
+        "mpris"
         "tray"
         "hyprland/language"
         "network"
+        "bluetooth"
         "pulseaudio"
         "battery"
       ];
@@ -266,6 +272,7 @@ in
         ];
         tooltip-format = "{volume}%";
         on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        on-click-right = app "pwvucontrol";
       };
       battery = {
         format = "{icon} {capacity}%";
@@ -277,6 +284,28 @@ in
           "󰂀"
           "󰁹"
         ];
+      };
+      mpris = {
+        format = "{status_icon} {dynamic}";
+        dynamic-len = 40;
+        dynamic-order = [
+          "artist"
+          "title"
+        ];
+        status-icons = {
+          playing = "󰐊";
+          paused = "󰏤";
+        };
+        tooltip-format = "{player}: {artist} – {title}";
+      };
+      bluetooth = {
+        format = "󰂯";
+        format-off = "󰂲";
+        format-disabled = "󰂲";
+        format-connected = "󰂱 {num_connections}";
+        tooltip-format-connected = "{device_enumerate}";
+        tooltip-format-enumerate-connected = "{device_alias}";
+        on-click = app "ghostty -e bluetui";
       };
       tray.spacing = 8;
     };
@@ -327,6 +356,8 @@ in
 
       #clock:hover,
       #network:hover,
+      #bluetooth:hover,
+      #mpris:hover,
       #pulseaudio:hover,
       #battery:hover {
         background: rgba(255, 255, 255, 0.12);
@@ -335,6 +366,8 @@ in
       #tray,
       #language,
       #network,
+      #bluetooth,
+      #mpris,
       #pulseaudio,
       #battery {
         padding: 0 8px;
@@ -489,10 +522,17 @@ in
     };
   };
 
+  # Media keys and the waybar mpris module act on the most recently active
+  # player, which playerctld tracks.
+  services.playerctld.enable = true;
+
   home.packages = with pkgs; [
     brightnessctl
+    bluetui
     grim
     hyprpaper
+    playerctl
+    pwvucontrol
     slurp
     wl-clipboard
   ];
