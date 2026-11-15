@@ -39,6 +39,24 @@ in
 
   services.tailscale = {
     extraSetFlags = [ "--accept-dns=true" ];
+
+    # `tailscale serve set-config` before 1.106 rejects tls-terminated-tcp://
+    # service targets; upstream fixed it in cfa83f7ef (#21789). Built on
+    # homerpilab and substituted from its cache. Falls back to the nixpkgs
+    # build by itself once that has the fix; then delete this.
+    package =
+      if lib.versionOlder pkgs.tailscale.version "1.106" then
+        pkgs.tailscale.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (pkgs.fetchpatch {
+              name = "tailscale-serve-tls-terminated-tcp.patch";
+              url = "https://github.com/tailscale/tailscale/commit/cfa83f7ef.patch";
+              hash = "sha256-FpRkcpHdkrB0nfPjobCnPScjQvM0Zvhcj4nr6NmJtAs=";
+            })
+          ];
+        })
+      else
+        pkgs.tailscale;
   };
 
   services.nginx = {
