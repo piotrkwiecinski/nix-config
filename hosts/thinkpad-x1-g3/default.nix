@@ -13,6 +13,7 @@
     inputs.hardware.nixosModules.lenovo-thinkpad-x1-extreme-gen3
     ./hardware-configuration.nix
     outputs.nixosModules.desktop
+    outputs.nixosModules.hyprland
     outputs.nixosModules.home-cache
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3-secrets
     inputs.private-nix-config.nixosModules.thinkpad-x1-g3

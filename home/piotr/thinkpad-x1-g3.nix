@@ -208,6 +208,7 @@ in
     inputs.private-nix-config.homeManagerModules.thinkpad-x1-g3
     ./profiles/workstation.nix
     ./features/mpv.nix
+    ./features/desktop/hyprland
   ];
 
   home = {
