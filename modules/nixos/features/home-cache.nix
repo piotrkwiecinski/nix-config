@@ -1,6 +1,11 @@
-# Binary cache on homerpilab. homerpilab serves its store with Harmonia; every
-# other host importing this module substitutes from it over Tailscale (port
-# 5000 stays closed on the LAN: tailscale0 is a trusted interface).
+# Binary cache on homerpilab. homerpilab serves its store with Harmonia on
+# port 5000, open on the LAN and the tailnet. Every other host importing this
+# module substitutes from it at homerpilab.local (mDNS, LAN only) first and
+# over Tailscale second, so it works with either one down. Away from home the
+# LAN entry fails within connect-timeout and Nix moves on to the next cache.
+#
+# The LAN can fetch any store path whose hash it knows; Harmonia cannot list
+# the store.
 #
 # The signing key keeps the name `homeserver-cache` so paths already signed
 # with it stay valid.
@@ -31,12 +36,16 @@ lib.mkMerge [
       signKeyPaths = [ config.sops.secrets."harmonia-signing-key".path ];
       settings.bind = "[::]:5000";
     };
+    networking.firewall.allowedTCPPorts = [ 5000 ];
   })
 
   (lib.mkIf (!isServer) {
     nix.settings = {
-      extra-substituters = [ "http://${server}:5000?priority=40" ];
-      # Fail over to the next cache quickly when homerpilab is off the tailnet
+      extra-substituters = [
+        "http://${server}.local:5000?priority=39"
+        "http://${server}:5000?priority=40"
+      ];
+      # Fail over to the next cache quickly when homerpilab is unreachable
       connect-timeout = lib.mkDefault 5;
     };
   })
