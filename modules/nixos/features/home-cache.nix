@@ -1,8 +1,11 @@
 # Binary cache on homerpilab. homerpilab serves its store with Harmonia on
 # port 5000, open on the LAN and the tailnet. Every other host importing this
-# module substitutes from it at homerpilab.local (mDNS, LAN only) first and
-# over Tailscale second, so it works with either one down. Away from home the
-# LAN entry fails within connect-timeout and Nix moves on to the next cache.
+# module substitutes from it at its LAN address first and over Tailscale
+# second, so it works with either one down. Away from home the LAN entry fails
+# within connect-timeout and Nix moves on to the next cache.
+#
+# The LAN entry is an IP, not homerpilab.local: Nix resolves host names with
+# only `files dns` (no nss-mdns), so the mDNS name never resolves for it.
 #
 # The LAN can fetch any store path whose hash it knows; Harmonia cannot list
 # the store.
@@ -17,6 +20,8 @@
 }:
 let
   server = "homerpilab";
+  # homerpilab's LAN IP, as in the thinkpad's dnsmasq entries
+  lanAddress = "192.168.68.109";
   isServer = config.networking.hostName == server;
 in
 lib.mkMerge [
@@ -42,7 +47,7 @@ lib.mkMerge [
   (lib.mkIf (!isServer) {
     nix.settings = {
       extra-substituters = [
-        "http://${server}.local:5000?priority=39"
+        "http://${lanAddress}:5000?priority=39"
         "http://${server}:5000?priority=40"
       ];
       # Fail over to the next cache quickly when homerpilab is unreachable
