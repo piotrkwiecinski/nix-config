@@ -177,7 +177,7 @@
                            (min (1+ (line-end-position)) (point-max))
                            'line-height (+ (frame-char-height) 15))))
     (apply show args)
-    (when-let ((w (get-buffer-window which-key--buffer)))
+    (when-let* ((w (get-buffer-window which-key--buffer)))
       (let ((window-resize-pixelwise t))
         (window-resize w (- (+ (cdr (window-text-pixel-size w)) 15)
                             (window-body-height w t))
@@ -1061,9 +1061,11 @@ document.addEventListener('DOMContentLoaded', () => {
   (require 'ob-js)
   (require 'ob-php)
   (require 'org-tempo)
-  ;; (file "") targets `org-default-notes-file', i.e. the inbox.
-  (add-to-list 'org-capture-templates
-               '("i" "Inbox" entry (file "") "* TODO %?\n%U"))
+  ;; (file "") targets `org-default-notes-file', i.e. the inbox.  The
+  ;; templates variable lives in org-capture, which org does not load.
+  (with-eval-after-load 'org-capture
+    (add-to-list 'org-capture-templates
+                 '("i" "Inbox" entry (file "") "* TODO %?\n%U")))
   (mapc (lambda (template)
         (add-to-list 'org-structure-template-alist template))
         '(("el" . "src emacs-lisp")
