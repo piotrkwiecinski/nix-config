@@ -17,6 +17,16 @@
       init.defaultBranch = "main";
       pull.rebase = true;
       rebase.autoStash = true;
+
+      # Config-based hook (git >= 2.54): runs in every repo alongside its own
+      # hooks, even where core.hooksPath is set locally. Strips the session
+      # trailer Claude Code appends to commit messages.
+      hook.strip-claude-session = {
+        event = "commit-msg";
+        command = "${pkgs.writeShellScript "strip-claude-session" ''
+          ${lib.getExe pkgs.gnused} -i '/^Claude-Session: /d' "$1"
+        ''}";
+      };
     };
 
     lfs.enable = true;
