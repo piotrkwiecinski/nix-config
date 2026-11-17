@@ -193,13 +193,16 @@ in
   };
 
   # Read by UWSM only when it starts Hyprland, so GNOME never sees these.
-  # Pin Aquamarine to the Intel iGPU (drives the panel in PRIME offload mode);
-  # opening the NVIDIA card too would keep it out of D3 sleep. The by-path name
-  # holds colons, which AQ_DRM_DEVICES uses as a separator, so resolve it.
+  # Aquamarine opens the Intel iGPU first (it drives the panel and renders in
+  # PRIME offload mode), then the NVIDIA card, which owns every external port
+  # (DP-1, DP-2, HDMI-A-1). Aquamarine only hotplugs connectors on cards it
+  # opened at startup, so the NVIDIA card stays open for the whole session,
+  # at the cost of keeping it out of D3 sleep. The by-path names hold colons,
+  # which AQ_DRM_DEVICES uses as a separator, so resolve them.
   # GTK apps pick up Adwaita dark, fonts and the accent from the same dconf
   # GNOME writes, via the settings portal; only the cursor needs spelling out.
   xdg.configFile."uwsm/env-hyprland".text = ''
-    export AQ_DRM_DEVICES="$(readlink -f /dev/dri/by-path/pci-0000:00:02.0-card)"
+    export AQ_DRM_DEVICES="$(readlink -f /dev/dri/by-path/pci-0000:00:02.0-card):$(readlink -f /dev/dri/by-path/pci-0000:01:00.0-card)"
     export XCURSOR_THEME=Adwaita
     export XCURSOR_SIZE=24
   '';
