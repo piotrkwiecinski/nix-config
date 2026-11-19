@@ -19,5 +19,8 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    # module-x11-bell segfaults pipewire when Xwayland goes away (every
+    # greeter hand-off and logout); the bell sound isn't worth it.
+    extraConfig.pipewire."99-no-x11-bell"."context.properties"."module.x11.bell" = false;
   };
 }

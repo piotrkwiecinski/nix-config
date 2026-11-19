@@ -5,6 +5,10 @@ let
   passwordSecret = config.sops.secrets."piotr-password-hash" or null;
 in
 {
+  # Referenced by the u2f udev rules (70-u2f.rules); without the group udevd
+  # logs "Unknown group" on every event.
+  users.groups.plugdev = { };
+
   users.users.piotr = {
     isNormalUser = true;
     description = "Piotr Kwiecinski";
