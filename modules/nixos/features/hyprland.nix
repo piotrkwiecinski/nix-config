@@ -47,5 +47,22 @@ in
     "gtk"
   ];
 
+  # At logout something re-activates xdg-desktop-portal over D-Bus after
+  # graphical-session.target has stopped; it then starts these backends with
+  # no display left, each exits 1 five times and hits its start limit.
+  # Requisite makes the start fail at once (no exec, no restart loop) unless
+  # the session is up. Drop-ins on the packaged units, so the rest of each
+  # unit stays upstream's.
+  config.systemd.user.services =
+    lib.genAttrs
+      [
+        "xdg-desktop-portal-gtk"
+        "xdg-desktop-portal-hyprland"
+      ]
+      (_: {
+        requisite = [ "graphical-session.target" ];
+        after = [ "graphical-session.target" ];
+      });
+
   config.environment.systemPackages = [ pkgs.hyprpolkitagent ];
 }
