@@ -281,9 +281,14 @@ in
 
   # Ordered ahead of gpg-agent so the first gpg operation of the session never
   # meets a leaked lock. See gnupgStaleLockCleanup above for the full story.
+  # Default dependencies would order it after basic.target, which comes after
+  # sockets.target and so after gpg-agent.socket: an ordering cycle that
+  # systemd broke at every login by dropping the gpg-agent.socket or
+  # sockets.target start job.
   systemd.user.services.gnupg-stale-lock-cleanup = {
     Unit = {
       Description = "Remove stale GnuPG keyboxd lock files";
+      DefaultDependencies = false;
       Before = [
         "gpg-agent.socket"
         "gpg-agent.service"
