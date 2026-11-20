@@ -271,6 +271,15 @@ in
     };
   };
 
+  # Only this host has the nixpkgs checkout; on the others the maintenance
+  # timers failed every run with "cannot change to ...".
+  programs.git.maintenance = {
+    enable = true;
+    repositories = [
+      "${config.home.homeDirectory}/projects/opensource/nixos-nixpkgs"
+    ];
+  };
+
   programs.gh = {
     enable = true;
     package = pkgs.unstable.gh;

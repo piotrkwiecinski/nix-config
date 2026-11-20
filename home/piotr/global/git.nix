@@ -31,13 +31,6 @@
 
     lfs.enable = true;
 
-    maintenance = {
-      enable = true;
-      repositories = [
-        "${config.home.homeDirectory}/projects/opensource/nixos-nixpkgs"
-      ];
-    };
-
     includes =
       let
         hasSopsTemplate =
