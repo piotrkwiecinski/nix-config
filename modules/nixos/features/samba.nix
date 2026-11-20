@@ -10,7 +10,12 @@
       "server string" = config.networking.hostName;
       security = "user";
       "map to guest" = "never";
+      # NetBIOS is legacy; wsdd and mDNS below handle discovery. With nmbd on
+      # every host, the Pis kept contesting the WORKGROUP master browser role
+      # and flooded the journal.
+      "disable netbios" = "yes";
     };
+    nmbd.enable = false;
   };
 
   services.samba-wsdd = {
