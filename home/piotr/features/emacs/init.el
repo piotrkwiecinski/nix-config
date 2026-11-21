@@ -1050,8 +1050,8 @@ document.addEventListener('DOMContentLoaded', () => {
   (org-confirm-babel-evaluate nil)
   (org-src-strip-leading-add-trailing-blank-lines t)
   (org-agenda-files (list "~/projects/personal/second-brain/"
-                          "~/org/inbox.org"))
-  (org-default-notes-file "~/org/inbox.org")
+                          "~/projects/personal/org/inbox.org"))
+  (org-default-notes-file "~/projects/personal/org/inbox.org")
   (org-agenda-include-diary t)
   (org-log-done t)
   (org-support-shift-select t)

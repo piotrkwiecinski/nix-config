@@ -66,7 +66,7 @@ Add to your phone's Emacs =init.el=:
 (setq tramp-default-method "ssh")
 
 ;; Org-mode pointing to remote files
-(setq org-directory "/ssh:thinkpad:~/org/")
+(setq org-directory "/ssh:thinkpad:~/projects/personal/org/")
 (setq org-agenda-files (list org-directory))
 #+end_src
 
@@ -110,7 +110,7 @@ Emacs's home). This avoids the cross-app filesystem issue.
 
 TRAMP over mobile networks can be slow. For faster org access:
 
-- *Syncthing* — sync =~/org/= to the phone for local access (available on F-Droid)
+- *Syncthing* — sync =~/projects/personal/org/= to the phone for local access (available on F-Droid)
 - *Nextcloud* — already running on homeserver, sync org files there
 - *Git* — clone org repo in Termux, use magit or CLI git to sync
 
