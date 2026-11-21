@@ -222,11 +222,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1795184866,
-        "narHash": "sha256-Qk2MkRRM8cHsgKQ84G2+h2TnQaAIpYEGhCjX70KCsO0=",
+        "lastModified": 1795270364,
+        "narHash": "sha256-u1aXuatZZNmqKAkgvfzuIrkTqRv6qfKoYkQXItWAPnM=",
         "owner": "codemanufacture",
         "repo": "magento-package-overlay",
-        "rev": "ca61e7432d3c3aeabb3b3b4a6f15affeb280d3d3",
+        "rev": "bbecb5c3a7cbb64a1827aa6808c3380c95d4d7a5",
         "type": "github"
       },
       "original": {
@@ -344,16 +344,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1772736753,
-        "narHash": "sha256-au/m3+EuBLoSzWUCb64a/MZq6QUtOV8oC0D9tY2scPQ=",
+        "lastModified": 1795269618,
+        "narHash": "sha256-T4TtPzVWEJdZ2y8IFZiw/qwLfzKheI/+xi30AMxmqM4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "917fec990948658ef1ccd07cef2a1ef060786846",
+        "rev": "b5194e0b5b11b5a72c2809ba262451d53a3c19b6",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
+        "ref": "master",
         "repo": "nixpkgs",
         "type": "github"
       }

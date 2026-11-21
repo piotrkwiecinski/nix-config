@@ -28,7 +28,14 @@ in
         config.cudaSupport = true;
       };
       claude-code = inputs.claude-code-overlay.packages.${final.stdenv.hostPlatform.system}.claude-code;
-      magento-pkgs = inputs.magento-overlay.overlays.default final prev;
+      # magento-cache-clean is only on nixpkgs master (NixOS/nixpkgs#590875);
+      # take it from the overlay's master pin until it reaches a release.
+      magento-pkgs = inputs.magento-overlay.overlays.default final prev // {
+        inherit
+          (inputs.magento-overlay.inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system})
+          magento-cache-clean
+          ;
+      };
       additions = import ../pkgs {
         pkgs = final.pkgs;
         inherit pkgs-unstable;
