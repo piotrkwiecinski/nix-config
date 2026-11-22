@@ -205,6 +205,17 @@ in
     export AQ_DRM_DEVICES="$(readlink -f /dev/dri/by-path/pci-0000:00:02.0-card):$(readlink -f /dev/dri/by-path/pci-0000:01:00.0-card)"
     export XCURSOR_THEME=Adwaita
     export XCURSOR_SIZE=24
+    # GNOME's IBus is not running here (see the autostart override below), so
+    # let apps use the compositor's text input instead of looking for it.
+    unset GTK_IM_MODULE QT_IM_MODULE XMODIFIERS
+  '';
+
+  # GNOME enables IBus system-wide; its XDG autostart entry skips only GNOME and
+  # KDE, so under Hyprland it starts as a bare XIM daemon and warns that it
+  # must be started from the desktop session. Hide it; GNOME starts IBus itself.
+  xdg.configFile."autostart/ibus-daemon.desktop".text = ''
+    [Desktop Entry]
+    Hidden=true
   '';
 
   # Written by hand rather than through services.hyprpaper, whose unit is
