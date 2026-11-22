@@ -31,8 +31,7 @@ in
       # magento-cache-clean is only on nixpkgs master (NixOS/nixpkgs#590875);
       # take it from the overlay's master pin until it reaches a release.
       magento-pkgs = inputs.magento-overlay.overlays.default final prev // {
-        inherit
-          (inputs.magento-overlay.inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system})
+        inherit (inputs.magento-overlay.inputs.nixpkgs.legacyPackages.${final.stdenv.hostPlatform.system})
           magento-cache-clean
           ;
       };
