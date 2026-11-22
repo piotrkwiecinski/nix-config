@@ -14,6 +14,7 @@
           git
           nil
           sops
+          age-plugin-yubikey # admin sops key lives on the YubiKey
           (writeShellApplication {
             name = "nix-switch";
             text = ''nixos-rebuild switch --sudo --flake ".#$(hostname)"'';
