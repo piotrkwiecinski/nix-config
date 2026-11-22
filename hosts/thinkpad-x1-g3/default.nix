@@ -404,6 +404,8 @@
       CUDA_VISIBLE_DEVICES = "0";
       OLLAMA_CONTEXT_LENGTH = "32768";
       LLAMA_ARG_FIT_TARGET = "256";
+      # Keep models resident for an hour (default 5m) so bonsai + d1-omni don't reload between tasks.
+      OLLAMA_KEEP_ALIVE = "1h";
     };
   };
 
