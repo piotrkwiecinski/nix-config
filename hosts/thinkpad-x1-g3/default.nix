@@ -403,20 +403,12 @@
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       CUDA_VISIBLE_DEVICES = "0";
       OLLAMA_CONTEXT_LENGTH = "32768";
-      # llama.cpp's layer fitter keeps ~1 GiB of free VRAM per device, sized for
-      # a GPU that also drives a display. The panel runs on the iGPU, so that
-      # margin is dead space that pushes layers onto the CPU.
-      # See docs/local-llm-benchmarks.md.
       LLAMA_ARG_FIT_TARGET = "256";
     };
   };
 
   systemd.services.ollama.serviceConfig = {
     EnvironmentFile = config.sops.templates."ollama-env".path;
-    # llama-server keeps an in-RAM prompt cache of up to 8 GiB (~380 MiB per
-    # cached prompt) on top of CPU-side weights and KV cache. Long eval runs
-    # fill it completely and can freeze an already loaded system. Cap the
-    # service so it gets reclaimed/killed, not the desktop.
     MemoryHigh = "10G";
     MemoryMax = "12G";
     MemorySwapMax = "2G";
