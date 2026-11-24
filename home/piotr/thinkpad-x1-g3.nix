@@ -396,9 +396,6 @@ in
     '';
 
     shellAliases = {
-      "c2" = "dm composer";
-      "m2" = "dm magento";
-      "mr2" = "dm n98-magerun2";
       "ls" = "ls --color=auto";
       "la" = "ls -la";
       "ll" = "ls -l";
