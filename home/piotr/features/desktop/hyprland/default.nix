@@ -104,6 +104,8 @@ in
         (app "hyprpaper")
         (app "waybar")
         (app "mako")
+        # Wi-Fi and VPN menu in the waybar tray; --indicator for SNI (no XEmbed).
+        (app "nm-applet --indicator")
         (app "${pkgs.hyprpolkitagent}/libexec/hyprpolkitagent")
       ];
 
@@ -545,6 +547,7 @@ in
     bluetui
     grim
     hyprpaper
+    networkmanagerapplet # nm-applet, nm-connection-editor
     playerctl
     pwvucontrol
     slurp
