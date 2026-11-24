@@ -726,12 +726,6 @@ $0`(yas-escape-text yas-selected-text)`")
                  :type "php"
                  :port 9003)))
 
-(defun project-environment-command (command)
-  "Run project environment related command."
-  (interactive "sEnter command: ")
-  (let ((default-directory (project-root (project-current t))))
-    (async-shell-command (concat "~/bin/dm " command))))
-
 ;;;; Version control
 (use-package magit
   :config
@@ -802,8 +796,6 @@ $0`(yas-escape-text yas-selected-text)`")
   :hook (nix-ts-mode . eglot-ensure))
 
 ;;;;; PHP
-
-(use-package php-mode)
 
 ;; Eglot's default server for php-ts-mode is phpactor.
 (use-package php-ts-mode
