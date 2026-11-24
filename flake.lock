@@ -222,11 +222,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1795270364,
-        "narHash": "sha256-u1aXuatZZNmqKAkgvfzuIrkTqRv6qfKoYkQXItWAPnM=",
+        "lastModified": 1795549507,
+        "narHash": "sha256-BTGtcTp1CkcHOtJVf2BytOFBcd/S6AA1GoPFbRNQMLM=",
         "owner": "codemanufacture",
         "repo": "magento-package-overlay",
-        "rev": "bbecb5c3a7cbb64a1827aa6808c3380c95d4d7a5",
+        "rev": "d911566d3565737531280278e344fa840d15c883",
         "type": "github"
       },
       "original": {
