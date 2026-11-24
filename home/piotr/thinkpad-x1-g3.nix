@@ -223,6 +223,10 @@ in
     MAGENTO_CLOUD_CLI_API_WRITE_USER_SSH_CONFIG = "0";
   };
 
+  # Sets XDG_{CACHE,CONFIG,DATA,STATE}_HOME. Switch to the NixOS
+  # xdg.directories module once it reaches stable nixpkgs (not in 26.05).
+  xdg.enable = true;
+
   # Configure scdaemon to not hold exclusive access to YubiKey,
   # allowing FIDO2/WebAuthn to work alongside GPG smartcard
   programs.gpg.scdaemonSettings = {
