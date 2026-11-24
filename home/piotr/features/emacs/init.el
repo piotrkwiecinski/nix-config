@@ -930,7 +930,13 @@ $0`(yas-escape-text yas-selected-text)`")
 
 ;;;;; YAML
 
-(use-package yaml-mode)
+(use-package yaml-ts-mode
+  :ensure nil
+  :if (treesit-available-p)
+  :mode "\\.ya?ml\\'"
+  :init
+  ;; Org src blocks and anything else asking for `yaml-mode'.
+  (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode)))
 
 ;;;;; Markdown
 
