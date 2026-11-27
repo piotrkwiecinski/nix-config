@@ -71,6 +71,8 @@ let
       name,
       inputsToUpdate,
       commitMessage,
+      # Runs after the preflight, holding the lock; `exit 0` skips the run.
+      precheck ? "",
     }:
     pkgs.writeShellScript name ''
       set -euo pipefail
@@ -78,6 +80,8 @@ let
       cd ${lib.escapeShellArg flakeDir}
 
       ${autoUpdatePreflight}
+
+      ${precheck}
 
       restoreLock() {
         if [ -f flake.lock.bak ]; then
@@ -130,6 +134,28 @@ let
       "magento-overlay"
     ];
     commitMessage = "flake: auto-update claude-code-overlay and magento-overlay";
+  };
+
+  # nixpkgs-unstable-cuda on its own, about once a month. services.ollama takes
+  # ollama-cuda from it, and a bump can break the whole system build ("CUDA
+  # Toolkit not found" in ggml-cuda), which is why update-flake-inputs leaves it
+  # out. Here the build is the gate: a failed build restores flake.lock and
+  # fails the unit, and the next firing tries again. The timer fires twice a
+  # week and this check skips while the locked revision is under 30 days old,
+  # so a run lost to the lock or a powered-off laptop costs days, not a month.
+  updateCudaScript = mkAutoUpdateScript {
+    name = "update-cuda-flake";
+    inputsToUpdate = [ "nixpkgs-unstable-cuda" ];
+    commitMessage = "flake: auto-update nixpkgs-unstable-cuda";
+    precheck = ''
+      locked=$(${pkgs.jq}/bin/jq -r '.nodes["nixpkgs-unstable-cuda"].locked.lastModified' flake.lock)
+      age_days=$(( ($(date +%s) - locked) / 86400 ))
+      if [ "$age_days" -lt 30 ]; then
+        echo "nixpkgs-unstable-cuda is $age_days days old (< 30); skipping."
+        exit 0
+      fi
+      echo "nixpkgs-unstable-cuda is $age_days days old; updating."
+    '';
   };
 
   updateFlakeInputsScript = mkAutoUpdateScript {
@@ -506,6 +532,39 @@ in
         ]
       }:/run/wrappers/bin:/run/current-system/sw/bin";
     };
+  };
+
+  # Shares the auto-update lock and preflight, so it skips while another
+  # update, a review-deploy, a manual nixos-rebuild or a dirty tree is in the
+  # way. Its slot (Mon/Thu 10:30) avoids the other timers' firings.
+  systemd.user.services.update-cuda-flake = {
+    Unit = {
+      Description = "Auto-update nixpkgs-unstable-cuda when it is 30+ days old";
+      After = [ "network-online.target" ];
+      Wants = [ "network-online.target" ];
+      X-SwitchMethod = "keep-old";
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart = "${updateCudaScript}";
+      # CUDA packages (ollama-cuda, obs-studio) may build from source.
+      TimeoutStartSec = "3h";
+      Environment = "PATH=${
+        lib.makeBinPath [
+          pkgs.nix
+          pkgs.git
+        ]
+      }:/run/wrappers/bin:/run/current-system/sw/bin";
+    };
+  };
+
+  systemd.user.timers.update-cuda-flake = {
+    Unit.Description = "Timer for nixpkgs-unstable-cuda update";
+    Timer = {
+      OnCalendar = "Mon,Thu *-*-* 10:30:00";
+      Persistent = false;
+    };
+    Install.WantedBy = [ "timers.target" ];
   };
 
   systemd.user.timers.update-flake-inputs = {
