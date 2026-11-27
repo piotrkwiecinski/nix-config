@@ -30,6 +30,10 @@
               host=''${1:?usage: pi-switch <homeserver|homerpilab>}
               ssh "piotr@$host" bash -s -- "$host" <<'EOF'
               set -euo pipefail
+              if systemctl is-active --quiet nix-config-auto-rebuild.service; then
+                echo "nix-config-auto-rebuild is running on $1; try again when it finishes." >&2
+                exit 1
+              fi
               cd ~/nix-config
               git pull --ff-only
               journalctl -fu nixos-rebuild-manual -n0 &

@@ -11,5 +11,6 @@
     wifi-watchdog = ../modules/nixos/features/wifi-watchdog.nix;
     home-cache = ../modules/nixos/features/home-cache.nix;
     hyprland = ../modules/nixos/features/hyprland.nix;
+    auto-rebuild = ../modules/nixos/features/auto-rebuild.nix;
   };
 }

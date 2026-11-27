@@ -19,6 +19,7 @@ in
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
     outputs.nixosModules.home-cache
+    outputs.nixosModules.auto-rebuild
     ./hardware-configuration.nix
     ./backup.nix
     inputs.private-nix-config.nixosModules.homeserver-secrets
@@ -28,6 +29,13 @@ in
   ];
 
   networking.hostName = "homeserver";
+
+  # An hour after homerpilab's, so the two Pis never switch at once.
+  services.nix-config-auto-rebuild = {
+    enable = true;
+    startAt = "*-*-* 03:30:00";
+    skipWhileActive = [ "restic-backups-*.service" ];
+  };
 
   # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
   # their modules). The Tailscale HTTPS vhosts are reached over tailscale0,

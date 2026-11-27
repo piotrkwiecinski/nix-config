@@ -9,6 +9,7 @@
     outputs.nixosModules.rpi4
     outputs.nixosModules.samba
     outputs.nixosModules.home-cache
+    outputs.nixosModules.auto-rebuild
     ./hardware-configuration.nix
     # sops secrets and the home Wi-Fi profile
     inputs.private-nix-config.nixosModules.homerpilab-secrets
@@ -18,6 +19,14 @@
   ];
 
   networking.hostName = "homerpilab";
+
+  # An hour before homeserver's, so the two Pis never switch at once; keeps
+  # clear of the Sunday 04:00 restic prune/check.
+  services.nix-config-auto-rebuild = {
+    enable = true;
+    startAt = "*-*-* 02:30:00";
+    skipWhileActive = [ "restic-backups-*.service" ];
+  };
 
   # Backup target for homeserver's restic jobs. Append-only, so a compromised
   # client can add snapshots but never delete or rewrite them. No firewall
