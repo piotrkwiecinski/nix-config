@@ -7,7 +7,6 @@
             (lambda () (setq gc-cons-threshold normal-gc-cons-threshold))))
 
 (customize-set-variable 'load-prefer-newer t)
-(customize-set-variable 'inhibit-startup-message t)
 (customize-set-variable 'inhibit-startup-screen t)
 
 (push '(tool-bar-lines . 0) default-frame-alist)

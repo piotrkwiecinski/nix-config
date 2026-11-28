@@ -22,16 +22,16 @@
   (kill-region-dwim 'emacs-word)
   ;; Show help-echo at point (e.g. Flymake diagnostics) through ElDoc.
   (eldoc-help-at-pt t)
+  (ring-bell-function #'ignore)
+  (initial-scratch-message nil)
+  ;; Customize writes are throwaway; keep settings in this file.
+  (custom-file (make-temp-file "emacs-custom-" nil ".el"))
   :init
   (delete-selection-mode 1)
   (electric-pair-mode 1)
   (save-place-mode 1)
   (global-so-long-mode 1)
   (pixel-scroll-precision-mode 1))
-
-(defgroup pk-emacs nil
-  "User options for my dotemacs."
-  :group 'file)
 
 (setq user-full-name "Piotr Kwiecinski")
 
@@ -47,7 +47,7 @@
 (use-package recentf
   :ensure nil
   :custom
-  (recentf-exclude '(".gz" ".xz" ".zip" "/elpa/" "/ssh:" "/sudo:"))
+  (recentf-exclude '("\\.gz\\'" "\\.xz\\'" "\\.zip\\'" "/elpa/" "\\`/ssh:" "\\`/sudo:"))
   (recentf-max-saved-items 1000)
   :hook (after-init . recentf-mode))
 
@@ -61,8 +61,6 @@
 
 (setq-default indent-tabs-mode nil)
 
-(setq ring-bell-function 'ignore)
-
 (add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 
 (use-package savehist
@@ -72,11 +70,7 @@
   :init
   (savehist-mode 1))
 
-;; Customize writes are throwaway; keep settings in this file.
-(setq custom-file (make-temp-file "emacs-custom-" nil ".el"))
-(setq initial-scratch-message nil)
-
-(global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+(keymap-global-set "<escape>" #'keyboard-escape-quit)
 
 ;;; File management
 (use-package dired
@@ -145,10 +139,11 @@
          ("M-s L" . consult-line-multi)
          ("M-s r" . consult-ripgrep)
          ("M-s f" . consult-fd))
+  :custom
+  (consult-line-numbers-widen t)
+  (consult-narrow-key "<")
   :config
-  (setq consult-line-numbers-widen t)
   (setq completion-in-region-function #'consult-completion-in-region)
-  (setq consult-narrow-key "<")
   (with-eval-after-load 'xref
     (setq xref-show-xrefs-function #'consult-xref
           xref-show-definitions-function #'consult-xref)))
@@ -189,7 +184,8 @@
   (advice-add 'which-key--show-popup :around #'pk--which-key-pad))
 
 (use-package corfu
-  :bind (:map corfu-map
+  :bind (("M-i" . completion-at-point)
+         :map corfu-map
          ("C-j" . corfu-next)
          ("C-k" . corfu-previous)
          ("TAB" . corfu-insert)
@@ -198,8 +194,7 @@
   (corfu-cycle t)
   (corfu-auto t)
   :init
-  (global-corfu-mode)
-  (global-set-key (kbd "M-i") #'completion-at-point))
+  (global-corfu-mode))
 
 (use-package vertico
   :custom
@@ -236,12 +231,10 @@
   (add-to-list 'completion-at-point-functions #'cape-file)
   (add-to-list 'completion-at-point-functions #'cape-dabbrev)
   (add-to-list 'completion-at-point-functions #'cape-abbrev)
-  ;; Elisp buffers already get symbols from `elisp-completion-at-point'.
-  (setq completion-at-point-functions
-        (remove 'ispell-completion-at-point completion-at-point-functions))
-  ;; Emacs 30 text-mode adds ispell-completion-at-point buffer-locally;
-  ;; it errors without a plain word-list (ispell-alternate-dictionary).
-  (setq text-mode-ispell-word-completion nil))
+  :custom
+  ;; Otherwise text-mode adds `ispell-completion-at-point' buffer-locally,
+  ;; which errors without a plain word-list (ispell-alternate-dictionary).
+  (text-mode-ispell-word-completion nil))
 
 ;;; User interface
 (set-face-attribute 'default nil
@@ -255,14 +248,8 @@
 (set-fontset-font t '(#x2669 . #x266F) "DejaVu Sans Mono")
 
 (add-to-list 'display-buffer-alist
-             '("\\*Help\\*"
+             '("\\`\\*Help\\*"
                (display-buffer-reuse-window display-buffer-pop-up-window)))
-
-(add-to-list 'display-buffer-alist
-             '("\\*Completions\\*"
-               (display-buffer-reuse-window display-buffer-pop-up-window)
-               (inhibit-same-window . t)
-               (window-height . 12)))
 
 (setq display-buffer-base-action
       '(display-buffer-reuse-mode-window
@@ -277,7 +264,9 @@
                (window-width . 70)))
 
 (add-to-list 'display-buffer-alist
-             '("\\*compilation\\*"
+             ;; `compilation-start' sets the mode before displaying, so this
+             ;; also catches renamed compilation buffers.
+             '((derived-mode . compilation-mode)
                (display-buffer-reuse-window
                 display-buffer-in-side-window)
                (window-height . 0.3)
@@ -310,27 +299,33 @@
 (use-package hide-mode-line
   :hook (elfeed-show-mode . hide-mode-line-mode))
 
+(defun pk--org-present-start ()
+  "Enlarge text and hide distractions for an `org-present' session."
+  (setq-local face-remapping-alist
+              '((default (:height 1.15) default)
+                (header-line (:height 2.0) variable-pitch)
+                (org-document-title (:height 1.0) org-document-title)
+                (org-level-1 (:height 1.0) org-level-1)))
+  (org-present-big)
+  (org-present-hide-cursor)
+  (org-present-read-only)
+  (olivetti-mode 1)
+  (hide-mode-line-mode 1))
+
+(defun pk--org-present-quit ()
+  "Undo `pk--org-present-start'."
+  (setq-local face-remapping-alist nil)
+  (org-present-small)
+  (org-present-show-cursor)
+  (setq-local cursor-type t)
+  (org-present-read-write)
+  (olivetti-mode -1)
+  (hide-mode-line-mode -1))
+
 (use-package org-present
   :commands org-present
-  :hook ((org-present-mode . (lambda ()
-                               (setq-local face-remapping-alist
-                                           '((default (:height 1.15) default)
-                                             (header-line (:height 2.0) variable-pitch)
-                                             (org-document-title (:height 1.0) org-document-title)
-                                             (org-level-1 (:height 1.0) org-level-1)))
-                               (org-present-big)
-                               (org-present-hide-cursor)
-                               (org-present-read-only)
-                               (olivetti-mode 1)
-                               (hide-mode-line-mode 1)))
-         (org-present-mode-quit . (lambda ()
-                                    (setq-local face-remapping-alist nil)
-                                    (org-present-small)
-                                    (org-present-show-cursor)
-                                    (setq-local cursor-type t)
-                                    (org-present-read-write)
-                                    (olivetti-mode -1)
-                                    (hide-mode-line-mode -1)))))
+  :hook ((org-present-mode . pk--org-present-start)
+         (org-present-mode-quit . pk--org-present-quit)))
 
 (setq-default line-spacing 5)
 
@@ -368,7 +363,7 @@
           (7 . (variable-pitch 1.2))))
   :init
   (load-theme 'modus-vivendi :no-confirm)
-  (defun pk--apply-ui-padding ()
+  (defun pk--apply-ui-padding (&rest _)
     "Apply padding to mode-line and tab-bar faces based on current theme colors."
     (let ((ml-active-bg (face-attribute 'mode-line :background nil t))
           (ml-inactive-bg (face-attribute 'mode-line-inactive :background nil t)))
@@ -386,7 +381,7 @@
       (set-face-attribute 'tab-bar-tab nil :box nil)
       (set-face-attribute 'tab-bar-tab-inactive nil :box nil)))
   (add-hook 'server-after-make-frame-hook #'pk--apply-ui-padding)
-  (add-hook 'enable-theme-functions (lambda (_) (pk--apply-ui-padding)))
+  (add-hook 'enable-theme-functions #'pk--apply-ui-padding)
   (unless (daemonp) (pk--apply-ui-padding)))
 
 (setq-default line-prefix (propertize " " 'display '(space :width (15))))
@@ -459,9 +454,8 @@ of the bar, so it has to be the bar's own.")
   (let ((name (alist-get 'name tab))
         (face (if (eq (car tab) 'current-tab) 'tab-bar-tab 'tab-bar-tab-inactive)))
     (if (and (display-graphic-p) (image-type-available-p 'svg))
-        ;; Without a `mouse-face', the tab bar draws a button relief
-        ;; round an image item under the mouse (raised on hover, sunken
-        ;; while pressed); an empty one replaces that with nothing.
+        ;; Emacs 31 highlights a hovered tab with `tab-bar-tab-highlight',
+        ;; which has a box; our own `mouse-face' replaces that with nothing.
         (propertize name
                     'display (pk-tab-bar--image name face (selected-frame))
                     'mouse-face 'pk-tab-bar-hover)
@@ -479,7 +473,10 @@ of the bar, so it has to be the bar's own.")
   (tab-bar-tab-name-format-function #'pk-tab-bar--format)
   :config
   (require 'svg)
-  (add-hook 'enable-theme-functions (lambda (_) (clrhash pk-tab-bar--cache))))
+  (defun pk-tab-bar--flush-cache (&rest _)
+    "Forget drawn tab images, whose colours come from the theme."
+    (clrhash pk-tab-bar--cache))
+  (add-hook 'enable-theme-functions #'pk-tab-bar--flush-cache))
 
 (use-package nerd-icons
   :demand t
@@ -524,18 +521,13 @@ of the bar, so it has to be the bar's own.")
 
 (use-package prog-mode
   :ensure nil
-  :hook ((prog-mode . column-number-mode)
-         (prog-mode . display-line-numbers-mode)))
+  :hook (prog-mode . display-line-numbers-mode))
 
 (use-package flymake
   :ensure nil
   :bind (:map flymake-mode-map
          ("M-n" . flymake-goto-next-error)
          ("M-p" . flymake-goto-prev-error)))
-
-(use-package eldoc
-  :ensure nil
-  :hook (prog-mode . eldoc-mode))
 
 ;; rust-analyzer replies are large; the 64k default means many reads per message.
 (setq read-process-output-max (* 1024 1024))
@@ -563,7 +555,6 @@ of the bar, so it has to be the bar's own.")
   (eglot-extend-to-xref t)
   :config
   (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nil")))
-  (add-to-list 'eglot-server-programs '((rust-ts-mode rust-mode) . ("rust-analyzer")))
   (add-to-list 'eglot-server-programs '(toml-ts-mode . ("taplo" "lsp" "stdio")))
   ;; Sent via workspace/configuration so projects can override in .dir-locals.el:
   ;; ((rust-ts-mode . ((eglot-workspace-configuration
@@ -585,12 +576,12 @@ of the bar, so it has to be the bar's own.")
                   ;; Fetch missing flake inputs without the "Fetch them now?" prompt.
                   :nil (:nix (:flake (:autoArchive t)))))
   ;; Fresh candidates from the server on every keystroke (Corfu wiki).
-  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
-  :hook (eglot-managed-mode . eglot-inlay-hints-mode))
+  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster))
 
 (use-package editorconfig
   :ensure nil
-  :hook (prog-mode . editorconfig-mode))
+  :init
+  (editorconfig-mode 1))
 
 (use-package autoinsert
   :ensure nil
@@ -615,8 +606,8 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package uuidgen)
 
-(defun autoinsert-yas-expand()
-  "Replace text in yasnippet template."
+(defun pk-autoinsert-yas-expand ()
+  "Expand the inserted auto-insert template as a yasnippet."
   (yas-expand-snippet (buffer-string) (point-min) (point-max)))
 
 (use-package envrc
@@ -839,12 +830,11 @@ $0`(yas-escape-text yas-selected-text)`")
   :after yasnippet
   :demand t
   :config
-  (auto-insert-mode 1)
   (let ((di-template (concat magento2-yasnippets-templates-dir "xml/di.xml")))
     (add-to-list 'auto-insert-alist
-                 `(("etc/\\(?:adminhtml/\\|frontend/\\|crontab/\\)?di\\.xml\\'" . "Magento 2 di.xml") . [,di-template  autoinsert-yas-expand])))
+                 `(("etc/\\(?:adminhtml/\\|frontend/\\|crontab/\\)?di\\.xml\\'" . "Magento 2 di.xml") . [,di-template pk-autoinsert-yas-expand])))
   (add-to-list 'auto-insert-alist
-               '(("etc/module\\.xml\\'" . "Magento 2 module.xml") . ["magento/module.xml" autoinsert-yas-expand]))
+               '(("etc/module\\.xml\\'" . "Magento 2 module.xml") . ["magento/module.xml" pk-autoinsert-yas-expand]))
   (add-to-list 'auto-insert-alist '(("\\.php\\'" . "PHP class") . "skeleton.php")))
 
 ;; trivialBuild package: no generated autoloads.
@@ -855,10 +845,6 @@ $0`(yas-escape-text yas-selected-text)`")
              magento-cache-clean-transient))
 
 (use-package composer)
-
-(defun php-types ()
-  "PHP types."
-  '("string" "void" "array" "int" "float" "bool"))
 
 (use-package magento2-cli
   :bind (("C-c m 2" . magento2-cli))
@@ -913,9 +899,20 @@ $0`(yas-escape-text yas-selected-text)`")
       (pk--cargo (concat (if (executable-find "cargo-nextest") "nextest run" "test")
                          (and name (concat " " name))))))
 
-  (defun pk-cargo-run () (interactive) (pk--cargo "run"))
-  (defun pk-cargo-build () (interactive) (pk--cargo "build"))
-  (defun pk-cargo-clippy () (interactive) (pk--cargo "clippy --all-targets")))
+  (defun pk-cargo-run ()
+    "Run `cargo run' from the nearest crate."
+    (interactive)
+    (pk--cargo "run"))
+
+  (defun pk-cargo-build ()
+    "Run `cargo build' from the nearest crate."
+    (interactive)
+    (pk--cargo "build"))
+
+  (defun pk-cargo-clippy ()
+    "Run `cargo clippy --all-targets' from the nearest crate."
+    (interactive)
+    (pk--cargo "clippy --all-targets")))
 
 ;;;;; TOML
 
@@ -980,9 +977,9 @@ document.addEventListener('DOMContentLoaded', () => {
   "Personal extensions for Elfeed."
   :group 'elfeed)
 
-(defcustom pk-elfeed-feeds-file (concat user-emacs-directory "feeds.el")
+(defcustom pk-elfeed-feeds-file (locate-user-emacs-file "feeds.el")
   "Path to file with `elfeed-feeds'."
-  :type 'string
+  :type 'file
   :group 'pk-elfeed)
 
 (defvar elfeed-search-mode-map)
@@ -1067,18 +1064,18 @@ document.addEventListener('DOMContentLoaded', () => {
   (with-eval-after-load 'org-capture
     (add-to-list 'org-capture-templates
                  '("i" "Inbox" entry (file "") "* TODO %?\n%U")))
-  (mapc (lambda (template)
-        (add-to-list 'org-structure-template-alist template))
-        '(("el" . "src emacs-lisp")
-          ("js" . "src js")
-          ("json" . "src json")
-          ("php" . "src php")
-          ("py" . "src python")
-          ("rust" . "src rust")
-          ("sc" . "src scheme")
-          ("sh" . "src sh")
-          ("ts" . "src typescript")
-          ("yaml" . "src yaml")))
+  (dolist (template
+           '(("el" . "src emacs-lisp")
+             ("js" . "src js")
+             ("json" . "src json")
+             ("php" . "src php")
+             ("py" . "src python")
+             ("rust" . "src rust")
+             ("sc" . "src scheme")
+             ("sh" . "src sh")
+             ("ts" . "src typescript")
+             ("yaml" . "src yaml")))
+    (add-to-list 'org-structure-template-alist template))
   (let ((langs '((js . t)
                  (php . t)
                  (shell . t))))
@@ -1089,28 +1086,28 @@ document.addEventListener('DOMContentLoaded', () => {
   (require 'org-protocol))
 
 (use-package org-roam
-      :if (file-directory-p "~/projects/personal/second-brain/")
-      :after org
-      :demand t
-      :custom
-      (org-roam-directory (file-truename "~/projects/personal/second-brain/"))
-      :bind (("C-c n l" . org-roam-buffer-toggle)
-             ("C-c n f" . org-roam-node-find)
-             ("C-c n g" . org-roam-graph)
-             ("C-c n i" . org-roam-node-insert)
-             ("C-c n c" . org-roam-capture)
-             ("C-c n j" . org-roam-dailies-capture-today))
-      :config
-      (require 'org-roam-protocol)
-      (org-roam-db-autosync-mode)
-      (add-to-list 'display-buffer-alist
-                   '("\\*org-roam\\*"
-                     (display-buffer-in-side-window)
-                     (side . right)
-                     (slot . 0)
-                     (window-width . 0.33)
-                     (window-parameters . ((no-other-window . t)
-                                           (no-delete-other-windows . t))))))
+  :if (file-directory-p "~/projects/personal/second-brain/")
+  :after org
+  :demand t
+  :custom
+  (org-roam-directory (file-truename "~/projects/personal/second-brain/"))
+  :bind (("C-c n l" . org-roam-buffer-toggle)
+         ("C-c n f" . org-roam-node-find)
+         ("C-c n g" . org-roam-graph)
+         ("C-c n i" . org-roam-node-insert)
+         ("C-c n c" . org-roam-capture)
+         ("C-c n j" . org-roam-dailies-capture-today))
+  :config
+  (require 'org-roam-protocol)
+  (org-roam-db-autosync-mode)
+  (add-to-list 'display-buffer-alist
+               '("\\*org-roam\\*"
+                 (display-buffer-in-side-window)
+                 (side . right)
+                 (slot . 0)
+                 (window-width . 0.33)
+                 (window-parameters . ((no-other-window . t)
+                                       (no-delete-other-windows . t))))))
 
 ;; Task dependencies (:BLOCKER:/:TRIGGER:), also used by org-agent-loop.
 (use-package org-edna
@@ -1134,8 +1131,8 @@ document.addEventListener('DOMContentLoaded', () => {
   (org-agent-loop-capture-setup))
 
 (use-package org-modern
-  :hook (org-mode . org-modern-mode)
-  :hook (org-agenda-finalize . org-modern-agenda))
+  :hook ((org-mode . org-modern-mode)
+         (org-agenda-finalize . org-modern-agenda)))
 
 (use-package websocket)
 
@@ -1158,18 +1155,19 @@ document.addEventListener('DOMContentLoaded', () => {
 (use-package mixed-pitch
   :hook (text-mode . mixed-pitch-mode))
 
+;; The player (MPD) is set in lisp-private/music.el.
 (use-package emms
   :config
   (require 'emms-setup)
-  (emms-all)
-  (setq emms-player-list '(emms-player-mpv)))
+  (emms-all))
 
 ;;;; llm
 (use-package claude-code-ide
   :bind ("C-c C-'" . claude-code-ide-menu)
+  :custom
+  (claude-code-ide-terminal-backend 'ghostel)
   :config
   (claude-code-ide-emacs-tools-setup)
-  (setq claude-code-ide-terminal-backend 'ghostel)
 
   (defun my/claude-code-propagate-envrc (orig-fun &rest args)
     "Propagate envrc environment variables to Claude Code terminal sessions."
