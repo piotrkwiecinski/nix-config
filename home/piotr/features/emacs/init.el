@@ -18,6 +18,10 @@
   ;; redisplay per animation step; on a large window this hung Emacs in
   ;; update_window.  Keep precise (touchpad) scrolling, drop the animation.
   (pixel-scroll-precision-interpolate-mice nil)
+  ;; C-w without a region kills the previous word.
+  (kill-region-dwim 'emacs-word)
+  ;; Show help-echo at point (e.g. Flymake diagnostics) through ElDoc.
+  (eldoc-help-at-pt t)
   :init
   (delete-selection-mode 1)
   (electric-pair-mode 1)
@@ -219,9 +223,13 @@
   :demand t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles . (partial-completion)))
-                                   (eglot (styles . (orderless)))
-                                   (eglot-capf (styles . (orderless))))))
+  (completion-category-defaults nil)
+  ;; basic first so TRAMP host completion works.
+  (completion-category-overrides '((file (styles basic partial-completion))
+                                   (eglot (styles orderless))
+                                   (eglot-capf (styles orderless))))
+  ;; partial-completion matches words anywhere, like substring.
+  (completion-pcm-leading-wildcard t))
 
 (use-package cape
   :init
@@ -777,6 +785,16 @@ $0`(yas-escape-text yas-selected-text)`")
   :demand t)
 
 ;;;; Programming languages
+;; .rs, .php and .y(a)ml files pick their ts modes by themselves once the
+;; grammar is installed; this also remaps conf-toml-mode and yaml-mode (Org
+;; src blocks) to theirs.  Its :set only applies once treesit is loaded.
+(use-package treesit
+  :ensure nil
+  :demand t
+  :config
+  (customize-set-variable 'treesit-enabled-modes
+                          '(php-ts-mode rust-ts-mode toml-ts-mode yaml-ts-mode)))
+
 (use-package paredit
   :hook ((emacs-lisp-mode . paredit-mode)
          (scheme-mode . paredit-mode)))
@@ -800,8 +818,6 @@ $0`(yas-escape-text yas-selected-text)`")
 ;; Eglot's default server for php-ts-mode is phpactor.
 (use-package php-ts-mode
   :ensure nil
-  :if (treesit-available-p)
-  :mode "\\.php\\'"
   :hook (php-ts-mode . eglot-ensure))
 
 ;; Magento vendor modules are nested git checkouts, so project.el stops at the
@@ -860,7 +876,6 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package rust-ts-mode
   :ensure nil
-  :mode "\\.rs\\'"
   :hook ((rust-ts-mode . eglot-ensure)
          (rust-ts-mode . pk--rust-format-on-save))
   :bind (:map rust-ts-mode-map
@@ -906,8 +921,6 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package toml-ts-mode
   :ensure nil
-  :if (treesit-available-p)
-  :mode ("Cargo\\.toml\\'" "\\.toml\\'")
   :hook (toml-ts-mode . eglot-ensure))
 
 ;;;;; Web
@@ -919,16 +932,6 @@ $0`(yas-escape-text yas-selected-text)`")
 ;;;;; XML
 (use-package nxml-mode
   :ensure nil)
-
-;;;;; YAML
-
-(use-package yaml-ts-mode
-  :ensure nil
-  :if (treesit-available-p)
-  :mode "\\.ya?ml\\'"
-  :init
-  ;; Org src blocks and anything else asking for `yaml-mode'.
-  (add-to-list 'major-mode-remap-alist '(yaml-mode . yaml-ts-mode)))
 
 ;;;;; Markdown
 
