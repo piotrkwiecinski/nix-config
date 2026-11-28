@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   inputs,
   outputs,
   ...
@@ -29,8 +30,8 @@
   };
 
   # Backup target for homeserver's restic jobs. Append-only, so a compromised
-  # client can add snapshots but never delete or rewrite them. No firewall
-  # port: clients reach it over tailscale0, which is trusted.
+  # client can add snapshots but never delete or rewrite them. Open on the
+  # tailnet only; homeserver reaches it there.
   services.restic.server = {
     enable = true;
     appendOnly = true;
@@ -38,6 +39,9 @@
     privateRepos = true;
     htpasswd-file = config.sops.secrets."restic-htpasswd".path;
   };
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts = [
+    (lib.toInt (lib.last (lib.splitString ":" config.services.restic.server.listenAddress)))
+  ];
 
   # Retention runs here, against the repo on disk (rest-server can't delete
   # in append-only mode). No paths: the module then only does forget/prune

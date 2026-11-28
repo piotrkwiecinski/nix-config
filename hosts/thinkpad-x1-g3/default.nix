@@ -182,6 +182,9 @@
     {
       docker0 = devPorts;
       "br-+" = devPorts; # user-defined docker networks (iptables wildcard)
+      # `tailscale serve` (https://thinkpad-x1-g3.<tailnet>.ts.net) listens
+      # on the tailnet address itself, behind the firewall
+      tailscale0.allowedTCPPorts = [ 443 ];
     };
 
   # With resolved, tailscale registers MagicDNS as a split-DNS route for the
@@ -428,6 +431,9 @@
       # Loopback only: *.test/*.loc resolve to 127.0.0.1, and a wildcard bind
       # collides with `tailscale serve` holding 443 on the tailnet address
       entryPoints = {
+        # api.insecure serves the dashboard on this entrypoint, which
+        # otherwise defaults to :8080 on every interface
+        traefik.address = "127.0.0.1:8080";
         web = {
           address = "127.0.0.1:80";
           reusePort = true;

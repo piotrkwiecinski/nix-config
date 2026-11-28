@@ -38,8 +38,8 @@ in
   };
 
   # LAN gets only the HTTPS vhosts (SSH, Samba and Tailscale are opened by
-  # their modules). The Tailscale HTTPS vhosts are reached over tailscale0,
-  # which is a trusted interface.
+  # their modules). The Tailscale HTTPS vhosts (84xx) open on tailscale0 only,
+  # from base.nix.
   networking.firewall.allowedTCPPorts = [
     80 # HTTP (redirect to HTTPS)
     443 # HTTPS (LAN subdomains)

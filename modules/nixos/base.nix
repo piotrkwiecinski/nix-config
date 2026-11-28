@@ -91,5 +91,19 @@ in
     enable = true;
     openFirewall = true;
   };
-  networking.firewall.trustedInterfaces = [ "tailscale0" ];
+
+  # The tailnet is not trusted wholesale: every device on it (phones too) would
+  # reach every port. Ports open everywhere (SSH, Samba, 80/443) stay
+  # reachable; hosts add what they serve only to the tailnet. nginx vhosts on
+  # ports other than 80/443 are the tailnet ones, so those open here.
+  # Tailscale Services (svc:*) are answered by tailscaled itself and need no
+  # port.
+  networking.firewall.interfaces.tailscale0.allowedTCPPorts =
+    lib.pipe config.services.nginx.virtualHosts
+      [
+        lib.attrValues
+        (lib.concatMap (v: map (l: l.port) v.listen))
+        (lib.filter (p: p != null && p != 80 && p != 443))
+        lib.unique
+      ];
 }
