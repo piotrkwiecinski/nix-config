@@ -14,6 +14,16 @@
       # every host, the Pis kept contesting the WORKGROUP master browser role
       # and flooded the journal.
       "disable netbios" = "yes";
+      # Without NetBIOS, 139 is only the legacy session port
+      "smb ports" = "445";
+      # SMB3 needs Windows 8 / macOS 10.10 / any current gvfs or Android client
+      "server min protocol" = "SMB3";
+      # Encrypt when the client supports it, without refusing those that don't
+      "server smb encrypt" = "desired";
+      # LAN, the tailnet (IPv4 and IPv6) and loopback; hosts allow then
+      # overrides the deny
+      "hosts allow" = "192.168.68.0/22 100.64.0.0/10 fd7a:115c:a1e0::/48 127.0.0.1 ::1";
+      "hosts deny" = "ALL";
     };
     nmbd.enable = false;
   };
