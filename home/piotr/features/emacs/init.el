@@ -606,10 +606,6 @@ $0`(yas-escape-text yas-selected-text)`")
 
 (use-package uuidgen)
 
-(defun pk-autoinsert-yas-expand ()
-  "Expand the inserted auto-insert template as a yasnippet."
-  (yas-expand-snippet (buffer-string) (point-min) (point-max)))
-
 (use-package envrc
   :custom
   ;; Block at most 2s waiting for direnv, then continue asynchronously,
@@ -830,12 +826,7 @@ $0`(yas-escape-text yas-selected-text)`")
   :after yasnippet
   :demand t
   :config
-  (let ((di-template (concat magento2-yasnippets-templates-dir "xml/di.xml")))
-    (add-to-list 'auto-insert-alist
-                 `(("etc/\\(?:adminhtml/\\|frontend/\\|crontab/\\)?di\\.xml\\'" . "Magento 2 di.xml") . [,di-template pk-autoinsert-yas-expand])))
-  (add-to-list 'auto-insert-alist
-               '(("etc/module\\.xml\\'" . "Magento 2 module.xml") . ["magento/module.xml" pk-autoinsert-yas-expand]))
-  (add-to-list 'auto-insert-alist '(("\\.php\\'" . "PHP class") . "skeleton.php")))
+  (magento2-yasnippets-auto-insert-setup))
 
 ;; trivialBuild package: no generated autoloads.
 (use-package magento-cache-clean
