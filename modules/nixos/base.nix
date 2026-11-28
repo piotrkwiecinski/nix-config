@@ -90,6 +90,12 @@ in
   services.tailscale = {
     enable = true;
     openFirewall = true;
+    # In the default mode ("on") tailscaled jumps INPUT to its ts-input chain
+    # ahead of nixos-fw, and that chain accepts everything on tailscale0, so
+    # the per-port rules below never apply. nodivert keeps its chains but
+    # leaves the jumps out; no host routes subnets or is an exit node, so
+    # nothing needs its forward rules.
+    extraSetFlags = [ "--netfilter-mode=nodivert" ];
   };
 
   # The tailnet is not trusted wholesale: every device on it (phones too) would
