@@ -1169,18 +1169,12 @@ document.addEventListener('DOMContentLoaded', () => {
   :config
   (claude-code-ide-emacs-tools-setup)
 
-  (defun my/claude-code-propagate-envrc (orig-fun &rest args)
-    "Propagate envrc environment variables to Claude Code terminal sessions."
-    (let* ((envrc-env (when (bound-and-true-p envrc--status)
-                        (cl-set-difference
-                         (buffer-local-value 'process-environment (current-buffer))
-                         (default-value 'process-environment)
-                         :test #'string=)))
-           (process-environment (append envrc-env process-environment)))
-      (apply orig-fun args)))
-
+  ;; The session starts its process from a new terminal buffer, which sees
+  ;; only the default `process-environment'; carry the caller's direnv
+  ;; environment and `exec-path' over as the defaults.
+  ;; (`inheritenv-add-advice' expands to this but is not autoloaded.)
   (advice-add 'claude-code-ide--create-terminal-session
-              :around #'my/claude-code-propagate-envrc)
+              :around #'inheritenv-apply)
 
   (defun my/claude-code-session-name (dir)
     "Stable session name for DIR: its basename, or parent-basename when generic."
