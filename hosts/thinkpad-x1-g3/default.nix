@@ -23,6 +23,13 @@
     pkgs.yubikey-personalization
     pkgs.libfido2
   ];
+  # Referenced by the u2f udev rules (70-u2f.rules); without the group udevd
+  # logs "Unknown group" on every event.
+  users.groups.plugdev = { };
+  users.users.piotr.extraGroups = [
+    "plugdev"
+    "ydotool"
+  ];
 
   services.pcscd.enable = true;
 

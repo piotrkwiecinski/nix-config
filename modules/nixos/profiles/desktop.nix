@@ -1,5 +1,12 @@
 # GNOME workstation.
 {
+  # input: raw /dev/input access (every keyboard), so desktops only
+  users.users.piotr.extraGroups = [
+    "audio"
+    "video"
+    "input"
+  ];
+
   services.xserver.enable = true;
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
